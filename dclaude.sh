@@ -53,20 +53,17 @@ fi
 # Check if we need a specific Claude Code version or latest from npm
 if [ "$DCLAUDE_CLAUDE_VERSION" = "latest" ]; then
     # Check npm for the stable version (not pre-release)
-    echo "Checking npm for stable Claude Code version..."
     NPM_LATEST=$(npm info @anthropic-ai/claude-code dist-tags.stable 2>/dev/null)
 
     if [ -n "$NPM_LATEST" ]; then
-        echo "Latest stable version on npm: $NPM_LATEST"
-
-        # Check if we already have an image with this version
-        EXISTING_IMAGE=$(docker images --filter "label=tools.claude.version=$NPM_LATEST" --format "{{.Repository}}:{{.Tag}}" | head -1)
+        # Check if we already have an image with this version (exclude dangling images)
+        EXISTING_IMAGE=$(docker images --filter "label=tools.claude.version=$NPM_LATEST" --format "{{.Repository}}:{{.Tag}}" | grep -v "<none>" | head -1)
 
         if [ -n "$EXISTING_IMAGE" ]; then
-            echo "✓ Already have Claude Code $NPM_LATEST: $EXISTING_IMAGE"
+            echo "✓ Claude Code $NPM_LATEST (stable) - using: $EXISTING_IMAGE"
             IMAGE_NAME="$EXISTING_IMAGE"
         else
-            echo "Building image with Claude Code $NPM_LATEST..."
+            echo "Building image with Claude Code $NPM_LATEST (stable)..."
             DCLAUDE_CLAUDE_VERSION="$NPM_LATEST"
             IMAGE_NAME="dclaude:claude-$NPM_LATEST"
         fi
@@ -75,8 +72,8 @@ if [ "$DCLAUDE_CLAUDE_VERSION" = "latest" ]; then
     fi
 else
     # Specific version requested
-    # Check if an image with this Claude version already exists
-    EXISTING_IMAGE=$(docker images --filter "label=tools.claude.version=$DCLAUDE_CLAUDE_VERSION" --format "{{.Repository}}:{{.Tag}}" | head -1)
+    # Check if an image with this Claude version already exists (exclude dangling images)
+    EXISTING_IMAGE=$(docker images --filter "label=tools.claude.version=$DCLAUDE_CLAUDE_VERSION" --format "{{.Repository}}:{{.Tag}}" | grep -v "<none>" | head -1)
 
     if [ -n "$EXISTING_IMAGE" ]; then
         echo "Found existing image with Claude Code $DCLAUDE_CLAUDE_VERSION: $EXISTING_IMAGE"
@@ -175,76 +172,73 @@ if [ -f .env ]; then
 fi
 
 # Check if ANTHROPIC_API_KEY is set (not required for shell mode)
-if [ "$OPEN_SHELL" = false ] && [ -z "$ANTHROPIC_API_KEY" ]; then
-    echo "Error: ANTHROPIC_API_KEY environment variable is not set"
-    echo "Please set it with: export ANTHROPIC_API_KEY='your-key'"
-    echo "Or add it to your .env file"
-    exit 1
-fi
+#if [ "$OPEN_SHELL" = false ] && [ -z "$ANTHROPIC_API_KEY" ]; then
+#    echo "Error: ANTHROPIC_API_KEY environment variable is not set"
+#    echo "Please set it with: export ANTHROPIC_API_KEY='your-key'"
+#    echo "Or add it to your .env file"
+#    exit 1
+#fi
 
 # Generate unique container name
 CONTAINER_NAME="dclaude-$(date +%Y%m%d-%H%M%S)-$$"
 
-# Build docker run command
+# Build docker run command using array for proper argument escaping
+DOCKER_CMD=(docker run --rm --name "$CONTAINER_NAME")
+
 # Detect if we're running in an interactive terminal
 if [ -t 0 ] && [ -t 1 ]; then
-    # Interactive mode - use -it flags
-    DOCKER_CMD="docker run -it --rm --name $CONTAINER_NAME"
+    DOCKER_CMD+=(-it)
 else
-    # Non-interactive mode (piped, scripted, etc) - don't use TTY
-    DOCKER_CMD="docker run -i --rm --name $CONTAINER_NAME"
+    DOCKER_CMD+=(-i)
 fi
 
 # Mount current directory
-DOCKER_CMD="$DOCKER_CMD -v $(pwd):/workspace"
+DOCKER_CMD+=(-v "$(pwd):/workspace")
 
 # Mount .gitconfig for git identity
 if [ -f "$HOME/.gitconfig" ]; then
-    DOCKER_CMD="$DOCKER_CMD -v $HOME/.gitconfig:/home/$(whoami)/.gitconfig:ro"
+    DOCKER_CMD+=(-v "$HOME/.gitconfig:/home/$(whoami)/.gitconfig:ro")
 fi
 
 # Mount .claude directory for session persistence
 if [ -d "$HOME/.claude" ]; then
-    DOCKER_CMD="$DOCKER_CMD -v $HOME/.claude:/home/$(whoami)/.claude"
+    DOCKER_CMD+=(-v "$HOME/.claude:/home/$(whoami)/.claude")
+fi
+
+# Mount .claude.json file for configuration persistence
+if [ -f "$HOME/.claude.json" ]; then
+    DOCKER_CMD+=(-v "$HOME/.claude.json:/home/$(whoami)/.claude.json")
 fi
 
 # Mount .gnupg directory for GPG commit signing support (opt-in)
 if [ "$DCLAUDE_GPG_FORWARD" = "true" ] && [ -d "$HOME/.gnupg" ]; then
-    DOCKER_CMD="$DOCKER_CMD -v $HOME/.gnupg:/home/$(whoami)/.gnupg"
-    # Set GPG_TTY for proper TTY handling
-    DOCKER_CMD="$DOCKER_CMD -e GPG_TTY=/dev/console"
+    DOCKER_CMD+=(-v "$HOME/.gnupg:/home/$(whoami)/.gnupg")
+    DOCKER_CMD+=(-e "GPG_TTY=/dev/console")
 fi
 
 # Pass environment variables (if set)
 if [ -n "$ANTHROPIC_API_KEY" ]; then
-    DOCKER_CMD="$DOCKER_CMD -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY"
+    DOCKER_CMD+=(-e "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY")
 fi
 
 # Add GH_TOKEN if it's set
 if [ -n "$GH_TOKEN" ]; then
-    DOCKER_CMD="$DOCKER_CMD -e GH_TOKEN=$GH_TOKEN"
+    DOCKER_CMD+=(-e "GH_TOKEN=$GH_TOKEN")
 fi
 
 # Handle shell mode or normal mode
 if [ "$OPEN_SHELL" = true ]; then
-    # Override entrypoint for shell mode
     echo "Opening bash shell in container..."
-    DOCKER_CMD="$DOCKER_CMD --entrypoint /bin/bash $IMAGE_NAME"
-    # Add any remaining arguments
-    if [ $# -gt 0 ]; then
-        DOCKER_CMD="$DOCKER_CMD $@"
-    fi
+    DOCKER_CMD+=(--entrypoint /bin/bash "$IMAGE_NAME")
+    DOCKER_CMD+=("$@")
 else
     # Normal mode - run claude command
-    DOCKER_CMD="$DOCKER_CMD $IMAGE_NAME"
-    # Add all arguments passed to this script
-    if [ $# -gt 0 ]; then
-        DOCKER_CMD="$DOCKER_CMD $@"
-    fi
+    DOCKER_CMD+=("$IMAGE_NAME")
+    DOCKER_CMD+=("$@")
 fi
 
 # Log the command
 log_command "PWD: $(pwd) | Container: $CONTAINER_NAME | Command: $@"
 
-# Execute the command
-eval $DOCKER_CMD
+# Execute the command with proper argument escaping
+"${DOCKER_CMD[@]}"
