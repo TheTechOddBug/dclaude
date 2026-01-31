@@ -216,6 +216,37 @@ if [ "$DCLAUDE_GPG_FORWARD" = "true" ] && [ -d "$HOME/.gnupg" ]; then
     DOCKER_CMD+=(-e "GPG_TTY=/dev/console")
 fi
 
+# Mount Docker socket for Docker-in-Docker support (opt-in)
+if [ "$DCLAUDE_DOCKER_FORWARD" = "host" ]; then
+    # Host mode: Mount host Docker socket (see all host containers)
+    if [ -e "/var/run/docker.sock" ] || [ -L "/var/run/docker.sock" ]; then
+        DOCKER_CMD+=(-v "/var/run/docker.sock:/var/run/docker.sock")
+
+        # Dynamically detect Docker socket group ID
+        DOCKER_SOCK_GID=$(stat -f "%g" /var/run/docker.sock 2>/dev/null || stat -c "%g" /var/run/docker.sock 2>/dev/null)
+        if [ -n "$DOCKER_SOCK_GID" ]; then
+            # Add the actual socket group, plus common fallback GIDs
+            DOCKER_CMD+=(--group-add "$DOCKER_SOCK_GID")
+            # Also add 102 (Rancher Desktop) and 999 (standard Docker) as fallbacks if different
+            [ "$DOCKER_SOCK_GID" != "102" ] && DOCKER_CMD+=(--group-add 102)
+            [ "$DOCKER_SOCK_GID" != "999" ] && DOCKER_CMD+=(--group-add 999)
+        else
+            echo "Warning: Could not detect Docker socket group, using common defaults"
+            DOCKER_CMD+=(--group-add 102 --group-add 999)
+        fi
+    else
+        echo "Warning: DCLAUDE_DOCKER_FORWARD=host but /var/run/docker.sock not found"
+    fi
+elif [ "$DCLAUDE_DOCKER_FORWARD" = "isolated" ] || [ "$DCLAUDE_DOCKER_FORWARD" = "true" ]; then
+    # Isolated mode: Run separate Docker daemon (Docker-in-Docker)
+    # Requires privileged mode for the daemon
+    DOCKER_CMD+=(--privileged)
+    # Mount a volume for the Docker daemon's data
+    DOCKER_CMD+=(-v "dclaude-docker-${CONTAINER_NAME}:/var/lib/docker")
+    # Set environment variable to signal DinD mode
+    DOCKER_CMD+=(-e "DCLAUDE_DIND=true")
+fi
+
 # Pass environment variables (if set)
 if [ -n "$ANTHROPIC_API_KEY" ]; then
     DOCKER_CMD+=(-e "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY")
@@ -229,10 +260,34 @@ fi
 # Handle shell mode or normal mode
 if [ "$OPEN_SHELL" = true ]; then
     echo "Opening bash shell in container..."
-    DOCKER_CMD+=(--entrypoint /bin/bash "$IMAGE_NAME")
-    DOCKER_CMD+=("$@")
+    # If using isolated Docker mode, we need to start dockerd first
+    if [ "$DCLAUDE_DOCKER_FORWARD" = "isolated" ] || [ "$DCLAUDE_DOCKER_FORWARD" = "true" ]; then
+        # Use a wrapper that starts dockerd then opens shell
+        DOCKER_CMD+=("$IMAGE_NAME" /bin/bash -c "
+            if [ \"\$DCLAUDE_DIND\" = \"true\" ]; then
+                echo 'Starting Docker daemon in isolated mode...'
+                sudo dockerd --host=unix:///var/run/docker.sock >/tmp/docker.log 2>&1 &
+                echo 'Waiting for Docker daemon...'
+                for i in {1..30}; do
+                    if [ -S /var/run/docker.sock ]; then
+                        sudo chmod 666 /var/run/docker.sock
+                        if docker info >/dev/null 2>&1; then
+                            echo '✓ Docker daemon ready (isolated environment)'
+                            break
+                        fi
+                    fi
+                    sleep 1
+                done
+            fi
+            exec /bin/bash \"\$@\"
+        " bash "$@")
+    else
+        # Normal shell mode without DinD
+        DOCKER_CMD+=(--entrypoint /bin/bash "$IMAGE_NAME")
+        DOCKER_CMD+=("$@")
+    fi
 else
-    # Normal mode - run claude command
+    # Normal mode - run claude command (entrypoint handles DinD if needed)
     DOCKER_CMD+=("$IMAGE_NAME")
     DOCKER_CMD+=("$@")
 fi

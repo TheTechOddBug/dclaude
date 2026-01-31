@@ -7,17 +7,22 @@ ARG GROUP_ID=1000
 ARG USERNAME=claude
 ARG CLAUDE_VERSION=latest
 
-# Install dependencies and GitHub CLI
+# Install dependencies, GitHub CLI, Docker CLI, and Docker daemon (for DinD)
 RUN apt-get update && apt-get install -y \
     curl \
     gnupg \
     git \
     sudo \
     ripgrep \
+    ca-certificates \
+    iptables \
+    supervisor \
     && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+    && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian bookworm stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
     && apt-get update \
-    && apt-get install -y gh \
+    && apt-get install -y gh docker-ce-cli docker-ce containerd.io \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -40,6 +45,10 @@ WORKDIR /workspace
 # Change ownership of workspace (use numeric IDs to avoid group name issues)
 RUN chown -R ${USER_ID}:${GROUP_ID} /workspace
 
+# Copy entrypoint wrapper for DinD support
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Switch to non-root user
 USER ${USERNAME}
 
@@ -55,7 +64,7 @@ LABEL tools.gh="installed"
 LABEL tools.ripgrep="installed"
 LABEL tools.node="installed"
 
-# Entry point will be claude command
+# Entry point will be our wrapper script (handles DinD mode)
 # Empty CMD means interactive session by default
-ENTRYPOINT ["claude"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD []

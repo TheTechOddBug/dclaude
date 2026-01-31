@@ -272,6 +272,10 @@ Benefits:
   - Set to `current` for the newest Node.js release
 - **DCLAUDE_GPG_FORWARD** (optional, default: `false`): Enable GPG commit signing
   - Set to `true` to mount `~/.gnupg` for commit signing
+- **DCLAUDE_DOCKER_FORWARD** (optional, default: `false`): Enable Docker support
+  - Set to `isolated` or `true` for isolated Docker environment (recommended)
+  - Set to `host` to mount host Docker socket (see all host containers)
+  - Allows Claude Code to run Docker commands
 
 ### GitHub CLI Integration
 
@@ -470,6 +474,69 @@ export DCLAUDE_GPG_FORWARD=true
 
 **Security Note:**
 - GPG keys are sensitive - only enable forwarding when needed
+
+### Docker-in-Docker Support (Opt-In)
+
+Docker support is **disabled by default** for security. Two modes are available:
+
+#### Isolated Mode (Recommended)
+
+**Own Docker environment - cannot see host containers:**
+```bash
+# One-time use
+export DCLAUDE_DOCKER_FORWARD=isolated
+./dclaude.sh
+
+# Or add to your .env file
+echo "DCLAUDE_DOCKER_FORWARD=isolated" >> .env
+./dclaude.sh
+```
+
+**How it works:**
+- Runs a separate Docker daemon inside the container
+- Completely isolated from your host containers
+- Claude Code can only see containers it creates
+- Won't interfere with your existing containers (Kubernetes, services, etc.)
+- Requires privileged mode but maintains namespace isolation
+
+**Use this when:**
+- Testing Docker projects safely
+- Building images without affecting host
+- You want isolation from production containers
+
+#### Host Mode
+
+**Shared Docker - sees ALL host containers:**
+```bash
+export DCLAUDE_DOCKER_FORWARD=host
+./dclaude.sh
+```
+
+**How it works:**
+- Mounts the host's Docker socket
+- Claude Code sees and can control ALL host containers
+- Can manage your existing services, Kubernetes pods, etc.
+- No isolation - full access to host Docker daemon
+
+**Use this when:**
+- You need to manage existing containers
+- Working with running services
+- Managing Docker Compose stacks
+
+**Test Docker access:**
+```bash
+# Isolated mode (won't see host containers)
+export DCLAUDE_DOCKER_FORWARD=isolated
+./dclaude.sh shell -c "docker ps"  # Shows only containers Claude creates
+
+# Host mode (sees everything)
+export DCLAUDE_DOCKER_FORWARD=host
+./dclaude.sh shell -c "docker ps"  # Shows all host containers
+```
+
+**Security Note:**
+- `isolated` mode: Safer, requires privileged mode but containers are isolated
+- `host` mode: Grants full Docker daemon control - use with caution
 - You may see a GPG ownership warning, which is harmless
 
 ### Image Customization
