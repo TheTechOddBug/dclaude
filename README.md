@@ -1,18 +1,18 @@
-# Docker + Makefile Project for Claude Code
+# Dockerized Claude Code
 
-Run Claude Code in Docker containers with easy build and run orchestration via Makefile.
+Run Claude Code in Docker containers with automatic building and easy execution.
 
 ## Overview
 
 This project provides a complete Docker-based setup for running Claude Code in an isolated container environment. It includes:
 
-- **Dockerfile**: Container definition with Claude Code, Git, and GitHub CLI pre-installed
-- **Makefile**: Simple build and run orchestration
-- **dclaude.sh**: Convenient wrapper script (recommended - auto-loads .env)
-- **run.sh**: Alternative script for running Claude Code with arguments
+- **Dockerfile**: Container definition with Claude Code, Git, GitHub CLI, and Ripgrep pre-installed
+- **dclaude.sh**: Smart wrapper script that auto-builds, auto-loads .env, and handles everything
 - **Volume mounting**: Access to your local files from within the container
+- **Session persistence**: Your conversation history persists across runs
 - **Environment-based auth**: Secure API key handling via .env file
 - **GitHub CLI**: Full gh CLI support for GitHub operations
+- **Non-root execution**: Runs as your local user with correct file permissions
 - **Git Identity**: Automatic git configuration from your local machine
 
 ## Prerequisites
@@ -36,19 +36,13 @@ This project provides a complete Docker-based setup for running Claude Code in a
    export GH_TOKEN='your-github-token'  # Optional
    ```
 
-2. **Build the Docker image:**
+2. **Run Claude Code:**
    ```bash
-   make build
-   ```
-
-3. **Run Claude Code:**
-   ```bash
-   # Recommended: Use dclaude.sh (auto-loads .env)
+   # Just run it - automatically builds if needed!
    ./dclaude.sh
-
-   # Or use make (requires exported variables)
-   make run
    ```
+
+   **Note:** The script automatically builds the Docker image on first run. No manual build step needed!
 
 ## Usage
 
@@ -97,51 +91,54 @@ When using `--print` mode for scripting/automation, Claude Code can't ask for pe
 
 **Benefits:**
 - Automatically loads `.env` file (no need to export variables)
-- Mounts current directory and `.gitconfig`
+- Mounts current directory, `.gitconfig`, and `.claude` directories
+- Session persistence - `--continue` works to resume conversations
+- Optional GPG commit signing support (opt-in with `DCLAUDE_GPG_FORWARD=true`)
 - Passes through all Claude Code arguments
 - Built-in shell access for debugging
+- Auto-detects interactive vs non-interactive mode (proper TTY handling)
+- Works seamlessly in pipes, scripts, and automation
+- Containers are named with `dclaude-` prefix for easy identification
+- Automatic command logging to `dclaude.log` for audit trail
+- Validates Docker installation and image availability before running
 - Simple and convenient
 
-### Using Makefile
+**Automatic Checks & Build:**
+The script performs these checks before running:
+1. ✅ Docker is installed
+2. ✅ Docker daemon is running
+3. ✅ Image `dclaude:latest` exists (automatically builds if missing)
+4. ✅ API key is configured (except for shell mode)
 
-The Makefile provides convenient targets for common operations:
+If the Docker image doesn't exist, the script will automatically build it for you. This means you can run `./dclaude.sh` immediately after cloning the repo!
+
+**Container Naming:**
+Each container gets a unique name in the format `dclaude-YYYYMMDD-HHMMSS-PID` (e.g., `dclaude-20260131-122028-23245`). This makes it easy to identify running Claude Code sessions:
 
 ```bash
-# Display help
-make help
+# View running dclaude containers
+docker ps --filter "name=dclaude"
 
-# Build the Docker image
-make build
-
-# Run Claude Code interactively
-make run
-
-# Open a shell in the container for debugging
-make shell
-
-# Remove the Docker image
-make clean
+# View all dclaude containers (including stopped)
+docker ps -a --filter "name=dclaude"
 ```
 
-### Using run.sh Script
-
-The `run.sh` script provides more flexibility for passing arguments:
+**Command Logging:**
+All commands are automatically logged to `dclaude.log` in the project directory. Each log entry includes:
+- Timestamp
+- Working directory where the command was executed
+- Container name
+- Command arguments
 
 ```bash
-# Make the script executable (first time only)
-chmod +x run.sh
+# View recent commands
+tail -20 dclaude.log
 
-# Run interactively (default)
-./run.sh
+# Monitor commands in real-time
+tail -f dclaude.log
 
-# Display Claude Code help
-./run.sh --help
-
-# Run with a specific prompt
-./run.sh "Fix the bug in app.js"
-
-# Run with additional options
-./run.sh --model opus "Refactor the authentication module"
+# Example log entry:
+# [2026-01-31 12:37:57] PWD: /tmp | Container: dclaude-20260131-123757-35140 | Command: --version
 ```
 
 ### Direct Docker Commands
@@ -169,6 +166,7 @@ docker run -it --rm \
 ### Base Image
 - Uses `node:20-slim` for lightweight and reliable Node.js environment
 - Debian-based for easy package installation
+- Automatically tagged with Claude Code version (e.g., `dclaude:2.1.27` and `dclaude:latest`)
 
 ### Non-Root User Setup
 - Container runs as your local user (not root) for security
@@ -199,14 +197,56 @@ docker run -it --rm \
   - No need to configure git identity separately
 - Keys and config passed securely (not stored in the image)
 
+### Image Metadata & Labels
+
+Images include metadata labels for tracking installed tools:
+
+```bash
+# View all labels
+docker inspect dclaude:latest --format '{{json .Config.Labels}}' | jq
+
+# Example output:
+{
+  "org.opencontainers.image.title": "dclaude",
+  "org.opencontainers.image.description": "Claude Code with Git, GitHub CLI, and Ripgrep",
+  "tools.claude": "installed",
+  "tools.gh": "installed",
+  "tools.git": "installed",
+  "tools.ripgrep": "installed",
+  "tools.node": "20"
+}
+
+# Filter images by label
+docker images --filter "label=tools.claude=installed"
+
+# Get specific label value
+docker inspect dclaude:latest --format '{{index .Config.Labels "tools.claude"}}'
+```
+
+**Installed Tool Versions:**
+
+After building, the script displays versions of all tools:
+```
+Installed versions:
+  • Claude Code: 2.1.27
+  • GitHub CLI:  2.86.0
+  • Ripgrep:     13.0.0
+  • Git:         2.39.5
+```
+
+Benefits:
+- 🏷️ **Metadata tracking** - Labels show what's installed in each image
+- 🔍 **Queryable** - Filter and search images by tools
+- 📊 **Documentation** - Self-documenting images
+- 🎯 **Standards compliant** - Uses OCI image spec labels
+
 ## File Structure
 
 ```
 /Users/patrickdebois/dev/dclaude/
-├── Dockerfile          # Container definition with Claude Code, Git, and gh CLI
-├── Makefile           # Build and run orchestration
-├── dclaude.sh         # Recommended wrapper script (auto-loads .env)
-├── run.sh             # Alternative script for running Claude Code
+├── Dockerfile         # Container definition with all tools pre-installed
+├── dclaude.sh         # Smart wrapper script (auto-builds, auto-loads .env)
+├── dclaude.log        # Command log (auto-generated)
 ├── .dockerignore      # Exclude unnecessary files from build context
 ├── .env               # Environment variables (ANTHROPIC_API_KEY, GH_TOKEN)
 └── README.md          # This file
@@ -221,6 +261,12 @@ docker run -it --rm \
   - Required for private repository access
   - Required for creating PRs, issues, and other write operations
   - Get yours at: https://github.com/settings/tokens
+- **DCLAUDE_CLAUDE_VERSION** (optional, default: `latest`): Pin to a specific Claude Code version
+  - Set to `latest` to always use the newest version
+  - Set to a specific version like `2.1.27` to pin to that version
+  - Automatically reuses existing images with matching version labels
+- **DCLAUDE_GPG_FORWARD** (optional, default: `false`): Enable GPG commit signing
+  - Set to `true` to mount `~/.gnupg` for commit signing
 
 ### GitHub CLI Integration
 
@@ -250,17 +296,119 @@ docker run --rm -v $(pwd):/workspace -e GH_TOKEN=$GH_TOKEN --entrypoint gh dclau
 
 ### Volume Mounts
 
-By default, the current directory is mounted to `/workspace`. You can add additional mounts:
+The following directories are automatically mounted by `dclaude.sh`:
+
+1. **Current directory** → `/workspace` - Your project files
+2. **`~/.gitconfig`** → `/home/<user>/.gitconfig` (read-only) - Git identity
+3. **`~/.claude`** → `/home/<user>/.claude` - Session persistence and history
+4. **`~/.gnupg`** → `/home/<user>/.gnupg` - GPG keys (opt-in, see GPG section below)
+
+This means:
+- ✅ `--continue` flag works to resume previous sessions
+- ✅ Conversation history persists across container runs
+- ✅ Settings and preferences are maintained
+- ✅ Project-specific session data is preserved
 
 ```bash
-# Example: Mount Claude session directory for persistence
-docker run -it --rm \
-  -v $(pwd):/workspace \
-  -v ~/.claude:/root/.claude \
-  -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
-  -e GH_TOKEN=$GH_TOKEN \
-  dclaude:latest
+# Example: Sessions now persist automatically
+./dclaude.sh "Write a hello world script"
+# Later, continue the conversation:
+./dclaude.sh --continue
 ```
+
+### Version Pinning
+
+Control which Claude Code version to use with `DCLAUDE_CLAUDE_VERSION`:
+
+**Use latest version (default):**
+```bash
+./dclaude.sh  # Automatically uses latest
+```
+
+**Pin to specific version:**
+```bash
+# One-time use
+DCLAUDE_CLAUDE_VERSION=2.1.27 ./dclaude.sh
+
+# Or add to .env file
+echo "DCLAUDE_CLAUDE_VERSION=2.1.27" >> .env
+./dclaude.sh
+```
+
+**How it works:**
+1. Script checks if an image with the requested Claude version exists (via labels)
+2. If found, uses the existing image (fast!)
+3. If not found, builds a new image with that version
+4. Images are tagged with version for easy reuse
+
+**Benefits:**
+- 📌 **Pin to stable versions** for production
+- 🔄 **Easy rollback** if new version has issues
+- 🏷️ **Automatic image reuse** - no rebuilding if version exists
+- 🚀 **Test new versions** without losing old ones
+
+**Example - Managing multiple versions:**
+```bash
+# Build version 2.1.27
+DCLAUDE_CLAUDE_VERSION=2.1.27 ./dclaude.sh --version
+# Output: 2.1.27 (Claude Code)
+
+# Build version 2.1.26 (if available)
+DCLAUDE_CLAUDE_VERSION=2.1.26 ./dclaude.sh --version
+# Builds new image with 2.1.26
+
+# Switch back to 2.1.27
+DCLAUDE_CLAUDE_VERSION=2.1.27 ./dclaude.sh --version
+# Output: Found existing image with Claude Code 2.1.27
+# (No rebuild needed!)
+
+# List all versions you have
+docker images dclaude --format "table {{.Tag}}\t{{.CreatedAt}}"
+```
+
+### GPG Commit Signing (Opt-In)
+
+GPG commit signing is **disabled by default** for security. To enable it, set the `DCLAUDE_GPG_FORWARD` environment variable:
+
+**Enable GPG signing:**
+```bash
+# One-time use
+export DCLAUDE_GPG_FORWARD=true
+./dclaude.sh
+
+# Or add to your .env file
+echo "DCLAUDE_GPG_FORWARD=true" >> .env
+./dclaude.sh
+```
+
+**Prerequisites:**
+1. GPG keys set up on your host system
+2. Git configured to use GPG signing:
+   ```bash
+   git config --global user.signingkey YOUR_KEY_ID
+   git config --global commit.gpgsign true  # Optional: always sign
+   ```
+
+**How it works:**
+- When `DCLAUDE_GPG_FORWARD=true`, your `~/.gnupg` directory is mounted into the container
+- GPG keys and agent socket are accessible
+- Commits can be signed just like on your host
+
+**Test GPG signing:**
+```bash
+# Enable GPG forwarding
+export DCLAUDE_GPG_FORWARD=true
+
+# Verify GPG access in container
+./dclaude.sh shell -c "gpg --list-secret-keys"
+
+# Create a signed commit
+./dclaude.sh "Make a change and commit it with git commit -S"
+```
+
+**Security Note:**
+- GPG keys are sensitive - only enable forwarding when needed
+- You may see a GPG ownership warning, which is harmless
 
 ### Image Customization
 
@@ -274,19 +422,17 @@ RUN apt-get update && apt-get install -y vim
 RUN npm install -g typescript
 ```
 
-Then rebuild:
+Then rebuild by removing the image and running dclaude.sh:
 ```bash
-make build
+docker rmi dclaude:latest
+./dclaude.sh  # Will auto-rebuild
 ```
 
 ## Examples
 
 ### Example 1: Quick Start with dclaude.sh
 ```bash
-# Build the image (one time)
-make build
-
-# Run interactively (automatically loads .env)
+# Just run it - auto-builds and loads .env
 ./dclaude.sh
 ```
 
@@ -323,7 +469,7 @@ make build
 ./dclaude.sh shell
 
 # Or use make
-make shell
+./dclaude.sh shell
 
 # Now you're in a bash shell inside the container
 # You can explore the environment, test commands, etc.
@@ -340,7 +486,7 @@ export ANTHROPIC_API_KEY='your-anthropic-key'
 export GH_TOKEN='your-github-token'
 
 # Run Claude and ask it to create a PR
-./run.sh "Create a pull request for the current branch"
+./dclaude.sh "Create a pull request for the current branch"
 
 # Or use gh CLI directly
 docker run --rm -v $(pwd):/workspace -e GH_TOKEN=$GH_TOKEN --entrypoint gh dclaude:latest pr list
@@ -383,9 +529,9 @@ export ANTHROPIC_API_KEY='your-key'
 ```
 Error: Docker image 'dclaude:latest' not found
 ```
-**Solution**: Build the image first:
+**Solution**: The image will be built automatically when you run:
 ```bash
-make build
+./dclaude.sh
 ```
 
 ### Permission Issues
@@ -411,17 +557,17 @@ docker run --rm \
   --entrypoint ls dclaude:latest -la /root/.gitconfig
 
 # Verify git configuration
-make shell
+./dclaude.sh shell
 git config --global user.name
 git config --global user.email
 ```
 
-The Makefile and run.sh automatically mount your `~/.gitconfig`, so commits will use your local git identity.
+The `dclaude.sh` script automatically mounts your `~/.gitconfig`, so commits will use your local git identity.
 
 ### Debugging Container Issues
 ```bash
 # Open a shell to inspect the container
-make shell
+./dclaude.sh shell
 
 # Check if Claude Code is installed
 which claude

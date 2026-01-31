@@ -4,6 +4,7 @@ FROM node:20-slim
 ARG USER_ID=1000
 ARG GROUP_ID=1000
 ARG USERNAME=claude
+ARG CLAUDE_VERSION=latest
 
 # Install dependencies and GitHub CLI
 RUN apt-get update && apt-get install -y \
@@ -19,8 +20,12 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Claude Code globally
-RUN npm install -g @anthropic-ai/claude-code
+# Install Claude Code globally (specific version or latest)
+RUN if [ "$CLAUDE_VERSION" = "latest" ]; then \
+        npm install -g @anthropic-ai/claude-code; \
+    else \
+        npm install -g @anthropic-ai/claude-code@$CLAUDE_VERSION; \
+    fi
 
 # Create user with matching UID/GID from host
 # Note: GID 20 may already exist (staff/dialout group), so we just add user to that group
@@ -36,6 +41,18 @@ RUN chown -R ${USER_ID}:${GROUP_ID} /workspace
 
 # Switch to non-root user
 USER ${USERNAME}
+
+# Add version labels for tracking
+LABEL org.opencontainers.image.title="dclaude"
+LABEL org.opencontainers.image.description="Claude Code with Git, GitHub CLI, and Ripgrep"
+LABEL org.opencontainers.image.authors="https://github.com/anthropics/claude-code"
+
+# Tool version labels (populated at build time)
+LABEL tools.claude="installed"
+LABEL tools.git="installed"
+LABEL tools.gh="installed"
+LABEL tools.ripgrep="installed"
+LABEL tools.node="20"
 
 # Entry point will be claude command
 # Empty CMD means interactive session by default
