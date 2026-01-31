@@ -15,6 +15,8 @@ set -e
 
 # Default to latest Claude Code version, or use specified version
 DCLAUDE_CLAUDE_VERSION="${DCLAUDE_CLAUDE_VERSION:-latest}"
+# Default to Node 20, or use specified version (can be "20", "lts", "current", etc.)
+DCLAUDE_NODE_VERSION="${DCLAUDE_NODE_VERSION:-20}"
 IMAGE_NAME="dclaude:latest"
 
 # Get the directory where this script is located
@@ -48,8 +50,31 @@ if ! docker info &> /dev/null; then
     exit 1
 fi
 
-# Check if we need a specific Claude Code version
-if [ "$DCLAUDE_CLAUDE_VERSION" != "latest" ]; then
+# Check if we need a specific Claude Code version or latest from npm
+if [ "$DCLAUDE_CLAUDE_VERSION" = "latest" ]; then
+    # Check npm for the stable version (not pre-release)
+    echo "Checking npm for stable Claude Code version..."
+    NPM_LATEST=$(npm info @anthropic-ai/claude-code dist-tags.stable 2>/dev/null)
+
+    if [ -n "$NPM_LATEST" ]; then
+        echo "Latest stable version on npm: $NPM_LATEST"
+
+        # Check if we already have an image with this version
+        EXISTING_IMAGE=$(docker images --filter "label=tools.claude.version=$NPM_LATEST" --format "{{.Repository}}:{{.Tag}}" | head -1)
+
+        if [ -n "$EXISTING_IMAGE" ]; then
+            echo "✓ Already have Claude Code $NPM_LATEST: $EXISTING_IMAGE"
+            IMAGE_NAME="$EXISTING_IMAGE"
+        else
+            echo "Building image with Claude Code $NPM_LATEST..."
+            DCLAUDE_CLAUDE_VERSION="$NPM_LATEST"
+            IMAGE_NAME="dclaude:claude-$NPM_LATEST"
+        fi
+    else
+        echo "Warning: Could not check npm, using existing dclaude:latest if available"
+    fi
+else
+    # Specific version requested
     # Check if an image with this Claude version already exists
     EXISTING_IMAGE=$(docker images --filter "label=tools.claude.version=$DCLAUDE_CLAUDE_VERSION" --format "{{.Repository}}:{{.Tag}}" | head -1)
 
@@ -71,8 +96,9 @@ if ! docker image inspect "$IMAGE_NAME" &> /dev/null; then
     echo "This may take a few minutes on first run..."
     echo ""
 
-    # Build the image with user's UID/GID and Claude version
+    # Build the image with user's UID/GID, Node version, and Claude version
     if docker build \
+        --build-arg NODE_VERSION="$DCLAUDE_NODE_VERSION" \
         --build-arg USER_ID=$(id -u) \
         --build-arg GROUP_ID=$(id -g) \
         --build-arg USERNAME=$(whoami) \
@@ -88,6 +114,7 @@ if ! docker image inspect "$IMAGE_NAME" &> /dev/null; then
         GH_VERSION=$(docker run --rm --entrypoint gh "$IMAGE_NAME" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
         RG_VERSION=$(docker run --rm --entrypoint rg "$IMAGE_NAME" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
         GIT_VERSION=$(docker run --rm --entrypoint git "$IMAGE_NAME" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+        NODE_VERSION_ACTUAL=$(docker run --rm --entrypoint node "$IMAGE_NAME" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 
         # Create a temporary Dockerfile to add version labels
         TEMP_DOCKERFILE=$(mktemp)
@@ -97,6 +124,7 @@ LABEL tools.claude.version="$CLAUDE_VERSION"
 LABEL tools.gh.version="$GH_VERSION"
 LABEL tools.ripgrep.version="$RG_VERSION"
 LABEL tools.git.version="$GIT_VERSION"
+LABEL tools.node.version="$NODE_VERSION_ACTUAL"
 EOF
 
         # Rebuild with version labels (fast - just adds metadata layer)
@@ -114,6 +142,7 @@ EOF
             rm "$TEMP_DOCKERFILE"
             echo ""
             echo "Installed versions:"
+            [ -n "$NODE_VERSION_ACTUAL" ] && echo "  • Node.js:     $NODE_VERSION_ACTUAL"
             [ -n "$CLAUDE_VERSION" ] && echo "  • Claude Code: $CLAUDE_VERSION"
             [ -n "$GH_VERSION" ] && echo "  • GitHub CLI:  $GH_VERSION"
             [ -n "$RG_VERSION" ] && echo "  • Ripgrep:     $RG_VERSION"

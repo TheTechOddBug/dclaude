@@ -1,4 +1,5 @@
-FROM node:20-slim
+ARG NODE_VERSION=20
+FROM node:${NODE_VERSION}-slim
 
 # Build arguments for user ID and group ID
 ARG USER_ID=1000
@@ -52,7 +53,7 @@ LABEL tools.claude="installed"
 LABEL tools.git="installed"
 LABEL tools.gh="installed"
 LABEL tools.ripgrep="installed"
-LABEL tools.node="20"
+LABEL tools.node="installed"
 
 # Entry point will be claude command
 # Empty CMD means interactive session by default

@@ -262,9 +262,14 @@ Benefits:
   - Required for creating PRs, issues, and other write operations
   - Get yours at: https://github.com/settings/tokens
 - **DCLAUDE_CLAUDE_VERSION** (optional, default: `latest`): Pin to a specific Claude Code version
-  - Set to `latest` to always use the newest version
+  - Set to `latest` to automatically use the newest **stable** version from npm
   - Set to a specific version like `2.1.27` to pin to that version
+  - Automatically checks npm and only rebuilds if a newer stable version is available
   - Automatically reuses existing images with matching version labels
+- **DCLAUDE_NODE_VERSION** (optional, default: `20`): Specify Node.js version for the container
+  - Set to a specific major version like `18`, `20`, `22`
+  - Set to `lts` for latest LTS version
+  - Set to `current` for the newest Node.js release
 - **DCLAUDE_GPG_FORWARD** (optional, default: `false`): Enable GPG commit signing
   - Set to `true` to mount `~/.gnupg` for commit signing
 
@@ -320,10 +325,18 @@ This means:
 
 Control which Claude Code version to use with `DCLAUDE_CLAUDE_VERSION`:
 
-**Use latest version (default):**
+**Use latest stable version (default):**
 ```bash
-./dclaude.sh  # Automatically uses latest
+./dclaude.sh  # Checks npm for latest stable version, only rebuilds if needed
 ```
+
+When you run with default settings:
+1. Checks npm for the latest **stable** version (uses `dist-tags.stable`, not pre-release)
+2. Checks if you already have an image with that version
+3. If yes, uses existing image (fast!)
+4. If no, builds new image with that version
+
+This means you always get stable releases, and rebuilds only happen when there's an actual new stable version.
 
 **Pin to specific version:**
 ```bash
@@ -364,6 +377,55 @@ DCLAUDE_CLAUDE_VERSION=2.1.27 ./dclaude.sh --version
 
 # List all versions you have
 docker images dclaude --format "table {{.Tag}}\t{{.CreatedAt}}"
+```
+
+### Node.js Version Management
+
+Customize the Node.js version used in the container with `DCLAUDE_NODE_VERSION`:
+
+**Use default (Node 20):**
+```bash
+./dclaude.sh  # Uses Node 20 by default
+```
+
+**Use specific Node version:**
+```bash
+# Node 18
+DCLAUDE_NODE_VERSION=18 ./dclaude.sh
+
+# Node 22
+DCLAUDE_NODE_VERSION=22 ./dclaude.sh
+
+# Latest LTS
+DCLAUDE_NODE_VERSION=lts ./dclaude.sh
+
+# Latest current release
+DCLAUDE_NODE_VERSION=current ./dclaude.sh
+
+# Add to .env for persistence
+echo "DCLAUDE_NODE_VERSION=18" >> .env
+```
+
+**Combine with Claude version:**
+```bash
+# Node 18 with Claude Code 2.1.25
+DCLAUDE_NODE_VERSION=18 DCLAUDE_CLAUDE_VERSION=2.1.25 ./dclaude.sh
+
+# Or in .env
+echo "DCLAUDE_NODE_VERSION=18" >> .env
+echo "DCLAUDE_CLAUDE_VERSION=2.1.25" >> .env
+./dclaude.sh
+```
+
+**Check versions:**
+```bash
+# Node version is displayed in build output
+Installed versions:
+  • Node.js:     20.11.0
+  • Claude Code: 2.1.25
+  • GitHub CLI:  2.86.0
+  • Ripgrep:     13.0.0
+  • Git:         2.39.5
 ```
 
 ### GPG Commit Signing (Opt-In)
