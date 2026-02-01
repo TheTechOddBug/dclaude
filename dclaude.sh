@@ -59,10 +59,12 @@ log_command() {
     fi
 }
 
-# Function to check if a port is available
+# Function to check if a port is available (using bash built-in, no external dependencies)
 is_port_available() {
     local port=$1
-    ! nc -z localhost "$port" 2>/dev/null
+    # Try to connect to port; if it succeeds, port is in use (return false)
+    # Use read with timeout to avoid hanging
+    (bash -c "exec 3<>/dev/tcp/localhost/$port" 2>/dev/null && exec 3>&-) && return 1 || return 0
 }
 
 # Function to find next available port starting from a base
@@ -93,6 +95,13 @@ fi
 if ! docker info &> /dev/null; then
     echo "Error: Docker daemon is not running"
     echo "Please start Docker and try again"
+    exit 1
+fi
+
+# Check if curl is installed (needed for npm registry queries)
+if ! command -v curl &> /dev/null; then
+    echo "Error: curl is not installed"
+    echo "Please install curl (usually: apt-get install curl, brew install curl, or yum install curl)"
     exit 1
 fi
 
