@@ -35,6 +35,18 @@ func (p *DockerProvider) FindImageByLabel(label, value string) string {
 	return ""
 }
 
+// GetImageLabel retrieves a specific label value from an image
+func (p *DockerProvider) GetImageLabel(imageName, label string) string {
+	cmd := exec.Command("docker", "inspect",
+		"--format", fmt.Sprintf("{{index .Config.Labels %q}}", label),
+		imageName)
+	output, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(output))
+}
+
 // BuildImage builds the Docker image
 func (p *DockerProvider) BuildImage(embeddedDockerfile, embeddedEntrypoint []byte) error {
 	fmt.Printf("Building %s...\n", p.config.ImageName)

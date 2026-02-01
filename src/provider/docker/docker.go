@@ -517,8 +517,29 @@ func (p *DockerProvider) BuildIfNeeded(rebuild bool) error {
 		}
 	}
 
-	// Build image if needed
+	// Check if image exists
 	if !p.ImageExists(p.config.ImageName) {
+		return p.BuildImage(p.embeddedDockerfile, p.embeddedEntrypoint)
+	}
+
+	// Check if versions match (Claude and Node)
+	claudeLabel := p.GetImageLabel(p.config.ImageName, "tools.claude.version")
+	nodeLabel := p.GetImageLabel(p.config.ImageName, "tools.node.version")
+
+	needsRebuild := false
+	if claudeLabel != p.config.ClaudeVersion && p.config.ClaudeVersion != "latest" {
+		fmt.Printf("Claude version mismatch: image has %s, requested %s\n", claudeLabel, p.config.ClaudeVersion)
+		needsRebuild = true
+	}
+	if nodeLabel != p.config.NodeVersion {
+		fmt.Printf("Node version mismatch: image has %s, requested %s\n", nodeLabel, p.config.NodeVersion)
+		needsRebuild = true
+	}
+
+	if needsRebuild {
+		fmt.Println("Rebuilding image with new versions...")
+		cmd := exec.Command("docker", "rmi", p.config.ImageName)
+		cmd.Run()
 		return p.BuildImage(p.embeddedDockerfile, p.embeddedEntrypoint)
 	}
 
