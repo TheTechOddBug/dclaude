@@ -13,7 +13,8 @@ PLATFORMS=darwin/amd64 darwin/arm64 linux/amd64 linux/arm64
 
 help:
 	@echo "Available targets:"
-	@echo "  make build         - Build binary for current platform"
+	@echo "  make build         - Format and build binary for current platform"
+	@echo "  make fmt           - Format Go code"
 	@echo "  make dist          - Build binaries for all platforms"
 	@echo "  make install       - Build and install to /usr/local/bin"
 	@echo "  make clean         - Remove build artifacts"
@@ -23,8 +24,14 @@ help:
 # Default target
 all: build
 
+# Format Go code
+fmt:
+	@echo "Formatting Go code..."
+	@cd $(SRC_DIR) && go fmt ./...
+	@echo "✓ Code formatted"
+
 # Build for current platform
-build: $(BUILD_DIR)/$(BINARY_NAME)
+build: fmt $(BUILD_DIR)/$(BINARY_NAME)
 
 $(BUILD_DIR)/$(BINARY_NAME): $(GO_FILES) $(ASSET_FILES) VERSION
 	@echo "Building $(BINARY_NAME) v$(VERSION)..."
@@ -34,7 +41,7 @@ $(BUILD_DIR)/$(BINARY_NAME): $(GO_FILES) $(ASSET_FILES) VERSION
 	@echo "✓ Built $(BUILD_DIR)/$(BINARY_NAME)"
 
 # Build for all platforms
-dist: clean
+dist: clean fmt
 	@echo "Building $(BINARY_NAME) v$(VERSION) for all platforms..."
 	@mkdir -p $(BUILD_DIR)
 	@for platform in $(PLATFORMS); do \
