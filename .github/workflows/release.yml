@@ -1,0 +1,127 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.2.3
+
+permissions:
+  contents: write  # Required for creating releases
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build binaries for all platforms
+        run: make dist
+
+      - name: Create checksums
+        run: |
+          cd dist
+          sha256sum dclaude-* > checksums.txt
+          cat checksums.txt
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+          body: |
+            ## DClaude ${{ steps.version.outputs.VERSION }}
+
+            ### Installation
+
+            Download the binary for your platform below and make it executable:
+
+            ```bash
+            # macOS Apple Silicon (M1/M2/M3)
+            curl -L https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/dclaude-darwin-arm64 -o dclaude
+            chmod +x dclaude
+            sudo mv dclaude /usr/local/bin/
+
+            # macOS Intel
+            curl -L https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/dclaude-darwin-amd64 -o dclaude
+            chmod +x dclaude
+            sudo mv dclaude /usr/local/bin/
+
+            # Linux x86_64
+            curl -L https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/dclaude-linux-amd64 -o dclaude
+            chmod +x dclaude
+            sudo mv dclaude /usr/local/bin/
+
+            # Linux ARM64
+            curl -L https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/dclaude-linux-arm64 -o dclaude
+            chmod +x dclaude
+            sudo mv dclaude /usr/local/bin/
+            ```
+
+            ### What's Changed
+
+            See commit history for details.
+
+      - name: Upload macOS ARM64 Binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/dclaude-darwin-arm64
+          asset_name: dclaude-darwin-arm64
+          asset_content_type: application/octet-stream
+
+      - name: Upload macOS AMD64 Binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/dclaude-darwin-amd64
+          asset_name: dclaude-darwin-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Linux AMD64 Binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/dclaude-linux-amd64
+          asset_name: dclaude-linux-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Linux ARM64 Binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/dclaude-linux-arm64
+          asset_name: dclaude-linux-arm64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Checksums
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/checksums.txt
+          asset_name: checksums.txt
+          asset_content_type: text/plain

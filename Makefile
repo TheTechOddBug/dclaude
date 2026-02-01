@@ -1,33 +1,78 @@
-.PHONY: standalone clean test help build
+.PHONY: all build clean test help install dist
+
+# Variables
+BINARY_NAME=dclaude
+BUILD_DIR=dist
+SRC_DIR=src
+VERSION=$(shell cat VERSION 2>/dev/null || echo "dev")
+GO_FILES=$(shell find $(SRC_DIR) -name '*.go')
+
+# Build targets for different platforms
+PLATFORMS=darwin/amd64 darwin/arm64 linux/amd64 linux/arm64
 
 help:
 	@echo "Available targets:"
-	@echo "  make build      - Build Go binary (dclaude-go)"
-	@echo "  make standalone - Build single-file distributable version"
-	@echo "  make test       - Test the standalone version"
-	@echo "  make clean      - Remove generated files"
+	@echo "  make build         - Build binary for current platform"
+	@echo "  make dist          - Build binaries for all platforms"
+	@echo "  make install       - Build and install to /usr/local/bin"
+	@echo "  make clean         - Remove build artifacts"
+	@echo "  make test          - Run tests"
+	@echo "  make help          - Show this help"
 
-build: dclaude-go
+# Default target
+all: build
 
-dclaude-go: src/**/*.go src/assets/**/*
-	@echo "Building dclaude-go..."
-	@cd src && go build -o ../dclaude-go .
-	@chmod +x dclaude-go
-	@echo "✓ Built dclaude-go"
+# Build for current platform
+build: $(BUILD_DIR)/$(BINARY_NAME)
 
-standalone: dist/dclaude-standalone.sh
+$(BUILD_DIR)/$(BINARY_NAME): $(GO_FILES) $(SRC_DIR)/assets/**/*
+	@echo "Building $(BINARY_NAME) v$(VERSION)..."
+	@mkdir -p $(BUILD_DIR)
+	@cd $(SRC_DIR) && go build -ldflags "-X main.Version=$(VERSION)" -o ../$(BUILD_DIR)/$(BINARY_NAME) .
+	@chmod +x $(BUILD_DIR)/$(BINARY_NAME)
+	@echo "✓ Built $(BUILD_DIR)/$(BINARY_NAME)"
 
-dist/dclaude-standalone.sh: dclaude.sh Dockerfile docker-entrypoint.sh build.sh VERSION
-	@./build.sh
+# Build for all platforms
+dist: clean
+	@echo "Building $(BINARY_NAME) v$(VERSION) for all platforms..."
+	@mkdir -p $(BUILD_DIR)
+	@for platform in $(PLATFORMS); do \
+		GOOS=$${platform%/*} GOARCH=$${platform#*/} \
+		cd $(SRC_DIR) && go build \
+			-ldflags "-X main.Version=$(VERSION)" \
+			-o ../$(BUILD_DIR)/$(BINARY_NAME)-$${platform%/*}-$${platform#*/} . && \
+		cd .. && \
+		echo "✓ Built $(BUILD_DIR)/$(BINARY_NAME)-$${platform%/*}-$${platform#*/}"; \
+	done
+	@echo ""
+	@echo "Build complete! Binaries in $(BUILD_DIR)/"
+	@ls -lh $(BUILD_DIR)/
 
-test: dist/dclaude-standalone.sh
-	@echo "Testing standalone version..."
-	@./dist/dclaude-standalone.sh --version
-	@echo "✓ Standalone version works!"
+# Install to system
+install: build
+	@echo "Installing $(BINARY_NAME) to /usr/local/bin/..."
+	@cp $(BUILD_DIR)/$(BINARY_NAME) /usr/local/bin/$(BINARY_NAME)
+	@echo "✓ Installed /usr/local/bin/$(BINARY_NAME)"
 
+# Run tests
+test:
+	@echo "Running tests..."
+	@cd $(SRC_DIR) && go test -v ./...
+
+# Clean build artifacts
 clean:
 	@echo "Cleaning up..."
-	@rm -rf dist
-	@rm -f dclaude-go
-	@rm -f .dclaude-Dockerfile.tmp
+	@rm -rf $(BUILD_DIR)
 	@echo "✓ Cleaned"
+
+# Development shortcuts
+dev: build
+	@echo "Running in development mode..."
+	@./$(BUILD_DIR)/$(BINARY_NAME)
+
+# Check if source files have changed
+.PHONY: check
+check:
+	@cd $(SRC_DIR) && go vet ./...
+	@cd $(SRC_DIR) && go fmt ./...
+	@echo "✓ Code checked"

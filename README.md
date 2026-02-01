@@ -1,4 +1,4 @@
-# DClaude - Dockerized Claude Code
+# DClaude - Containerized Claude Code
 
 **dclaude is a containerized Claude Code runner.** It wraps the Claude CLI in Docker so your AI agent can read, write, and execute code in complete isolation.
 
@@ -50,12 +50,21 @@ claude --model opus dclaude --model opus
 - [x] curl, bash, sudo
 
 **✓ Distribution**
-- [x] **Standalone Build** - Single-file script with embedded Dockerfile
+- [x] **Standalone Binary** - Single-file script with embedded Dockerfile
 - [x] **No External Dependencies** - Only requires Docker and curl on host
+
+## Providers
+
+### Docker Provider (Default)
+Runs Claude Code in local Docker containers:
+- ✅ Complete isolation
+- ✅ Full control over resources
+- ✅ Docker-in-Docker support
+- ⚙️ Requires Docker installed locally
 
 ## Prerequisites
 
-### Required (Host System)
+### For Docker Provider (Default)
 - **Docker** - Container runtime ([installation guide](https://docs.docker.com/get-docker/))
 - **curl** - For npm registry queries (usually pre-installed on macOS/Linux)
 - **Bash 4+** - For built-in port checking (standard on macOS/Linux)
@@ -74,28 +83,55 @@ claude --model opus dclaude --model opus
 
 ## Installation
 
-**Single-file download:**
+### Option 1: Download Pre-built Binary (Recommended)
+
+Download the latest release for your platform:
 
 ```bash
-# Download and install
-curl -o dclaude https://raw.githubusercontent.com/jedi4ever/dclaude/main/dist/dclaude-standalone.sh
+# macOS Apple Silicon (M1/M2/M3)
+curl -L https://github.com/jedi4ever/dclaude/releases/latest/download/dclaude-darwin-arm64 -o dclaude
 chmod +x dclaude
+sudo mv dclaude /usr/local/bin/
 
-# Option 1: Run from current directory
-./dclaude --version
+# macOS Intel
+curl -L https://github.com/jedi4ever/dclaude/releases/latest/download/dclaude-darwin-amd64 -o dclaude
+chmod +x dclaude
+sudo mv dclaude /usr/local/bin/
 
-# Option 2: Add to your PATH
-mkdir -p ~/.local/bin
-mv dclaude ~/.local/bin/
-export PATH="$HOME/.local/bin:$PATH"  # Add to ~/.bashrc or ~/.zshrc
+# Linux x86_64
+curl -L https://github.com/jedi4ever/dclaude/releases/latest/download/dclaude-linux-amd64 -o dclaude
+chmod +x dclaude
+sudo mv dclaude /usr/local/bin/
 
-# Now run from anywhere
-dclaude --version
+# Linux ARM64
+curl -L https://github.com/jedi4ever/dclaude/releases/latest/download/dclaude-linux-arm64 -o dclaude
+chmod +x dclaude
+sudo mv dclaude /usr/local/bin/
+
+# Verify installation
+dclaude --dversion
+```
+
+### Option 2: Build from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/jedi4ever/dclaude.git
+cd dclaude
+
+# Build
+make build
+
+# Install
+sudo cp dist/dclaude /usr/local/bin/
+
+# Or use make install
+make install
 ```
 
 ## Quick Start
 
-### Option 1: Use Local Claude Configuration (Recommended)
+### Option 1: Use Docker with Local Claude Configuration (Recommended)
 
 If you've already run `claude login` on your machine:
 
@@ -104,7 +140,7 @@ If you've already run `claude login` on your machine:
 dclaude
 ```
 
-### Option 2: Use API Key
+### Option 2: Use Docker with API Key
 
 If you haven't configured Claude locally, set your API key:
 
@@ -117,7 +153,7 @@ export GH_TOKEN='your-github-token'  # Optional
 dclaude
 ```
 
-**Note:** The script automatically builds the Docker image on first run. No manual build step needed!
+**Note:** The Docker image automatically builds on first run. No manual build step needed!
 
 ## Usage
 
@@ -142,17 +178,23 @@ dclaude --continue                         # Same as: claude --continue
 dclaude --model opus "Refactor this"       # Same as: claude --model opus "Refactor this"
 
 # Help and options
-dclaude --help                             # Same as: claude --help
+dclaude --help                             # Same as: claude --help (shows Claude's help)
 
 # Check version
-dclaude --version                          # Same as: claude --version
+dclaude --version                          # Same as: claude --version (shows Claude's version)
 ```
 
-### Extra Commands
+### DClaude-Specific Commands
 
 DClaude adds special commands and flags:
 
 ```bash
+# Show DClaude version
+dclaude --dversion
+
+# Show DClaude help
+dclaude --dhelp
+
 # Check for and install updates
 dclaude --update
 
@@ -160,7 +202,7 @@ dclaude --update
 dclaude --rebuild
 
 # Can combine with other commands
-dclaude --rebuild --version
+dclaude --rebuild --dversion
 
 # YOLO mode - bypass all permission checks (shorthand for --dangerously-skip-permissions)
 dclaude --yolo "Refactor this entire codebase"
@@ -270,6 +312,7 @@ The server will be available at http://localhost:3000
 | **DCLAUDE_LOG_FILE** | `dclaude.log` | Log file location (only used when `DCLAUDE_LOG=true`). Example: `/tmp/dclaude.log` or `~/logs/dclaude.log` |
 | **DCLAUDE_PERSISTENT** | `false` | Enable persistent container mode. Set to `true` to keep containers running across sessions. Each directory gets its own persistent container with preserved state, Docker images, and installed packages |
 | **DCLAUDE_MODE** | `container` | Execution mode: `container` (Docker-based, default) or `shell` (direct host execution - not yet implemented) |
+| **DCLAUDE_PROVIDER** | `docker` | Provider type: `docker` (default) or `daytona` (experimental, see [docs/README-daytona.md](docs/README-daytona.md)) |
 
 ### Quick Configuration Examples
 
@@ -542,9 +585,9 @@ dclaude shell
 
 ## How It Works
 
-DClaude is a wrapper script that:
+DClaude is a Go binary that:
 
-1. **Checks Requirements** - Verifies Docker, curl, and bash are available
+1. **Checks Requirements** - Verifies Docker is available
 2. **Version Detection** - Queries npm registry for Claude Code versions via HTTP
 3. **Image Management** - Builds Docker image if needed, reuses existing images
 4. **Volume Mounting** - Automatically mounts your project, git config, and Claude settings
@@ -568,18 +611,7 @@ DClaude is a wrapper script that:
 - Ripgrep (rg)
 - Docker CLI
 
-For technical details, architecture, and development guide, see [README-development.md](README-development.md).
-
-## Standalone Distribution
-
-Build a single-file distributable version:
-
-```bash
-make standalone
-# Creates: dist/dclaude-standalone.sh
-```
-
-The standalone script includes the Dockerfile and entrypoint embedded as heredocs. Share this single file with others!
+For technical details, architecture, and development guide, see [docs/README-development.md](docs/README-development.md).
 
 ## Examples
 
