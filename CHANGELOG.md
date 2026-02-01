@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-02-01
+
+### Added
+- Network firewall with whitelist-based domain filtering using iptables and ipset
+- Firewall management commands: `dclaude firewall list|add|remove|reset`
+- Three firewall modes: strict (block non-whitelisted), permissive (log only), off
+- Default whitelist includes: Anthropic API, GitHub, npm, PyPI, Go modules, Docker Hub, CDNs
+- Configuration via DCLAUDE_FIREWALL and DCLAUDE_FIREWALL_MODE environment variables
+- Firewall config file at ~/.dclaude/firewall/allowed-domains.txt
+- Automatic NET_ADMIN capability when firewall is enabled
+- Firewall status display in container status line
+- Firewall initialization in both run and shell modes
+- Test script for firewall functionality verification
+
+### Changed
+- Docker provider now mounts firewall config directory when firewall is enabled
+- Shell mode wrapper now initializes firewall before opening bash
+- Updated help text and README with firewall documentation
+- Added Credits section in README acknowledging claude-clamp inspiration
+
+### Technical
+- Added init-firewall.sh script for firewall initialization
+- Added firewall.go for domain management commands
+- Firewall resolves domain names to IPs using dig/host commands
+- ipset stores up to 65536 whitelisted IPs with 4096 hashsize
+- iptables rules: ACCEPT allowed_ips, LOG blocked traffic, DROP everything else
+
+### Tested
+- Firewall blocks non-whitelisted domains (google.com, example.com)
+- Firewall allows whitelisted domains (api.anthropic.com)
+- Domain management commands work correctly
+- Firewall initialization works in both run and shell modes
+- Persistent and ephemeral container modes both supported
+
 ## [1.5.0] - 2025-02-01
 
 ### Added
