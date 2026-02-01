@@ -22,7 +22,7 @@ type Config struct {
 	LogFile           string
 	ImageName         string
 	Persistent        bool   // Enable persistent container mode
-	MountPWD          bool   // Mount present working directory
+	MountWorkdir      bool   // Mount present working directory
 	MountClaudeConfig bool   // Mount ~/.claude directory
 	Mode              string // container or shell
 	Provider          string // Provider type: docker or daytona
@@ -43,7 +43,7 @@ func LoadConfig(defaultNodeVersion string, defaultPortRangeStart int) *Config {
 		LogEnabled:        os.Getenv("DCLAUDE_LOG") == "true",
 		LogFile:           getEnvOrDefault("DCLAUDE_LOG_FILE", "dclaude.log"),
 		Persistent:        os.Getenv("DCLAUDE_PERSISTENT") == "true",
-		MountPWD:          getEnvOrDefault("DCLAUDE_MOUNT_PWD", "true") != "false",
+		MountWorkdir:      getEnvOrDefault("DCLAUDE_MOUNT_WORKDIR", "true") != "false",
 		MountClaudeConfig: getEnvOrDefault("DCLAUDE_MOUNT_CLAUDE_CONFIG", "true") != "false",
 		Mode:              getEnvOrDefault("DCLAUDE_MODE", "container"),
 		Provider:          getEnvOrDefault("DCLAUDE_PROVIDER", "docker"),

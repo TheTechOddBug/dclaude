@@ -83,7 +83,7 @@ func Execute(version, defaultNodeVersion string, defaultPortRangeStart int) {
 		LogFile:           cfg.LogFile,
 		ImageName:         cfg.ImageName,
 		Persistent:        cfg.Persistent,
-		MountPWD:          cfg.MountPWD,
+		MountWorkdir:      cfg.MountWorkdir,
 		MountClaudeConfig: cfg.MountClaudeConfig,
 		Mode:              cfg.Mode,
 		Provider:          cfg.Provider,

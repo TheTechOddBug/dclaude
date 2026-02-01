@@ -45,7 +45,7 @@ type Config struct {
 	LogFile           string
 	ImageName         string
 	Persistent        bool
-	MountPWD          bool
+	MountWorkdir      bool
 	MountClaudeConfig bool
 	Mode              string
 	Provider          string

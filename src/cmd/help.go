@@ -37,7 +37,7 @@ Environment Variables:
   DCLAUDE_LOG                 Enable command logging (default: false)
   DCLAUDE_LOG_FILE            Log file path
   DCLAUDE_PERSISTENT          Enable persistent container mode (true/false)
-  DCLAUDE_MOUNT_PWD           Mount present working directory (default: true)
+  DCLAUDE_MOUNT_WORKDIR       Mount working directory to /workspace (default: true)
   DCLAUDE_MOUNT_CLAUDE_CONFIG Mount ~/.claude and ~/.claude.json (default: true)
   DCLAUDE_MODE                Execution mode: container or shell (default: container)
 
