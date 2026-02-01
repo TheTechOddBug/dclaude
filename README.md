@@ -194,7 +194,7 @@ dclaude containers clean
 
 **Note:** Container management commands only work with persistent containers created using `DCLAUDE_PERSISTENT=true`. Ephemeral containers are automatically removed after each run.
 
-```
+
 
 ### Persistent Mode
 
