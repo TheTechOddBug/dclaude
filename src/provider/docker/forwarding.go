@@ -62,10 +62,10 @@ func (p *DockerProvider) HandleSSHForwarding(sshForward, homeDir, username strin
 }
 
 // HandleDockerForwarding configures Docker-in-Docker or host Docker socket forwarding
-func (p *DockerProvider) HandleDockerForwarding(dockerForward, containerName string) []string {
+func (p *DockerProvider) HandleDockerForwarding(dindMode, containerName string) []string {
 	var args []string
 
-	if dockerForward == "host" {
+	if dindMode == "host" {
 		socketPath := "/var/run/docker.sock"
 		if _, err := os.Stat(socketPath); err == nil {
 			args = append(args, "-v", fmt.Sprintf("%s:%s", socketPath, socketPath))
@@ -85,9 +85,9 @@ func (p *DockerProvider) HandleDockerForwarding(dockerForward, containerName str
 				args = append(args, "--group-add", "102", "--group-add", "999")
 			}
 		} else {
-			fmt.Println("Warning: DCLAUDE_DOCKER_FORWARD=host but /var/run/docker.sock not found")
+			fmt.Println("Warning: DCLAUDE_DIND_MODE=host but /var/run/docker.sock not found")
 		}
-	} else if dockerForward == "isolated" || dockerForward == "true" {
+	} else if dindMode == "isolated" || dindMode == "true" {
 		args = append(args, "--privileged")
 		args = append(args, "-v", fmt.Sprintf("dclaude-docker-%s:/var/lib/docker", containerName))
 		args = append(args, "-e", "DCLAUDE_DIND=true")

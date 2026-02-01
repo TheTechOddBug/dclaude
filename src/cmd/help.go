@@ -32,7 +32,7 @@ Environment Variables:
   DCLAUDE_PORT_RANGE_START    Starting port for auto allocation (default: 30000)
   DCLAUDE_SSH_FORWARD         SSH forwarding mode: agent, keys, or empty
   DCLAUDE_GPG_FORWARD         Enable GPG forwarding (true/false)
-  DCLAUDE_DOCKER_FORWARD      Docker mode: host, isolated, or empty
+  DCLAUDE_DIND_MODE           Docker-in-Docker mode: host, isolated (default: none)
   DCLAUDE_ENV_FILE            Path to .env file (default: .env)
   DCLAUDE_LOG                 Enable command logging (default: false)
   DCLAUDE_LOG_FILE            Log file path

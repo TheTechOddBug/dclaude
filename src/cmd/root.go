@@ -77,7 +77,7 @@ func Execute(version, defaultNodeVersion string, defaultPortRangeStart int) {
 		PortRangeStart: cfg.PortRangeStart,
 		SSHForward:     cfg.SSHForward,
 		GPGForward:     cfg.GPGForward,
-		DockerForward:  cfg.DockerForward,
+		DindMode:       cfg.DindMode,
 		EnvFile:        cfg.EnvFile,
 		LogEnabled:     cfg.LogEnabled,
 		LogFile:        cfg.LogFile,

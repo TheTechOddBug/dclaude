@@ -220,7 +220,7 @@ func (p *DockerProvider) Run(spec *provider.RunSpec) error {
 		}
 
 		// Docker forwarding
-		dockerArgs = append(dockerArgs, p.HandleDockerForwarding(spec.DockerForward, spec.Name)...)
+		dockerArgs = append(dockerArgs, p.HandleDockerForwarding(spec.DindMode, spec.Name)...)
 
 		// Add ports
 		for _, port := range spec.Ports {
@@ -236,6 +236,8 @@ func (p *DockerProvider) Run(spec *provider.RunSpec) error {
 	// Handle shell mode or normal mode
 	if useExistingContainer {
 		dockerArgs = append(dockerArgs, spec.Name)
+		// Call entrypoint with args for existing containers
+		dockerArgs = append(dockerArgs, "/usr/local/bin/docker-entrypoint.sh")
 		dockerArgs = append(dockerArgs, spec.Args...)
 	} else {
 		dockerArgs = append(dockerArgs, spec.ImageName)
@@ -342,7 +344,7 @@ func (p *DockerProvider) Shell(spec *provider.RunSpec) error {
 		}
 
 		// Docker forwarding
-		dockerArgs = append(dockerArgs, p.HandleDockerForwarding(spec.DockerForward, spec.Name)...)
+		dockerArgs = append(dockerArgs, p.HandleDockerForwarding(spec.DindMode, spec.Name)...)
 
 		// Add ports
 		for _, port := range spec.Ports {
@@ -361,8 +363,9 @@ func (p *DockerProvider) Shell(spec *provider.RunSpec) error {
 		dockerArgs = append(dockerArgs, spec.Name, "/bin/bash")
 		dockerArgs = append(dockerArgs, spec.Args...)
 	} else {
-		if spec.DockerForward == "isolated" || spec.DockerForward == "true" {
-			// DinD mode with shell
+		// Override entrypoint to bash for shell mode
+		if spec.DindMode == "isolated" || spec.DindMode == "true" {
+			// DinD mode with shell - start docker daemon then exec bash
 			script := `
 if [ "$DCLAUDE_DIND" = "true" ]; then
     echo 'Starting Docker daemon in isolated mode...'
@@ -381,7 +384,7 @@ if [ "$DCLAUDE_DIND" = "true" ]; then
 fi
 exec /bin/bash "$@"
 `
-			dockerArgs = append(dockerArgs, spec.ImageName, "/bin/bash", "-c", script, "bash")
+			dockerArgs = append(dockerArgs, "--entrypoint", "/bin/bash", spec.ImageName, "-c", script, "bash")
 			dockerArgs = append(dockerArgs, spec.Args...)
 		} else {
 			dockerArgs = append(dockerArgs, "--entrypoint", "/bin/bash", spec.ImageName)
@@ -447,7 +450,7 @@ func (p *DockerProvider) GetStatus(cfg *provider.Config, envName string) string 
 	}
 
 	// Docker forwarding status
-	switch cfg.DockerForward {
+	switch cfg.DindMode {
 	case "isolated", "true":
 		status += " | Docker:isolated"
 	case "host":

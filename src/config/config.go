@@ -16,7 +16,7 @@ type Config struct {
 	PortRangeStart int
 	SSHForward     string
 	GPGForward     bool
-	DockerForward  string
+	DindMode       string
 	EnvFile        string
 	LogEnabled     bool
 	LogFile        string
@@ -36,7 +36,7 @@ func LoadConfig(defaultNodeVersion string, defaultPortRangeStart int) *Config {
 		PortRangeStart: getEnvInt("DCLAUDE_PORT_RANGE_START", defaultPortRangeStart),
 		SSHForward:     os.Getenv("DCLAUDE_SSH_FORWARD"),
 		GPGForward:     os.Getenv("DCLAUDE_GPG_FORWARD") == "true",
-		DockerForward:  os.Getenv("DCLAUDE_DOCKER_FORWARD"),
+		DindMode:       os.Getenv("DCLAUDE_DIND_MODE"),
 		EnvFile:        os.Getenv("DCLAUDE_ENV_FILE"), // Empty means use default .env
 		LogEnabled:     os.Getenv("DCLAUDE_LOG") == "true",
 		LogFile:        getEnvOrDefault("DCLAUDE_LOG_FILE", "dclaude.log"),

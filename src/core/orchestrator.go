@@ -54,18 +54,18 @@ func (o *Orchestrator) buildRunSpec(name string, args []string, openShell bool) 
 	cwd, _ := os.Getwd()
 
 	spec := &provider.RunSpec{
-		Name:          name,
-		ImageName:     o.config.ImageName,
-		Args:          args,
-		WorkDir:       cwd,
-		Interactive:   terminal.IsTerminal(),
-		Persistent:    o.config.Persistent,
-		Volumes:       o.buildVolumes(cwd),
-		Ports:         o.buildPorts(),
-		Env:           o.buildEnvironment(),
-		SSHForward:    o.config.SSHForward,
-		GPGForward:    o.config.GPGForward,
-		DockerForward: o.config.DockerForward,
+		Name:        name,
+		ImageName:   o.config.ImageName,
+		Args:        args,
+		WorkDir:     cwd,
+		Interactive: terminal.IsTerminal(),
+		Persistent:  o.config.Persistent,
+		Volumes:     o.buildVolumes(cwd),
+		Ports:       o.buildPorts(),
+		Env:         o.buildEnvironment(),
+		SSHForward:  o.config.SSHForward,
+		GPGForward:  o.config.GPGForward,
+		DindMode:    o.config.DindMode,
 	}
 
 	// Special handling for shell mode with args

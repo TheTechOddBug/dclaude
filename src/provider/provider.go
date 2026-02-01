@@ -39,7 +39,7 @@ type Config struct {
 	PortRangeStart int
 	SSHForward     string
 	GPGForward     bool
-	DockerForward  string
+	DindMode       string
 	EnvFile        string
 	LogEnabled     bool
 	LogFile        string
@@ -51,18 +51,18 @@ type Config struct {
 
 // RunSpec specifies how to run a container/workspace
 type RunSpec struct {
-	Name          string
-	ImageName     string
-	Args          []string
-	WorkDir       string
-	Interactive   bool
-	Persistent    bool
-	Volumes       []VolumeMount
-	Ports         []PortMapping
-	Env           map[string]string
-	SSHForward    string
-	GPGForward    bool
-	DockerForward string
+	Name        string
+	ImageName   string
+	Args        []string
+	WorkDir     string
+	Interactive bool
+	Persistent  bool
+	Volumes     []VolumeMount
+	Ports       []PortMapping
+	Env         map[string]string
+	SSHForward  string
+	GPGForward  bool
+	DindMode    string
 }
 
 // Environment represents a container or workspace
