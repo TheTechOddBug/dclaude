@@ -299,6 +299,14 @@ Benefits:
   - Only used when `DCLAUDE_LOG=true`
   - Default is `dclaude.log` in the script directory
   - Example: `DCLAUDE_LOG_FILE="/tmp/dclaude.log"` or `DCLAUDE_LOG_FILE="~/logs/dclaude.log"`
+- **DCLAUDE_PORTS** (optional): Automatic port mapping for web services
+  - Comma-separated list of container ports to expose (e.g., `"3000,8080,5432"`)
+  - Automatically maps to available host ports starting from `DCLAUDE_PORT_RANGE_START`
+  - Claude Code receives port mapping information and will tell you the correct host ports
+  - Displayed in status line (e.g., `Ports:3000→30000,8080→30001`)
+- **DCLAUDE_PORT_RANGE_START** (optional, default: `30000`): Starting port for automatic allocation
+  - Sets the base port number for automatic port mapping
+  - Useful to avoid conflicts with other services
 
 ### Custom Environment Variables
 
@@ -736,6 +744,57 @@ export DCLAUDE_DOCKER_FORWARD=host
 - `isolated` mode: Safer, requires privileged mode but containers are isolated
 - `host` mode: Grants full Docker daemon control - use with caution
 - You may see a GPG ownership warning, which is harmless
+
+### Automatic Port Mapping
+
+When Claude Code starts web services inside the container, you need to access them via mapped host ports. DClaude automatically handles this and tells Claude the correct ports to share with you.
+
+**Enable port mapping:**
+```bash
+# Map common web development ports
+export DCLAUDE_PORTS="3000,8080,5432"
+./dclaude.sh "Create a simple Express server on port 3000"
+```
+
+**How it works:**
+1. You specify which container ports to expose (e.g., `3000,8080,5432`)
+2. DClaude automatically maps them to available host ports (e.g., `30000,30001,30002`)
+3. Claude Code receives the mapping information via system prompt
+4. When Claude tells you URLs, it uses the correct host ports
+
+**Example conversation:**
+```bash
+export DCLAUDE_PORTS="3000,8080"
+./dclaude.sh "Create a simple HTTP server"
+```
+
+Status line shows: `Ports:3000→30000,8080→30001`
+
+Claude will say:
+> "I've started the server on port 3000. **Visit http://localhost:30000 in your browser**"
+
+(Claude uses internal port 3000 for testing, but tells you to use host port 30000)
+
+**Customize port range:**
+```bash
+# Use ports starting from 4000 instead of 30000
+export DCLAUDE_PORT_RANGE_START=4000
+export DCLAUDE_PORTS="3000,8080"
+./dclaude.sh
+# Maps: 3000→4000, 8080→4001
+```
+
+**Common use cases:**
+```bash
+# Web development
+DCLAUDE_PORTS="3000,5173,8080" ./dclaude.sh
+
+# Full stack (frontend, backend, database)
+DCLAUDE_PORTS="3000,8000,5432" ./dclaude.sh
+
+# Multiple services
+DCLAUDE_PORTS="3000,3001,8080,8081,5432" ./dclaude.sh
+```
 
 ### Image Customization
 

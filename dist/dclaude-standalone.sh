@@ -41,6 +41,10 @@ DCLAUDE_NODE_VERSION="${DCLAUDE_NODE_VERSION:-20}"
 DCLAUDE_ENV_VARS="${DCLAUDE_ENV_VARS:-ANTHROPIC_API_KEY,GH_TOKEN}"
 # Auto-detect GitHub token from gh CLI (default: false - opt-in)
 DCLAUDE_GITHUB_DETECT="${DCLAUDE_GITHUB_DETECT:-false}"
+# Port mappings (comma-separated list of container ports to expose)
+DCLAUDE_PORTS="${DCLAUDE_PORTS:-}"
+# Port range start for automatic allocation (default: 30000)
+DCLAUDE_PORT_RANGE_START="${DCLAUDE_PORT_RANGE_START:-30000}"
 IMAGE_NAME="dclaude:latest"
 
 # Get the directory where this script is located
@@ -56,6 +60,22 @@ log_command() {
         local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
         echo "[$timestamp] $*" >> "$DCLAUDE_LOG_FILE"
     fi
+}
+
+# Function to check if a port is available
+is_port_available() {
+    local port=$1
+    ! nc -z localhost "$port" 2>/dev/null
+}
+
+# Function to find next available port starting from a base
+find_available_port() {
+    local start_port=$1
+    local port=$start_port
+    while ! is_port_available "$port"; do
+        port=$((port + 1))
+    done
+    echo "$port"
 }
 
 # Check for special "shell" command
@@ -228,8 +248,38 @@ if [ "$DCLAUDE_DIND" = "true" ]; then
     done
 fi
 
-# Execute claude with all arguments
-exec claude "$@"
+# Build system prompt for port mappings
+CLAUDE_ARGS=()
+
+if [ -n "$DCLAUDE_PORT_MAP" ]; then
+    # Parse port mappings (format: "3000:30000,8080:30001")
+    SYSTEM_PROMPT="# Port Mapping Information
+
+When the user starts a service inside this container on certain ports, you need to tell them the correct HOST port to access it from their browser.
+
+Port mappings (container→host):
+"
+    IFS=',' read -ra MAPPINGS <<< "$DCLAUDE_PORT_MAP"
+    for mapping in "${MAPPINGS[@]}"; do
+        IFS=':' read -ra PORTS <<< "$mapping"
+        CONTAINER_PORT="${PORTS[0]}"
+        HOST_PORT="${PORTS[1]}"
+        SYSTEM_PROMPT+="- Container port $CONTAINER_PORT → Host port $HOST_PORT (user accesses: http://localhost:$HOST_PORT)
+"
+    done
+
+    SYSTEM_PROMPT+="
+IMPORTANT:
+- When testing/starting services inside the container, use the container ports (e.g., http://localhost:3000)
+- When telling the USER where to access services in their browser, use the HOST ports (e.g., http://localhost:30000)
+- Always remind the user to use the host port in their browser"
+
+    # Add the system prompt to claude arguments
+    CLAUDE_ARGS+=(--append-system-prompt "$SYSTEM_PROMPT")
+fi
+
+# Execute claude with system prompt (if any) and all user arguments
+exec claude "${CLAUDE_ARGS[@]}" "$@"
 ENTRYPOINT_EOF
     chmod +x "$ENTRYPOINT_PATH"
 
@@ -444,6 +494,43 @@ elif [ "$DCLAUDE_DOCKER_FORWARD" = "isolated" ] || [ "$DCLAUDE_DOCKER_FORWARD" =
     DOCKER_CMD+=(-e "DCLAUDE_DIND=true")
 fi
 
+# Handle port mappings if specified
+PORT_MAP_STRING=""
+PORT_MAP_DISPLAY=""
+if [ -n "$DCLAUDE_PORTS" ]; then
+    IFS=',' read -ra PORT_ARRAY <<< "$DCLAUDE_PORTS"
+    HOST_PORT=$DCLAUDE_PORT_RANGE_START
+    PORT_MAPPINGS=()
+
+    for container_port in "${PORT_ARRAY[@]}"; do
+        # Trim whitespace
+        container_port=$(echo "$container_port" | xargs)
+
+        # Find next available host port
+        HOST_PORT=$(find_available_port "$HOST_PORT")
+
+        # Add port mapping to docker command
+        DOCKER_CMD+=(-p "$HOST_PORT:$container_port")
+
+        # Track mapping for environment variable and display
+        PORT_MAPPINGS+=("$container_port:$HOST_PORT")
+
+        # Move to next port for next iteration
+        HOST_PORT=$((HOST_PORT + 1))
+    done
+
+    # Build comma-separated string for environment variable
+    PORT_MAP_STRING=$(IFS=','; echo "${PORT_MAPPINGS[*]}")
+
+    # Build display string
+    PORT_MAP_DISPLAY=$(echo "$PORT_MAP_STRING" | sed 's/:/→/g')
+fi
+
+# Pass port mapping info to container
+if [ -n "$PORT_MAP_STRING" ]; then
+    DOCKER_CMD+=(-e "DCLAUDE_PORT_MAP=$PORT_MAP_STRING")
+fi
+
 # Pass environment variables specified in DCLAUDE_ENV_VARS
 IFS=',' read -ra ENV_VAR_ARRAY <<< "$DCLAUDE_ENV_VARS"
 for var_name in "${ENV_VAR_ARRAY[@]}"; do
@@ -498,6 +585,11 @@ build_status_line() {
         status="$status | Docker:host"
     else
         status="$status | Docker:-"
+    fi
+
+    # Port mappings
+    if [ -n "$PORT_MAP_DISPLAY" ]; then
+        status="$status | Ports:$PORT_MAP_DISPLAY"
     fi
 
     echo "✓ $status"

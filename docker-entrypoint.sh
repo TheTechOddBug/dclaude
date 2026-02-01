@@ -28,5 +28,35 @@ if [ "$DCLAUDE_DIND" = "true" ]; then
     done
 fi
 
-# Execute claude with all arguments
-exec claude "$@"
+# Build system prompt for port mappings
+CLAUDE_ARGS=()
+
+if [ -n "$DCLAUDE_PORT_MAP" ]; then
+    # Parse port mappings (format: "3000:30000,8080:30001")
+    SYSTEM_PROMPT="# Port Mapping Information
+
+When the user starts a service inside this container on certain ports, you need to tell them the correct HOST port to access it from their browser.
+
+Port mappings (container→host):
+"
+    IFS=',' read -ra MAPPINGS <<< "$DCLAUDE_PORT_MAP"
+    for mapping in "${MAPPINGS[@]}"; do
+        IFS=':' read -ra PORTS <<< "$mapping"
+        CONTAINER_PORT="${PORTS[0]}"
+        HOST_PORT="${PORTS[1]}"
+        SYSTEM_PROMPT+="- Container port $CONTAINER_PORT → Host port $HOST_PORT (user accesses: http://localhost:$HOST_PORT)
+"
+    done
+
+    SYSTEM_PROMPT+="
+IMPORTANT:
+- When testing/starting services inside the container, use the container ports (e.g., http://localhost:3000)
+- When telling the USER where to access services in their browser, use the HOST ports (e.g., http://localhost:30000)
+- Always remind the user to use the host port in their browser"
+
+    # Add the system prompt to claude arguments
+    CLAUDE_ARGS+=(--append-system-prompt "$SYSTEM_PROMPT")
+fi
+
+# Execute claude with system prompt (if any) and all user arguments
+exec claude "${CLAUDE_ARGS[@]}" "$@"
