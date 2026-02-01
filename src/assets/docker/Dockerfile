@@ -52,6 +52,9 @@ RUN (groupadd -g ${GROUP_ID} ${USERNAME} 2>/dev/null || true) \
     && useradd -m -u ${USER_ID} -g ${GROUP_ID} -s /bin/bash ${USERNAME} 2>/dev/null || usermod -u ${USER_ID} ${USERNAME} \
     && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
+# Add Go to user's PATH in bash profile
+RUN echo 'export PATH="/usr/local/go/bin:$PATH"' >> /home/${USERNAME}/.bashrc
+
 # Set working directory
 WORKDIR /workspace
 
