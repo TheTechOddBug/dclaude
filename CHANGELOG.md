@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-02-01
+
+### Added
+- Homebrew installation instructions as primary installation method (Option 1)
+- Support for "latest" tag in Go version (queries https://go.dev/VERSION?m=text)
+- Support for npm dist-tags (stable, latest, next) for Claude Code
+- UV self-update capability via official install script
+
+### Changed
+- **Claude Code default changed from "latest" to "stable"** (2.1.29 → 2.1.17)
+  - More stable for production use
+  - Users can still use `latest` or `next` if needed
+- **UV installation now uses official install script** instead of manual binary download
+  - Enables `uv self update` inside containers
+  - Installs to ~/.local/bin as claude user
+- **UV default version changed to "latest"** (was 0.5.11, now gets 0.9.28+)
+- **Go default version changed to "latest"** (was 1.23.5, now gets 1.25.6+)
+  - Automatically queries go.dev for newest stable version
+- Updated all documentation to reflect new defaults
+
+### Installation
+- Homebrew tap available: `brew tap jedi4ever/tap && brew install dclaude`
+- Added instructions for tap setup, upgrade, and versioned installs
+
+### Technical
+- Added `getNpmVersionByTag()` to fetch versions for any npm dist-tag
+- Modified `DetermineImageName()` to handle dist-tags (stable, latest, next)
+- Dockerfile now queries go.dev/VERSION for latest Go version when GO_VERSION=latest
+- UV install script supports version-in-URL format (https://astral.sh/uv/{version}/install.sh)
+
+### Current Defaults
+- DCLAUDE_CLAUDE_VERSION=stable (2.1.17)
+- DCLAUDE_UV_VERSION=latest (0.9.28+)
+- DCLAUDE_GO_VERSION=latest (1.25.6+)
+- DCLAUDE_NODE_VERSION=20
+
+### Tested
+- Go 1.25.6 installs correctly with "latest"
+- UV 0.9.28 installs correctly with "latest"
+- `uv self update` works inside containers
+- Claude Code stable tag resolves to 2.1.17
+- All three dist-tags work (stable, latest, next)
+
 ## [1.6.0] - 2026-02-01
 
 ### Added
