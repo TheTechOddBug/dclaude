@@ -68,12 +68,16 @@ RUN if [ "${UV_VERSION}" = "latest" ]; then \
     else \
         curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh; \
     fi
+
+# Install Gastown (multi-agent orchestration for Claude Code)
+RUN /usr/local/go/bin/go install github.com/steveyegge/gastown/cmd/gt@latest
+
 USER root
 
-# Add Go and UV to PATH environment and bash profile
-# UV installs to ~/.local/bin by default
-ENV PATH="/home/${USERNAME}/.local/bin:/usr/local/go/bin:${PATH}"
-RUN echo 'export PATH="/home/${USERNAME}/.local/bin:/usr/local/go/bin:$PATH"' >> /home/${USERNAME}/.bashrc
+# Add Go, UV, and Gastown to PATH environment and bash profile
+# UV installs to ~/.local/bin, Gastown installs to ~/go/bin by default
+ENV PATH="/home/${USERNAME}/go/bin:/home/${USERNAME}/.local/bin:/usr/local/go/bin:${PATH}"
+RUN echo 'export PATH="/home/${USERNAME}/go/bin:/home/${USERNAME}/.local/bin:/usr/local/go/bin:$PATH"' >> /home/${USERNAME}/.bashrc
 
 # Set working directory
 WORKDIR /workspace

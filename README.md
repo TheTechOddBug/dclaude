@@ -45,6 +45,7 @@ claude --model opus dclaude --model opus
 - [x] Node.js (configurable version)
 - [x] Go (configurable version)
 - [x] UV - Python package manager (configurable version)
+- [x] Gastown (gt) - Multi-agent orchestration for Claude Code
 - [x] Git
 - [x] GitHub CLI (gh)
 - [x] Ripgrep (rg)
@@ -746,6 +747,7 @@ DClaude is a Go binary that:
 - Node.js
 - Go
 - UV (Python package manager)
+- Gastown (gt) - Multi-agent orchestration
 - Git
 - GitHub CLI (gh)
 - Ripgrep (rg)
