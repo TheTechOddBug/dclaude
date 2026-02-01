@@ -112,6 +112,19 @@ sudo mv dclaude /usr/local/bin/
 dclaude --dversion
 ```
 
+**Install a specific version:**
+
+If you need a specific version for reproducibility, use the version tag:
+
+```bash
+# Example: Install v1.4.3 specifically
+curl -L https://github.com/jedi4ever/dclaude/releases/download/v1.4.3/dclaude-darwin-arm64 -o dclaude
+chmod +x dclaude
+sudo mv dclaude /usr/local/bin/
+```
+
+See all releases at: https://github.com/jedi4ever/dclaude/releases
+
 ### Option 2: Build from Source
 
 ```bash
