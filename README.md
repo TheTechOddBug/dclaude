@@ -525,6 +525,26 @@ dshell  # Quick shell access
 
 ## Troubleshooting
 
+### Binary Killed with Signal 9 (macOS)
+
+If you see `Killed: 9` when running dclaude on macOS, the binary needs to be code-signed:
+
+```bash
+# If you forgot to run codesign during installation
+codesign --sign - --force /usr/local/bin/dclaude
+
+# Or re-download with proper signing
+curl -fsSL https://github.com/jedi4ever/dclaude/releases/latest/download/dclaude-darwin-arm64 -o dclaude
+chmod +x dclaude
+xattr -c dclaude && codesign --sign - --force dclaude
+sudo mv dclaude /usr/local/bin/
+```
+
+**Why this happens:**
+- macOS requires binaries to be properly signed
+- Re-downloading without signing corrupts the signature
+- The `codesign --sign - --force` command ad-hoc signs the binary
+
 ### Authentication Issues
 
 If Claude Code reports authentication errors:
