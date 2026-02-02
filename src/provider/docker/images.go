@@ -244,4 +244,3 @@ func (p *DockerProvider) addVersionLabels(cfg interface{}, versions map[string]s
 		exec.Command("docker", "tag", imageName, fmt.Sprintf("dclaude:claude-%s", v)).Run()
 	}
 }
-
