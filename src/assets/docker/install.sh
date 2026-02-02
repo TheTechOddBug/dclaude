@@ -13,7 +13,7 @@
 set -e
 
 EXTENSIONS_DIR="${EXTENSIONS_DIR:-/usr/local/share/dclaude/extensions}"
-METADATA_FILE="${METADATA_FILE:-/home/claude/.dclaude/extensions.json}"
+METADATA_FILE="${METADATA_FILE:-/home/dclaude/.dclaude/extensions.json}"
 EXTENSIONS="${1:-$DCLAUDE_EXTENSIONS}"
 
 # Parse EXTENSION_VERSIONS into associative array

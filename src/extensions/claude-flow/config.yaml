@@ -6,4 +6,4 @@ dependencies:
   - claude
 mounts:
   - source: ~/.claude-flow
-    target: /home/claude/.claude-flow
+    target: /home/dclaude/.claude-flow

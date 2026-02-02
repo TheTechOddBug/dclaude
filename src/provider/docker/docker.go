@@ -153,7 +153,7 @@ func (p *DockerProvider) setupContainerContext(spec *provider.RunSpec) (*contain
 
 	ctx := &containerContext{
 		homeDir:              currentUser.HomeDir,
-		username:             "claude", // Always use "claude" in container, but with host UID/GID
+		username:             "dclaude", // Always use "dclaude" in container, but with host UID/GID
 		useExistingContainer: false,
 	}
 

@@ -121,7 +121,7 @@ func (p *DockerProvider) BuildImage(embeddedDockerfile, embeddedEntrypoint []byt
 	}
 	uid := currentUser.Uid
 	gid := currentUser.Gid
-	username := "claude" // Always use "claude" in container, but with host UID/GID
+	username := "dclaude" // Always use "dclaude" in container, but with host UID/GID
 
 	// Build EXTENSION_VERSIONS string from map (e.g., "claude:stable,codex:latest")
 	var versionPairs []string

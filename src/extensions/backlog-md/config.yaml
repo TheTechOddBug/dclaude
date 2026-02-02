@@ -5,4 +5,4 @@ default_version: latest
 dependencies: []
 mounts:
   - source: ~/.backlog-md
-    target: /home/claude/.backlog-md
+    target: /home/dclaude/.backlog-md

@@ -4,7 +4,7 @@ set -e
 # Network firewall initialization for DClaude
 # Implements a whitelist-based firewall to restrict outbound network access
 
-ALLOWED_DOMAINS_FILE="${FIREWALL_CONFIG_FILE:-/home/claude/.dclaude/firewall/allowed-domains.txt}"
+ALLOWED_DOMAINS_FILE="${FIREWALL_CONFIG_FILE:-/home/dclaude/.dclaude/firewall/allowed-domains.txt}"
 
 # Check if firewall is disabled
 if [ "${DCLAUDE_FIREWALL_MODE}" = "off" ] || [ "${DCLAUDE_FIREWALL_MODE}" = "disabled" ]; then
@@ -94,7 +94,7 @@ cdn.jsdelivr.net
 unpkg.com
 EOF
 
-    chown claude:$(id -gn claude) "$ALLOWED_DOMAINS_FILE"
+    chown dclaude:$(id -gn dclaude) "$ALLOWED_DOMAINS_FILE"
 
     echo "Firewall: Default configuration created"
     echo "Firewall: Edit $ALLOWED_DOMAINS_FILE to customize allowed domains"

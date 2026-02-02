@@ -4,7 +4,7 @@ FROM node:${NODE_VERSION}-slim
 # Build arguments for user ID and group ID
 ARG USER_ID=1000
 ARG GROUP_ID=1000
-ARG USERNAME=claude
+ARG USERNAME=dclaude
 ARG GO_VERSION=1.23
 ARG UV_VERSION=0.5.11
 ARG DCLAUDE_EXTENSIONS=claude
@@ -74,7 +74,7 @@ COPY extensions/ /usr/local/share/dclaude/extensions/
 RUN chmod +x /usr/local/share/dclaude/install.sh && \
     find /usr/local/share/dclaude/extensions -name "*.sh" -exec chmod +x {} \;
 
-# Install requested extensions (as claude user for go installs)
+# Install requested extensions (as dclaude user for go installs)
 # EXTENSION_VERSIONS overrides default versions from config.yaml
 USER ${USERNAME}
 RUN EXTENSION_VERSIONS="${EXTENSION_VERSIONS}" \
