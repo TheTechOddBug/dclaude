@@ -64,6 +64,7 @@ func (p *DockerProvider) CheckPrerequisites() error {
 	return nil
 }
 
+// GetExtensionMounts reads extension metadata from image and returns all mounts
 // Exists checks if a container exists (running or stopped)
 func (p *DockerProvider) Exists(name string) bool {
 	cmd := exec.Command("docker", "ps", "-a", "--filter", fmt.Sprintf("name=^%s$", name), "--format", "{{.Names}}")
@@ -189,6 +190,9 @@ func (p *DockerProvider) Run(spec *provider.RunSpec) error {
 			}
 			dockerArgs = append(dockerArgs, "-v", mount)
 		}
+
+		// Add extension mounts
+		dockerArgs = p.AddExtensionMounts(dockerArgs, spec.ImageName, homeDir)
 
 		// Mount .gitconfig
 		gitconfigPath := fmt.Sprintf("%s/.gitconfig", homeDir)
@@ -328,6 +332,9 @@ func (p *DockerProvider) Shell(spec *provider.RunSpec) error {
 			}
 			dockerArgs = append(dockerArgs, "-v", mount)
 		}
+
+		// Add extension mounts
+		dockerArgs = p.AddExtensionMounts(dockerArgs, spec.ImageName, homeDir)
 
 		// Mount .gitconfig
 		gitconfigPath := fmt.Sprintf("%s/.gitconfig", homeDir)

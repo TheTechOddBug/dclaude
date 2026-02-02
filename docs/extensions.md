@@ -72,6 +72,11 @@ description: Short description of what the extension does
 entrypoint: mycommand
 dependencies:
   - beads           # Other extensions this depends on
+mounts:
+  - source: ~/.myextension
+    target: /home/claude/.myextension
+  - source: ~/.config/myextension
+    target: /home/claude/.config/myextension
 ```
 
 | Field | Required | Description |
@@ -80,6 +85,21 @@ dependencies:
 | `description` | Yes | Brief description |
 | `entrypoint` | Yes | Main command provided by extension |
 | `dependencies` | No | List of other extensions required |
+| `mounts` | No | Directories to mount from host to container |
+
+### Mounts
+
+Extensions can specify directories to be mounted from the host into the container at runtime. This is useful for:
+
+- Persisting extension configuration across container restarts
+- Sharing data between host and container
+- Caching extension data
+
+Each mount entry requires:
+- `source`: Path on the host (supports `~` for home directory)
+- `target`: Path inside the container
+
+The host directories are automatically created if they don't exist.
 
 ### install.sh
 
@@ -131,18 +151,26 @@ When extensions are installed, metadata is written to `~/.dclaude/extensions.jso
     "beads": {
       "name": "beads",
       "description": "Git-backed issue tracker for AI agents",
-      "entrypoint": "bd"
+      "entrypoint": "bd",
+      "mounts": [
+        {"source": "~/.beads", "target": "/home/claude/.beads"}
+      ]
     },
     "gastown": {
       "name": "gastown",
       "description": "Multi-agent orchestration for Claude Code",
-      "entrypoint": "gt"
+      "entrypoint": "gt",
+      "mounts": [
+        {"source": "~/.gastown", "target": "/home/claude/.gastown"}
+      ]
     }
   }
 }
 ```
 
-This metadata can be used by tools to discover available extensions and their entrypoints.
+This metadata is used at runtime to:
+- Mount extension directories from the host
+- Discover available extensions and their entrypoints
 
 ## Examples
 
