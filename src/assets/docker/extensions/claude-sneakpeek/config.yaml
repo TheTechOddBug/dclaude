@@ -1,0 +1,8 @@
+name: claude-sneakpeek
+description: Claude Sneakpeek - Preview tool for Claude Code
+entrypoint: claudesp
+dependencies:
+  - claude
+mounts:
+  - source: ~/.claude-sneakpeek
+    target: /home/claude/.claude-sneakpeek
