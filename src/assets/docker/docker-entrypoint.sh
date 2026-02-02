@@ -84,6 +84,9 @@ IMPORTANT:
     CLAUDE_ARGS+=(--append-system-prompt "$SYSTEM_PROMPT")
 fi
 
+# Ensure ~/.local/bin and ~/go/bin are in PATH (for extensions installed there)
+export PATH="$HOME/.local/bin:$HOME/go/bin:$PATH"
+
 # Determine which command to run (default: claude)
 DCLAUDE_CMD="${DCLAUDE_COMMAND:-claude}"
 

@@ -9,7 +9,7 @@ import (
 var Version = "1.1.0"
 
 const (
-	DefaultNodeVersion    = "20"
+	DefaultNodeVersion    = "22"
 	DefaultGoVersion      = "latest"
 	DefaultUvVersion      = "latest"
 	DefaultPortRangeStart = 30000
