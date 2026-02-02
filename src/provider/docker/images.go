@@ -77,22 +77,26 @@ func (p *DockerProvider) BuildImage(embeddedDockerfile, embeddedEntrypoint []byt
 		return fmt.Errorf("failed to write init-firewall.sh: %w", err)
 	}
 
+	// Write install.sh to build directory
+	installShPath := filepath.Join(buildDir, "install.sh")
+	if err := os.WriteFile(installShPath, p.embeddedInstallSh, 0755); err != nil {
+		return fmt.Errorf("failed to write install.sh: %w", err)
+	}
+
 	// Write embedded extensions (preserving directory structure)
 	extensionsDir := filepath.Join(buildDir, "extensions")
 	if err := os.MkdirAll(extensionsDir, 0755); err != nil {
 		return fmt.Errorf("failed to create extensions directory: %w", err)
 	}
-	err = fs.WalkDir(p.embeddedExtensions, "docker/extensions", func(path string, d fs.DirEntry, err error) error {
+	err = fs.WalkDir(p.embeddedExtensions, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		// Get relative path from docker/extensions
-		relPath := strings.TrimPrefix(path, "docker/extensions")
-		relPath = strings.TrimPrefix(relPath, "/")
-		if relPath == "" {
+		// Skip the root directory and Go source files
+		if path == "." || path == "embed.go" || path == "go.mod" {
 			return nil
 		}
-		destPath := filepath.Join(extensionsDir, relPath)
+		destPath := filepath.Join(extensionsDir, path)
 
 		if d.IsDir() {
 			return os.MkdirAll(destPath, 0755)

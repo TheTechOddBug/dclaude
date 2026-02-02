@@ -68,16 +68,17 @@ RUN if [ "${UV_VERSION}" = "latest" ]; then \
 
 USER root
 
-# Copy extensions and make scripts executable
+# Copy install script and extensions
+COPY install.sh /usr/local/share/dclaude/install.sh
 COPY extensions/ /usr/local/share/dclaude/extensions/
-RUN chmod +x /usr/local/share/dclaude/extensions/install.sh && \
+RUN chmod +x /usr/local/share/dclaude/install.sh && \
     find /usr/local/share/dclaude/extensions -name "*.sh" -exec chmod +x {} \;
 
 # Install requested extensions (as claude user for go installs)
 # EXTENSION_VERSIONS overrides default versions from config.yaml
 USER ${USERNAME}
 RUN EXTENSION_VERSIONS="${EXTENSION_VERSIONS}" \
-    /usr/local/share/dclaude/extensions/install.sh "${DCLAUDE_EXTENSIONS}"
+    /usr/local/share/dclaude/install.sh "${DCLAUDE_EXTENSIONS}"
 
 # Add Go, UV, and extensions to PATH environment and bash profile
 # UV installs to ~/.local/bin, Go tools install to ~/go/bin by default

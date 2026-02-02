@@ -23,17 +23,19 @@ type DockerProvider struct {
 	embeddedDockerfile   []byte
 	embeddedEntrypoint   []byte
 	embeddedInitFirewall []byte
+	embeddedInstallSh    []byte
 	embeddedExtensions   embed.FS
 }
 
 // NewDockerProvider creates a new Docker provider
-func NewDockerProvider(cfg *provider.Config, dockerfile, entrypoint, initFirewall []byte, extensions embed.FS) (provider.Provider, error) {
+func NewDockerProvider(cfg *provider.Config, dockerfile, entrypoint, initFirewall, installSh []byte, extensions embed.FS) (provider.Provider, error) {
 	return &DockerProvider{
 		config:               cfg,
 		tempDirs:             []string{},
 		embeddedDockerfile:   dockerfile,
 		embeddedEntrypoint:   entrypoint,
 		embeddedInitFirewall: initFirewall,
+		embeddedInstallSh:    installSh,
 		embeddedExtensions:   extensions,
 	}, nil
 }

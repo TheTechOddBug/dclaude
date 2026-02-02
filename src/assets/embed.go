@@ -1,8 +1,6 @@
 package assets
 
-import (
-	"embed"
-)
+import _ "embed"
 
 // Embedded assets organized by provider
 
@@ -17,8 +15,8 @@ var DockerEntrypoint []byte
 //go:embed docker/init-firewall.sh
 var DockerInitFirewall []byte
 
-//go:embed docker/extensions/* docker/extensions/**/*
-var DockerExtensions embed.FS
+//go:embed docker/install.sh
+var DockerInstallSh []byte
 
 // Daytona provider assets
 //
