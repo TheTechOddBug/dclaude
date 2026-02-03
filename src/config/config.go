@@ -2,9 +2,56 @@ package config
 
 import (
 	"os"
+	"os/user"
+	"path/filepath"
 	"strconv"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
+
+// GlobalConfig represents the persistent configuration stored in ~/.addt/config.yaml
+type GlobalConfig struct {
+	Dind             *bool  `yaml:"dind,omitempty"`
+	DindMode         string `yaml:"dind_mode,omitempty"`
+	DockerCPUs       string `yaml:"docker_cpus,omitempty"`
+	DockerMemory     string `yaml:"docker_memory,omitempty"`
+	Firewall         *bool  `yaml:"firewall,omitempty"`
+	FirewallMode     string `yaml:"firewall_mode,omitempty"`
+	GitHubDetect     *bool  `yaml:"github_detect,omitempty"`
+	GoVersion        string `yaml:"go_version,omitempty"`
+	GPGForward       *bool  `yaml:"gpg_forward,omitempty"`
+	Log              *bool  `yaml:"log,omitempty"`
+	LogFile          string `yaml:"log_file,omitempty"`
+	NodeVersion      string `yaml:"node_version,omitempty"`
+	Persistent       *bool  `yaml:"persistent,omitempty"`
+	PortRangeStart   *int   `yaml:"port_range_start,omitempty"`
+	SSHForward       string `yaml:"ssh_forward,omitempty"`
+	UvVersion        string `yaml:"uv_version,omitempty"`
+	Workdir          string `yaml:"workdir,omitempty"`
+	WorkdirAutomount *bool  `yaml:"workdir_automount,omitempty"`
+}
+
+// loadGlobalConfig loads the global config from ~/.addt/config.yaml
+func loadGlobalConfig() *GlobalConfig {
+	currentUser, err := user.Current()
+	if err != nil {
+		return &GlobalConfig{}
+	}
+
+	configPath := filepath.Join(currentUser.HomeDir, ".addt", "config.yaml")
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return &GlobalConfig{}
+	}
+
+	var cfg GlobalConfig
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return &GlobalConfig{}
+	}
+
+	return &cfg
+}
 
 // Config holds all configuration options
 type Config struct {
@@ -37,35 +84,164 @@ type Config struct {
 	Memory             string            // Memory limit (e.g., "512m", "2g", "4gb")
 }
 
-// LoadConfig loads configuration from environment variables
+// LoadConfig loads configuration with precedence: defaults < config file < env vars
 func LoadConfig(defaultNodeVersion string, defaultGoVersion string, defaultUvVersion string, defaultPortRangeStart int) *Config {
+	// Load global config file first
+	globalCfg := loadGlobalConfig()
+
+	// Start with defaults, then apply global config, then env vars
 	cfg := &Config{
-		NodeVersion:        getEnvOrDefault("ADDT_NODE_VERSION", defaultNodeVersion),
-		GoVersion:          getEnvOrDefault("ADDT_GO_VERSION", defaultGoVersion),
-		UvVersion:          getEnvOrDefault("ADDT_UV_VERSION", defaultUvVersion),
-		EnvVars:            strings.Split(getEnvOrDefault("ADDT_ENV_VARS", "ANTHROPIC_API_KEY,GH_TOKEN"), ","),
-		GitHubDetect:       getEnvOrDefault("ADDT_GITHUB_DETECT", "false") == "true",
-		PortRangeStart:     getEnvInt("ADDT_PORT_RANGE_START", defaultPortRangeStart),
-		SSHForward:         os.Getenv("ADDT_SSH_FORWARD"),
-		GPGForward:         os.Getenv("ADDT_GPG_FORWARD") == "true",
-		DindMode:           os.Getenv("ADDT_DIND_MODE"),
-		EnvFile:            os.Getenv("ADDT_ENV_FILE"), // Empty means use default .env
-		LogEnabled:         os.Getenv("ADDT_LOG") == "true",
-		LogFile:            getEnvOrDefault("ADDT_LOG_FILE", "addt.log"),
-		Persistent:         os.Getenv("ADDT_PERSISTENT") == "true",
-		WorkdirAutomount:   getEnvOrDefault("ADDT_WORKDIR_AUTOMOUNT", "true") != "false",
-		Workdir:            os.Getenv("ADDT_WORKDIR"),
-		FirewallEnabled:    os.Getenv("ADDT_FIREWALL") == "true",
-		FirewallMode:       getEnvOrDefault("ADDT_FIREWALL_MODE", "strict"),
-		Mode:               getEnvOrDefault("ADDT_MODE", "container"),
-		Provider:           getEnvOrDefault("ADDT_PROVIDER", "docker"),
-		Extensions:         os.Getenv("ADDT_EXTENSIONS"), // No default - must be set via symlink or env
-		Command:            os.Getenv("ADDT_COMMAND"),
 		ExtensionVersions:  make(map[string]string),
 		ExtensionAutomount: make(map[string]bool),
-		CPUs:               os.Getenv("ADDT_CPUS"),   // CPU limit (e.g., "2", "0.5")
-		Memory:             os.Getenv("ADDT_MEMORY"), // Memory limit (e.g., "512m", "2g")
 	}
+
+	// Node version: default -> global config -> env
+	cfg.NodeVersion = defaultNodeVersion
+	if globalCfg.NodeVersion != "" {
+		cfg.NodeVersion = globalCfg.NodeVersion
+	}
+	if v := os.Getenv("ADDT_NODE_VERSION"); v != "" {
+		cfg.NodeVersion = v
+	}
+
+	// Go version: default -> global config -> env
+	cfg.GoVersion = defaultGoVersion
+	if globalCfg.GoVersion != "" {
+		cfg.GoVersion = globalCfg.GoVersion
+	}
+	if v := os.Getenv("ADDT_GO_VERSION"); v != "" {
+		cfg.GoVersion = v
+	}
+
+	// UV version: default -> global config -> env
+	cfg.UvVersion = defaultUvVersion
+	if globalCfg.UvVersion != "" {
+		cfg.UvVersion = globalCfg.UvVersion
+	}
+	if v := os.Getenv("ADDT_UV_VERSION"); v != "" {
+		cfg.UvVersion = v
+	}
+
+	// Port range start: default -> global config -> env
+	cfg.PortRangeStart = defaultPortRangeStart
+	if globalCfg.PortRangeStart != nil {
+		cfg.PortRangeStart = *globalCfg.PortRangeStart
+	}
+	if v := os.Getenv("ADDT_PORT_RANGE_START"); v != "" {
+		if i, err := strconv.Atoi(v); err == nil {
+			cfg.PortRangeStart = i
+		}
+	}
+
+	// SSH forward: default (empty) -> global config -> env
+	cfg.SSHForward = globalCfg.SSHForward
+	if v := os.Getenv("ADDT_SSH_FORWARD"); v != "" {
+		cfg.SSHForward = v
+	}
+
+	// GPG forward: default (false) -> global config -> env
+	cfg.GPGForward = false
+	if globalCfg.GPGForward != nil {
+		cfg.GPGForward = *globalCfg.GPGForward
+	}
+	if v := os.Getenv("ADDT_GPG_FORWARD"); v != "" {
+		cfg.GPGForward = v == "true"
+	}
+
+	// DinD mode: default (empty) -> global config -> env
+	cfg.DindMode = globalCfg.DindMode
+	if v := os.Getenv("ADDT_DIND_MODE"); v != "" {
+		cfg.DindMode = v
+	}
+
+	// Log enabled: default (false) -> global config -> env
+	cfg.LogEnabled = false
+	if globalCfg.Log != nil {
+		cfg.LogEnabled = *globalCfg.Log
+	}
+	if v := os.Getenv("ADDT_LOG"); v != "" {
+		cfg.LogEnabled = v == "true"
+	}
+
+	// Log file: default -> global config -> env
+	cfg.LogFile = "addt.log"
+	if globalCfg.LogFile != "" {
+		cfg.LogFile = globalCfg.LogFile
+	}
+	if v := os.Getenv("ADDT_LOG_FILE"); v != "" {
+		cfg.LogFile = v
+	}
+
+	// Persistent: default (false) -> global config -> env
+	cfg.Persistent = false
+	if globalCfg.Persistent != nil {
+		cfg.Persistent = *globalCfg.Persistent
+	}
+	if v := os.Getenv("ADDT_PERSISTENT"); v != "" {
+		cfg.Persistent = v == "true"
+	}
+
+	// Workdir automount: default (true) -> global config -> env
+	cfg.WorkdirAutomount = true
+	if globalCfg.WorkdirAutomount != nil {
+		cfg.WorkdirAutomount = *globalCfg.WorkdirAutomount
+	}
+	if v := os.Getenv("ADDT_WORKDIR_AUTOMOUNT"); v != "" {
+		cfg.WorkdirAutomount = v != "false"
+	}
+
+	// Firewall: default (false) -> global config -> env
+	cfg.FirewallEnabled = false
+	if globalCfg.Firewall != nil {
+		cfg.FirewallEnabled = *globalCfg.Firewall
+	}
+	if v := os.Getenv("ADDT_FIREWALL"); v != "" {
+		cfg.FirewallEnabled = v == "true"
+	}
+
+	// Firewall mode: default (strict) -> global config -> env
+	cfg.FirewallMode = "strict"
+	if globalCfg.FirewallMode != "" {
+		cfg.FirewallMode = globalCfg.FirewallMode
+	}
+	if v := os.Getenv("ADDT_FIREWALL_MODE"); v != "" {
+		cfg.FirewallMode = v
+	}
+
+	// GitHub detect: default (false) -> global config -> env
+	cfg.GitHubDetect = false
+	if globalCfg.GitHubDetect != nil {
+		cfg.GitHubDetect = *globalCfg.GitHubDetect
+	}
+	if v := os.Getenv("ADDT_GITHUB_DETECT"); v != "" {
+		cfg.GitHubDetect = v == "true"
+	}
+
+	// CPUs: default (empty) -> global config -> env
+	cfg.CPUs = globalCfg.DockerCPUs
+	if v := os.Getenv("ADDT_DOCKER_CPUS"); v != "" {
+		cfg.CPUs = v
+	}
+
+	// Memory: default (empty) -> global config -> env
+	cfg.Memory = globalCfg.DockerMemory
+	if v := os.Getenv("ADDT_DOCKER_MEMORY"); v != "" {
+		cfg.Memory = v
+	}
+
+	// Workdir: default (empty = current dir) -> global config -> env
+	cfg.Workdir = globalCfg.Workdir
+	if v := os.Getenv("ADDT_WORKDIR"); v != "" {
+		cfg.Workdir = v
+	}
+
+	// These don't have global config equivalents
+	cfg.EnvVars = strings.Split(getEnvOrDefault("ADDT_ENV_VARS", "ANTHROPIC_API_KEY,GH_TOKEN"), ",")
+	cfg.EnvFile = os.Getenv("ADDT_ENV_FILE")
+	cfg.Mode = getEnvOrDefault("ADDT_MODE", "container")
+	cfg.Provider = getEnvOrDefault("ADDT_PROVIDER", "docker")
+	cfg.Extensions = os.Getenv("ADDT_EXTENSIONS")
+	cfg.Command = os.Getenv("ADDT_COMMAND")
 
 	// Load per-extension versions and mount configs from environment
 	// Pattern: ADDT_<EXT>_VERSION and ADDT_MOUNT_<EXT>_CONFIG

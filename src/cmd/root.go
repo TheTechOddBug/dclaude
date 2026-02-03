@@ -205,7 +205,7 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 		// Check if first arg is a known addt command (matches switch cases below)
 		switch args[0] {
 		case "run", "build", "shell", "containers", "firewall",
-			"extensions", "cli", "version":
+			"extensions", "cli", "config", "version":
 			// Known command, continue processing
 		default:
 			// Unknown command, show help
@@ -236,6 +236,10 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 				fmt.Printf("Unknown cli command: %s\n", args[1])
 				os.Exit(1)
 			}
+			return
+		case "config":
+			// Config management subcommands
+			HandleConfigCommand(args[1:])
 			return
 		case "extensions":
 			// Extensions management subcommands
@@ -357,6 +361,8 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 					fmt.Printf("Unknown cli command: %s\n", subArgs[0])
 					os.Exit(1)
 				}
+			case "config":
+				HandleConfigCommand(subArgs)
 			case "version":
 				PrintVersion(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion)
 			default:
