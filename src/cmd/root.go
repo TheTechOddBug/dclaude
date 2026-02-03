@@ -35,10 +35,10 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 	// Check for special commands
 	if len(args) > 0 {
 		switch args[0] {
-		case "--update":
+		case "--nddt-update":
 			update.UpdateNddt(version)
 			return
-		case "--dversion":
+		case "--nddt-version":
 			fmt.Printf("nddt version %s\n", version)
 			return
 		case "--nddt-help":

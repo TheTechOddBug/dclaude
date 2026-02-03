@@ -25,9 +25,9 @@ Commands:
   containers build [--build-arg ...] Build the container image
   containers [list|stop|rm|clean]    Manage persistent environments
   firewall [list|add|remove|reset]   Manage network firewall domains
-  --update                           Check for and install updates
+  --nddt-update                      Check for and install updates
   --nddt-rebuild                     Rebuild the environment (Docker only)
-  --dversion                         Show nddt version
+  --nddt-version                     Show nddt version
   --nddt-help                        Show this help
 
 `, version)

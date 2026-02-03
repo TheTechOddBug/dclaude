@@ -27,7 +27,7 @@ jobs:
         run: make build
 
       - name: Test binary
-        run: ./dist/nddt --dversion
+        run: ./dist/nddt --nddt-version
 
       - name: Run tests (if any)
         run: |
