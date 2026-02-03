@@ -297,22 +297,11 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 			return
 		case "run":
 			// addt run <extension> [args...] - run a specific extension
-			if len(args) < 2 {
-				fmt.Println("Usage: addt run <extension> [args...]")
-				fmt.Println()
-				fmt.Println("Examples:")
-				fmt.Println("  addt run claude \"Fix the bug\"")
-				fmt.Println("  addt run codex --help")
-				fmt.Println("  addt run gemini")
-				fmt.Println()
-				fmt.Println("Available extensions: addt --addt-list-extensions")
-				return
+			remainingArgs := HandleRunCommand(args[1:])
+			if remainingArgs == nil {
+				return // Help was printed or error occurred
 			}
-			// Set the extension and continue with normal execution
-			extName := args[1]
-			os.Setenv("ADDT_EXTENSIONS", extName)
-			os.Setenv("ADDT_COMMAND", extName)
-			args = args[2:] // Remove "run" and extension name, keep remaining args
+			args = remainingArgs
 
 		case "build", "shell", "containers", "firewall":
 			// Top-level subcommands (work for both plain addt and via "addt" namespace)
