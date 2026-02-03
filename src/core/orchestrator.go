@@ -219,6 +219,13 @@ func (o *Orchestrator) displayStatus(envName string) {
 		status += fmt.Sprintf(" | Ports:%s", portMapDisplay)
 	}
 
+	// Get extension name (from Command or default to "claude")
+	extension := o.config.Command
+	if extension == "" {
+		extension = "claude"
+	}
+
+	fmt.Printf("⚠ nddt:%s is experimental - things are not perfect yet\n", extension)
 	fmt.Printf("✓ %s\n", status)
 }
 

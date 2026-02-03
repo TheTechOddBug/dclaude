@@ -39,7 +39,7 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 			update.UpdateNddt(version)
 			return
 		case "--nddt-version":
-			fmt.Printf("nddt version %s\n", version)
+			PrintVersion(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion)
 			return
 		case "--nddt-list-extensions":
 			ListExtensions()

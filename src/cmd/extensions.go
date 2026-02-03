@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"io/fs"
+	"os"
 	"sort"
 	"strings"
 
@@ -18,6 +19,53 @@ type ExtensionConfig struct {
 	DefaultVersion string   `yaml:"default_version"`
 	AutoMount      bool     `yaml:"auto_mount"`
 	Dependencies   []string `yaml:"dependencies"`
+}
+
+// PrintVersion prints nddt version and loaded extension version
+func PrintVersion(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion string) {
+	fmt.Printf("nddt %s\n", version)
+	fmt.Println()
+
+	// Default tool versions
+	fmt.Println("Tools:")
+	fmt.Printf("  Node.js:  %s\n", defaultNodeVersion)
+	fmt.Printf("  Go:       %s\n", defaultGoVersion)
+	fmt.Printf("  UV:       %s\n", defaultUvVersion)
+	fmt.Println()
+
+	// Get loaded extension (from env or binary name)
+	extName := os.Getenv("NDDT_EXTENSIONS")
+	if extName == "" {
+		extName = os.Getenv("NDDT_COMMAND")
+	}
+	if extName == "" {
+		extName = "claude" // default
+	}
+	// Take first extension if comma-separated
+	if idx := strings.Index(extName, ","); idx != -1 {
+		extName = extName[:idx]
+	}
+
+	// Get version for this extension
+	extVersion := os.Getenv("NDDT_" + strings.ToUpper(extName) + "_VERSION")
+	if extVersion == "" {
+		// Look up default version from config
+		exts, err := getExtensions()
+		if err == nil {
+			for _, ext := range exts {
+				if ext.Name == extName {
+					extVersion = ext.DefaultVersion
+					break
+				}
+			}
+		}
+	}
+	if extVersion == "" {
+		extVersion = "latest"
+	}
+
+	fmt.Println("Extension:")
+	fmt.Printf("  %-16s %s\n", extName, extVersion)
 }
 
 // ListExtensions prints all available extensions

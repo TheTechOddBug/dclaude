@@ -381,68 +381,59 @@ func (p *DockerProvider) Cleanup() error {
 
 // GetStatus returns a status string for display
 func (p *DockerProvider) GetStatus(cfg *provider.Config, envName string) string {
-	status := fmt.Sprintf("Provider:%s Mode:%s", p.GetName(), cfg.Mode)
-
-	// Image name
-	status += fmt.Sprintf(" | %s", cfg.ImageName)
+	var parts []string
 
 	// Get Node version from image labels
 	cmd := exec.Command("docker", "inspect", cfg.ImageName, "--format", "{{index .Config.Labels \"tools.node.version\"}}")
 	if output, err := cmd.Output(); err == nil {
 		if nodeVersion := strings.TrimSpace(string(output)); nodeVersion != "" {
-			status += fmt.Sprintf(" | Node %s", nodeVersion)
+			parts = append(parts, fmt.Sprintf("Node %s", nodeVersion))
 		}
 	}
 
-	// GitHub token status
-	if os.Getenv("GH_TOKEN") != "" {
-		status += " | GH:✓"
+	// Show mounted workdir with RW/RO/none indicator (key security boundary)
+	workdir := cfg.Workdir
+	if workdir == "" {
+		workdir, _ = os.Getwd()
+	}
+	if cfg.WorkdirAutomount {
+		parts = append(parts, fmt.Sprintf("%s [RW]", workdir))
 	} else {
-		status += " | GH:-"
+		parts = append(parts, "[not mounted]")
 	}
 
-	// SSH forwarding status
+	// Only show enabled features (skip disabled ones to reduce noise)
+	if os.Getenv("GH_TOKEN") != "" {
+		parts = append(parts, "GH")
+	}
+
 	switch cfg.SSHForward {
 	case "agent":
-		status += " | SSH:agent"
+		parts = append(parts, "SSH:agent")
 	case "keys":
-		status += " | SSH:keys"
-	default:
-		status += " | SSH:-"
+		parts = append(parts, "SSH:keys")
 	}
 
-	// GPG forwarding status
 	if cfg.GPGForward {
-		status += " | GPG:✓"
-	} else {
-		status += " | GPG:-"
+		parts = append(parts, "GPG")
 	}
 
-	// Docker forwarding status
 	switch cfg.DindMode {
 	case "isolated", "true":
-		status += " | Docker:isolated"
+		parts = append(parts, "DinD:isolated")
 	case "host":
-		status += " | Docker:host"
-	default:
-		status += " | Docker:-"
+		parts = append(parts, "DinD:host")
 	}
 
-	// Firewall status
 	if cfg.FirewallEnabled {
-		status += fmt.Sprintf(" | Firewall:%s", cfg.FirewallMode)
-	} else {
-		status += " | Firewall:-"
+		parts = append(parts, fmt.Sprintf("Firewall:%s", cfg.FirewallMode))
 	}
 
-	// Port mappings - will be added by orchestrator
-
-	// Persistent container name
 	if cfg.Persistent {
-		status += fmt.Sprintf(" | Container:%s", envName)
+		parts = append(parts, "Persistent")
 	}
 
-	return status
+	return strings.Join(parts, " | ")
 }
 
 // GenerateContainerName generates a persistent container name based on working directory and extensions
