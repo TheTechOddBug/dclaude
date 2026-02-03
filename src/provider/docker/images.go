@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/jedi4ever/addt/extensions"
 )
 
 // ImageExists checks if a Docker image exists
@@ -207,7 +209,7 @@ func (p *DockerProvider) BuildImage(embeddedDockerfile, embeddedEntrypoint []byt
 	}
 
 	// Copy local extensions (override embedded ones with same name)
-	localExtsDir := p.GetLocalExtensionsDir()
+	localExtsDir := extensions.GetLocalExtensionsDir()
 	if localExtsDir != "" {
 		if _, err := os.Stat(localExtsDir); err == nil {
 			if err := p.copyLocalExtensions(localExtsDir, extensionsDir); err != nil {
@@ -352,15 +354,6 @@ func (p *DockerProvider) addVersionLabels(cfg interface{}, versions map[string]s
 			fmt.Printf("Warning: failed to tag with claude version: %v\n", err)
 		}
 	}
-}
-
-// GetLocalExtensionsDir returns the path to local extensions directory (~/.addt/extensions)
-func (p *DockerProvider) GetLocalExtensionsDir() string {
-	currentUser, err := user.Current()
-	if err != nil {
-		return ""
-	}
-	return filepath.Join(currentUser.HomeDir, ".addt", "extensions")
 }
 
 // copyLocalExtensions copies local extensions to the build directory, overwriting embedded ones

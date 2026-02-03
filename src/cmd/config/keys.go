@@ -1,22 +1,22 @@
-package cmd
+package config
 
 import (
 	"fmt"
 
-	"github.com/jedi4ever/addt/config"
+	cfgtypes "github.com/jedi4ever/addt/config"
 )
 
-// configKeyInfo holds metadata about a config key
-type configKeyInfo struct {
+// KeyInfo holds metadata about a config key
+type KeyInfo struct {
 	Key         string
 	Description string
 	Type        string // "bool", "string", "int"
 	EnvVar      string
 }
 
-// getConfigKeys returns all valid config keys with their metadata (sorted alphabetically)
-func getConfigKeys() []configKeyInfo {
-	keys := []configKeyInfo{
+// GetKeys returns all valid config keys with their metadata (sorted alphabetically)
+func GetKeys() []KeyInfo {
+	keys := []KeyInfo{
 		{Key: "dind", Description: "Enable Docker-in-Docker", Type: "bool", EnvVar: "ADDT_DIND"},
 		{Key: "dind_mode", Description: "Docker-in-Docker mode: host or isolated", Type: "string", EnvVar: "ADDT_DIND_MODE"},
 		{Key: "docker_cpus", Description: "CPU limit for container (e.g., \"2\", \"0.5\")", Type: "string", EnvVar: "ADDT_DOCKER_CPUS"},
@@ -39,16 +39,16 @@ func getConfigKeys() []configKeyInfo {
 	return keys
 }
 
-// getExtensionConfigKeys returns all valid extension config keys with their metadata
-func getExtensionConfigKeys() []configKeyInfo {
-	return []configKeyInfo{
+// GetExtensionKeys returns all valid extension config keys with their metadata
+func GetExtensionKeys() []KeyInfo {
+	return []KeyInfo{
 		{Key: "version", Description: "Extension version", Type: "string", EnvVar: "ADDT_%s_VERSION"},
 		{Key: "automount", Description: "Auto-mount extension config directories", Type: "bool", EnvVar: "ADDT_%s_AUTOMOUNT"},
 	}
 }
 
-// getDefaultValue returns the default value for a config key
-func getDefaultValue(key string) string {
+// GetDefaultValue returns the default value for a config key
+func GetDefaultValue(key string) string {
 	switch key {
 	case "docker_cpus":
 		return ""
@@ -90,9 +90,9 @@ func getDefaultValue(key string) string {
 	return ""
 }
 
-// isValidConfigKey checks if a key is a valid config key
-func isValidConfigKey(key string) bool {
-	for _, k := range getConfigKeys() {
+// IsValidKey checks if a key is a valid config key
+func IsValidKey(key string) bool {
+	for _, k := range GetKeys() {
 		if k.Key == key {
 			return true
 		}
@@ -100,9 +100,9 @@ func isValidConfigKey(key string) bool {
 	return false
 }
 
-// getConfigKeyInfo returns the metadata for a config key, or nil if not found
-func getConfigKeyInfo(key string) *configKeyInfo {
-	for _, k := range getConfigKeys() {
+// GetKeyInfo returns the metadata for a config key, or nil if not found
+func GetKeyInfo(key string) *KeyInfo {
+	for _, k := range GetKeys() {
 		if k.Key == key {
 			return &k
 		}
@@ -110,9 +110,9 @@ func getConfigKeyInfo(key string) *configKeyInfo {
 	return nil
 }
 
-// isValidExtensionConfigKey checks if a key is a valid extension config key
-func isValidExtensionConfigKey(key string) bool {
-	for _, k := range getExtensionConfigKeys() {
+// IsValidExtensionKey checks if a key is a valid extension config key
+func IsValidExtensionKey(key string) bool {
+	for _, k := range GetExtensionKeys() {
 		if k.Key == key {
 			return true
 		}
@@ -120,8 +120,8 @@ func isValidExtensionConfigKey(key string) bool {
 	return false
 }
 
-// getConfigValue retrieves a config value from the config struct
-func getConfigValue(cfg *config.GlobalConfig, key string) string {
+// GetValue retrieves a config value from the config struct
+func GetValue(cfg *cfgtypes.GlobalConfig, key string) string {
 	switch key {
 	case "docker_cpus":
 		return cfg.DockerCPUs
@@ -179,8 +179,8 @@ func getConfigValue(cfg *config.GlobalConfig, key string) string {
 	return ""
 }
 
-// setConfigValue sets a config value in the config struct
-func setConfigValue(cfg *config.GlobalConfig, key, value string) {
+// SetValue sets a config value in the config struct
+func SetValue(cfg *cfgtypes.GlobalConfig, key, value string) {
 	switch key {
 	case "docker_cpus":
 		cfg.DockerCPUs = value
@@ -230,8 +230,8 @@ func setConfigValue(cfg *config.GlobalConfig, key, value string) {
 	}
 }
 
-// unsetConfigValue clears a config value in the config struct
-func unsetConfigValue(cfg *config.GlobalConfig, key string) {
+// UnsetValue clears a config value in the config struct
+func UnsetValue(cfg *cfgtypes.GlobalConfig, key string) {
 	switch key {
 	case "docker_cpus":
 		cfg.DockerCPUs = ""

@@ -2,15 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
-	"os/user"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/jedi4ever/addt/extensions"
-	"gopkg.in/yaml.v3"
 )
 
 // PrintVersion prints addt version and loaded extension version
@@ -40,7 +36,7 @@ func PrintVersion(version, defaultNodeVersion, defaultGoVersion, defaultUvVersio
 	extVersion := os.Getenv("ADDT_" + strings.ToUpper(extName) + "_VERSION")
 	if extVersion == "" {
 		// Look up default version from config
-		exts, err := getExtensions()
+		exts, err := extensions.GetExtensions()
 		if err == nil {
 			for _, ext := range exts {
 				if ext.Name == extName {
@@ -60,7 +56,7 @@ func PrintVersion(version, defaultNodeVersion, defaultGoVersion, defaultUvVersio
 
 // ListExtensions prints all available extensions
 func ListExtensions() {
-	exts, err := getExtensions()
+	exts, err := extensions.GetExtensions()
 	if err != nil {
 		fmt.Printf("Error reading extensions: %v\n", err)
 		return
@@ -104,7 +100,7 @@ func ListExtensions() {
 	}
 
 	// Show local extensions directory info
-	localDir := GetLocalExtensionsDir()
+	localDir := extensions.GetLocalExtensionsDir()
 	if localDir != "" {
 		fmt.Printf("\nLocal extensions directory: %s\n", localDir)
 	}
@@ -112,7 +108,7 @@ func ListExtensions() {
 
 // ShowExtensionInfo displays detailed info about a specific extension
 func ShowExtensionInfo(name string) {
-	exts, err := getExtensions()
+	exts, err := extensions.GetExtensions()
 	if err != nil {
 		fmt.Printf("Error reading extensions: %v\n", err)
 		os.Exit(1)
@@ -180,7 +176,7 @@ func ShowExtensionInfo(name string) {
 // GetEntrypointForExtension returns the entrypoint command for a given extension name
 // If extension not found, returns the extension name itself as fallback
 func GetEntrypointForExtension(extName string) string {
-	exts, err := getExtensions()
+	exts, err := extensions.GetExtensions()
 	if err != nil {
 		return extName
 	}
@@ -197,83 +193,18 @@ func GetEntrypointForExtension(extName string) string {
 	return extName
 }
 
-// getExtensions reads all extension configs from embedded filesystem and local ~/.addt/extensions/
-func getExtensions() ([]extensions.ExtensionConfig, error) {
-	configMap := make(map[string]extensions.ExtensionConfig)
-
-	// First, read embedded extensions
-	entries, err := fs.ReadDir(extensions.FS, ".")
+// extensionExists checks if an extension with the given name exists
+func extensionExists(name string) bool {
+	exts, err := extensions.GetExtensions()
 	if err != nil {
-		return nil, err
+		return false
 	}
-
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-
-		configPath := entry.Name() + "/config.yaml"
-		data, err := extensions.FS.ReadFile(configPath)
-		if err != nil {
-			continue // Skip directories without config.yaml
-		}
-
-		var cfg extensions.ExtensionConfig
-		if err := yaml.Unmarshal(data, &cfg); err != nil {
-			continue // Skip invalid configs
-		}
-
-		cfg.IsLocal = false
-		configMap[cfg.Name] = cfg
-	}
-
-	// Then, read local extensions (override embedded ones with same name)
-	localExtsDir := GetLocalExtensionsDir()
-	if localExtsDir != "" {
-		if entries, err := os.ReadDir(localExtsDir); err == nil {
-			for _, entry := range entries {
-				if !entry.IsDir() {
-					continue
-				}
-
-				configPath := filepath.Join(localExtsDir, entry.Name(), "config.yaml")
-				data, err := os.ReadFile(configPath)
-				if err != nil {
-					continue // Skip directories without config.yaml
-				}
-
-				var cfg extensions.ExtensionConfig
-				if err := yaml.Unmarshal(data, &cfg); err != nil {
-					continue // Skip invalid configs
-				}
-
-				cfg.IsLocal = true
-				configMap[cfg.Name] = cfg // Override embedded extension if exists
-			}
+	for _, ext := range exts {
+		if ext.Name == name {
+			return true
 		}
 	}
-
-	// Convert map to slice
-	var configs []extensions.ExtensionConfig
-	for _, cfg := range configMap {
-		configs = append(configs, cfg)
-	}
-
-	// Sort by name
-	sort.Slice(configs, func(i, j int) bool {
-		return configs[i].Name < configs[j].Name
-	})
-
-	return configs, nil
-}
-
-// GetLocalExtensionsDir returns the path to local extensions directory (~/.addt/extensions)
-func GetLocalExtensionsDir() string {
-	currentUser, err := user.Current()
-	if err != nil {
-		return ""
-	}
-	return filepath.Join(currentUser.HomeDir, ".addt", "extensions")
+	return false
 }
 
 // CreateExtension creates a new local extension with template files
@@ -293,7 +224,7 @@ func CreateExtension(name string) {
 	}
 
 	// Get local extensions directory
-	localDir := GetLocalExtensionsDir()
+	localDir := extensions.GetLocalExtensionsDir()
 	if localDir == "" {
 		fmt.Println("Error: could not determine local extensions directory")
 		os.Exit(1)

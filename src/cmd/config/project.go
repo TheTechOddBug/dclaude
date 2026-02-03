@@ -1,24 +1,24 @@
-package cmd
+package config
 
 import (
 	"fmt"
 	"os"
 	"strings"
 
-	"github.com/jedi4ever/addt/config"
+	cfgtypes "github.com/jedi4ever/addt/config"
 )
 
-func listProjectConfig() {
-	cfg, err := config.LoadProjectConfigFile()
+func listProject() {
+	cfg, err := cfgtypes.LoadProjectConfigFile()
 	if err != nil {
 		fmt.Printf("Error loading project config: %v\n", err)
 		os.Exit(1)
 	}
 
-	configPath := config.GetProjectConfigPath()
+	configPath := cfgtypes.GetProjectConfigPath()
 	fmt.Printf("Project config: %s\n\n", configPath)
 
-	keys := getConfigKeys()
+	keys := GetKeys()
 
 	// Calculate column widths
 	maxKeyLen := 3
@@ -27,7 +27,7 @@ func listProjectConfig() {
 		if len(k.Key) > maxKeyLen {
 			maxKeyLen = len(k.Key)
 		}
-		val := getConfigValue(cfg, k.Key)
+		val := GetValue(cfg, k.Key)
 		if val == "" {
 			val = "-"
 		}
@@ -42,7 +42,7 @@ func listProjectConfig() {
 
 	hasValues := false
 	for _, k := range keys {
-		val := getConfigValue(cfg, k.Key)
+		val := GetValue(cfg, k.Key)
 		if val != "" {
 			hasValues = true
 			fmt.Printf("* %-*s   %-*s\n", maxKeyLen, k.Key, maxValLen, val)
@@ -54,20 +54,20 @@ func listProjectConfig() {
 	}
 }
 
-func getProjectConfig(key string) {
-	if !isValidConfigKey(key) {
+func getProject(key string) {
+	if !IsValidKey(key) {
 		fmt.Printf("Unknown config key: %s\n", key)
 		fmt.Println("Use 'addt config project list' to see available keys.")
 		os.Exit(1)
 	}
 
-	cfg, err := config.LoadProjectConfigFile()
+	cfg, err := cfgtypes.LoadProjectConfigFile()
 	if err != nil {
 		fmt.Printf("Error loading project config: %v\n", err)
 		os.Exit(1)
 	}
 
-	val := getConfigValue(cfg, key)
+	val := GetValue(cfg, key)
 	if val == "" {
 		fmt.Printf("%s is not set in project config\n", key)
 	} else {
@@ -75,8 +75,8 @@ func getProjectConfig(key string) {
 	}
 }
 
-func setProjectConfig(key, value string) {
-	keyInfo := getConfigKeyInfo(key)
+func setProject(key, value string) {
+	keyInfo := GetKeyInfo(key)
 	if keyInfo == nil {
 		fmt.Printf("Unknown config key: %s\n", key)
 		fmt.Println("Use 'addt config project --help' to see available keys.")
@@ -91,15 +91,15 @@ func setProjectConfig(key, value string) {
 		}
 	}
 
-	cfg, err := config.LoadProjectConfigFile()
+	cfg, err := cfgtypes.LoadProjectConfigFile()
 	if err != nil {
 		fmt.Printf("Error loading project config: %v\n", err)
 		os.Exit(1)
 	}
 
-	setConfigValue(cfg, key, value)
+	SetValue(cfg, key, value)
 
-	if err := config.SaveProjectConfigFile(cfg); err != nil {
+	if err := cfgtypes.SaveProjectConfigFile(cfg); err != nil {
 		fmt.Printf("Error saving project config: %v\n", err)
 		os.Exit(1)
 	}
@@ -107,22 +107,22 @@ func setProjectConfig(key, value string) {
 	fmt.Printf("Set %s = %s (project)\n", key, value)
 }
 
-func unsetProjectConfig(key string) {
-	if !isValidConfigKey(key) {
+func unsetProject(key string) {
+	if !IsValidKey(key) {
 		fmt.Printf("Unknown config key: %s\n", key)
 		fmt.Println("Use 'addt config project list' to see available keys.")
 		os.Exit(1)
 	}
 
-	cfg, err := config.LoadProjectConfigFile()
+	cfg, err := cfgtypes.LoadProjectConfigFile()
 	if err != nil {
 		fmt.Printf("Error loading project config: %v\n", err)
 		os.Exit(1)
 	}
 
-	unsetConfigValue(cfg, key)
+	UnsetValue(cfg, key)
 
-	if err := config.SaveProjectConfigFile(cfg); err != nil {
+	if err := cfgtypes.SaveProjectConfigFile(cfg); err != nil {
 		fmt.Printf("Error saving project config: %v\n", err)
 		os.Exit(1)
 	}

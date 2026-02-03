@@ -1,30 +1,30 @@
-package cmd
+package config
 
 import (
 	"fmt"
 	"os"
 	"strings"
 
-	"github.com/jedi4ever/addt/config"
+	cfgtypes "github.com/jedi4ever/addt/config"
 )
 
-func listConfig() {
-	globalCfg, err := config.LoadGlobalConfigFile()
+func listGlobal() {
+	globalCfg, err := cfgtypes.LoadGlobalConfigFile()
 	if err != nil {
 		fmt.Printf("Error loading global config: %v\n", err)
 		os.Exit(1)
 	}
 
-	projectCfg, err := config.LoadProjectConfigFile()
+	projectCfg, err := cfgtypes.LoadProjectConfigFile()
 	if err != nil {
 		fmt.Printf("Error loading project config: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("Global config:  %s\n", config.GetGlobalConfigPath())
-	fmt.Printf("Project config: %s\n\n", config.GetProjectConfigPath())
+	fmt.Printf("Global config:  %s\n", cfgtypes.GetGlobalConfigPath())
+	fmt.Printf("Project config: %s\n\n", cfgtypes.GetProjectConfigPath())
 
-	keys := getConfigKeys()
+	keys := GetKeys()
 
 	// Calculate column widths based on content
 	maxKeyLen := 3 // "Key"
@@ -34,9 +34,9 @@ func listConfig() {
 			maxKeyLen = len(k.Key)
 		}
 		envValue := os.Getenv(k.EnvVar)
-		projectValue := getConfigValue(projectCfg, k.Key)
-		globalValue := getConfigValue(globalCfg, k.Key)
-		defaultValue := getDefaultValue(k.Key)
+		projectValue := GetValue(projectCfg, k.Key)
+		globalValue := GetValue(globalCfg, k.Key)
+		defaultValue := GetDefaultValue(k.Key)
 		val := envValue
 		if val == "" {
 			val = projectValue
@@ -61,9 +61,9 @@ func listConfig() {
 
 	for _, k := range keys {
 		envValue := os.Getenv(k.EnvVar)
-		projectValue := getConfigValue(projectCfg, k.Key)
-		globalValue := getConfigValue(globalCfg, k.Key)
-		defaultValue := getDefaultValue(k.Key)
+		projectValue := GetValue(projectCfg, k.Key)
+		globalValue := GetValue(globalCfg, k.Key)
+		defaultValue := GetDefaultValue(k.Key)
 
 		var displayValue, source string
 		if envValue != "" {
@@ -92,21 +92,21 @@ func listConfig() {
 	}
 }
 
-func getConfig(key string) {
+func getGlobal(key string) {
 	// Validate key
-	if !isValidConfigKey(key) {
+	if !IsValidKey(key) {
 		fmt.Printf("Unknown config key: %s\n", key)
 		fmt.Println("Use 'addt config list' to see available keys.")
 		os.Exit(1)
 	}
 
-	cfg, err := config.LoadGlobalConfigFile()
+	cfg, err := cfgtypes.LoadGlobalConfigFile()
 	if err != nil {
 		fmt.Printf("Error loading config: %v\n", err)
 		os.Exit(1)
 	}
 
-	val := getConfigValue(cfg, key)
+	val := GetValue(cfg, key)
 	if val == "" {
 		fmt.Printf("%s is not set\n", key)
 	} else {
@@ -114,9 +114,9 @@ func getConfig(key string) {
 	}
 }
 
-func setConfig(key, value string) {
+func setGlobal(key, value string) {
 	// Validate key
-	keyInfo := getConfigKeyInfo(key)
+	keyInfo := GetKeyInfo(key)
 	if keyInfo == nil {
 		fmt.Printf("Unknown config key: %s\n", key)
 		fmt.Println("Use 'addt config --help' to see available keys.")
@@ -132,15 +132,15 @@ func setConfig(key, value string) {
 		}
 	}
 
-	cfg, err := config.LoadGlobalConfigFile()
+	cfg, err := cfgtypes.LoadGlobalConfigFile()
 	if err != nil {
 		fmt.Printf("Error loading config: %v\n", err)
 		os.Exit(1)
 	}
 
-	setConfigValue(cfg, key, value)
+	SetValue(cfg, key, value)
 
-	if err := config.SaveGlobalConfigFile(cfg); err != nil {
+	if err := cfgtypes.SaveGlobalConfigFile(cfg); err != nil {
 		fmt.Printf("Error saving config: %v\n", err)
 		os.Exit(1)
 	}
@@ -148,23 +148,23 @@ func setConfig(key, value string) {
 	fmt.Printf("Set %s = %s\n", key, value)
 }
 
-func unsetConfig(key string) {
+func unsetGlobal(key string) {
 	// Validate key
-	if !isValidConfigKey(key) {
+	if !IsValidKey(key) {
 		fmt.Printf("Unknown config key: %s\n", key)
 		fmt.Println("Use 'addt config list' to see available keys.")
 		os.Exit(1)
 	}
 
-	cfg, err := config.LoadGlobalConfigFile()
+	cfg, err := cfgtypes.LoadGlobalConfigFile()
 	if err != nil {
 		fmt.Printf("Error loading config: %v\n", err)
 		os.Exit(1)
 	}
 
-	unsetConfigValue(cfg, key)
+	UnsetValue(cfg, key)
 
-	if err := config.SaveGlobalConfigFile(cfg); err != nil {
+	if err := cfgtypes.SaveGlobalConfigFile(cfg); err != nil {
 		fmt.Printf("Error saving config: %v\n", err)
 		os.Exit(1)
 	}

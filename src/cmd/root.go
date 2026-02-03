@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	configcmd "github.com/jedi4ever/addt/cmd/config"
 	"github.com/jedi4ever/addt/config"
 	"github.com/jedi4ever/addt/core"
 	"github.com/jedi4ever/addt/provider"
@@ -174,7 +175,7 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 			return
 		case "config":
 			// Config management subcommands
-			HandleConfigCommand(args[1:])
+			configcmd.HandleCommand(args[1:])
 			return
 		case "extensions":
 			// Extensions management subcommands
@@ -224,7 +225,7 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 					return
 				}
 				// Delegate to HandleConfigCommand with "extension" prefix
-				HandleConfigCommand(append([]string{"extension"}, args[2:]...))
+				configcmd.HandleCommand(append([]string{"extension"}, args[2:]...))
 			default:
 				fmt.Printf("Unknown extensions command: %s\n", args[1])
 				os.Exit(1)
@@ -310,7 +311,7 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 						fmt.Println("  claude addt extensions config claude set version 1.0.5")
 						return
 					}
-					HandleConfigCommand(append([]string{"extension"}, subArgs[1:]...))
+					configcmd.HandleCommand(append([]string{"extension"}, subArgs[1:]...))
 				default:
 					fmt.Printf("Unknown extensions command: %s\n", subArgs[0])
 					os.Exit(1)
@@ -331,7 +332,7 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 					os.Exit(1)
 				}
 			case "config":
-				HandleConfigCommand(subArgs)
+				configcmd.HandleCommand(subArgs)
 			case "version":
 				PrintVersion(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion)
 			default:
