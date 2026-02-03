@@ -1,16 +1,16 @@
-# DClaude - Containerized Claude Code
+# nddt - Containerized Claude Code
 
-**dclaude is a containerized Claude Code runner.** It wraps the Claude CLI in Docker so your AI agent can read, write, and execute code in complete isolation.
+**nddt is a containerized Claude Code runner.** It wraps the Claude CLI in Docker so your AI agent can read, write, and execute code in complete isolation.
 
 **Same commands. Same workflows. No surprises on your host machine.**
 
 ```bash
 # Instead of:        Use:
-claude              dclaude
-claude --help       dclaude --help
-claude -p "prompt"  dclaude -p "prompt"
-claude --continue   dclaude --continue
-claude --model opus dclaude --model opus
+claude              nddt
+claude --help       nddt --help
+claude -p "prompt"  nddt -p "prompt"
+claude --continue   nddt --continue
+claude --model opus nddt --model opus
 ```
 
 ## Overview
@@ -95,20 +95,20 @@ Install via Homebrew tap:
 brew tap jedi4ever/tap
 
 # Install latest version
-brew install dclaude
+brew install nddt
 
 # Verify installation
-dclaude --dversion
+nddt --dversion
 ```
 
 **Upgrading:**
 ```bash
-brew upgrade dclaude
+brew upgrade nddt
 ```
 
 **Install specific version:**
 ```bash
-brew install jedi4ever/tap/dclaude@1.6.0
+brew install jedi4ever/tap/nddt@1.6.0
 ```
 
 ### Option 2: Download Pre-built Binary
@@ -117,29 +117,29 @@ Download the latest release for your platform:
 
 ```bash
 # macOS Apple Silicon (M1/M2/M3)
-curl -fsSL https://github.com/jedi4ever/dclaude/releases/latest/download/dclaude-darwin-arm64 -o dclaude
-chmod +x dclaude
-xattr -c dclaude && codesign --sign - --force dclaude
-sudo mv dclaude /usr/local/bin/
+curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-darwin-arm64 -o nddt
+chmod +x nddt
+xattr -c nddt && codesign --sign - --force nddt
+sudo mv nddt /usr/local/bin/
 
 # macOS Intel
-curl -fsSL https://github.com/jedi4ever/dclaude/releases/latest/download/dclaude-darwin-amd64 -o dclaude
-chmod +x dclaude
-xattr -c dclaude && codesign --sign - --force dclaude
-sudo mv dclaude /usr/local/bin/
+curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-darwin-amd64 -o nddt
+chmod +x nddt
+xattr -c nddt && codesign --sign - --force nddt
+sudo mv nddt /usr/local/bin/
 
 # Linux x86_64
-curl -fsSL https://github.com/jedi4ever/dclaude/releases/latest/download/dclaude-linux-amd64 -o dclaude
-chmod +x dclaude
-sudo mv dclaude /usr/local/bin/
+curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-linux-amd64 -o nddt
+chmod +x nddt
+sudo mv nddt /usr/local/bin/
 
 # Linux ARM64
-curl -fsSL https://github.com/jedi4ever/dclaude/releases/latest/download/dclaude-linux-arm64 -o dclaude
-chmod +x dclaude
-sudo mv dclaude /usr/local/bin/
+curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-linux-arm64 -o nddt
+chmod +x nddt
+sudo mv nddt /usr/local/bin/
 
 # Verify installation
-dclaude --dversion
+nddt --dversion
 ```
 
 **Install a specific version:**
@@ -148,10 +148,10 @@ If you need a specific version for reproducibility, use the version tag:
 
 ```bash
 # Example: Install v1.4.3 specifically (macOS)
-curl -fsSL https://github.com/jedi4ever/dclaude/releases/download/v1.4.3/dclaude-darwin-arm64 -o dclaude
-chmod +x dclaude
-xattr -c dclaude && codesign --sign - --force dclaude
-sudo mv dclaude /usr/local/bin/
+curl -fsSL https://github.com/jedi4ever/nddt/releases/download/v1.4.3/nddt-darwin-arm64 -o nddt
+chmod +x nddt
+xattr -c nddt && codesign --sign - --force nddt
+sudo mv nddt /usr/local/bin/
 ```
 
 **Upgrading to a newer version:**
@@ -160,26 +160,26 @@ Simply re-run the installation command (the codesign step is important to avoid 
 
 ```bash
 # Upgrade to latest version (macOS)
-curl -fsSL https://github.com/jedi4ever/dclaude/releases/latest/download/dclaude-darwin-arm64 -o dclaude
-chmod +x dclaude
-xattr -c dclaude && codesign --sign - --force dclaude
-sudo mv dclaude /usr/local/bin/
+curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-darwin-arm64 -o nddt
+chmod +x nddt
+xattr -c nddt && codesign --sign - --force nddt
+sudo mv nddt /usr/local/bin/
 ```
 
-See all releases at: https://github.com/jedi4ever/dclaude/releases
+See all releases at: https://github.com/jedi4ever/nddt/releases
 
 ### Option 3: Build from Source
 
 ```bash
 # Clone the repository
-git clone https://github.com/jedi4ever/dclaude.git
-cd dclaude
+git clone https://github.com/jedi4ever/nddt.git
+cd nddt
 
 # Build
 make build
 
 # Install
-sudo cp dist/dclaude /usr/local/bin/
+sudo cp dist/nddt /usr/local/bin/
 
 # Or use make install
 make install
@@ -193,7 +193,7 @@ If you've already run `claude login` on your machine:
 
 ```bash
 # Just run it - your ~/.claude config is automatically mounted!
-dclaude
+nddt
 ```
 
 ### Option 2: Use Docker with API Key
@@ -205,8 +205,8 @@ If you haven't configured Claude locally, set your API key:
 export ANTHROPIC_API_KEY='your-anthropic-api-key'
 export GH_TOKEN='your-github-token'  # Optional
 
-# Run dclaude
-dclaude
+# Run nddt
+nddt
 ```
 
 **Note:** The Docker image automatically builds on first run. No manual build step needed!
@@ -215,59 +215,59 @@ dclaude
 
 ### Drop-in Replacement
 
-Use `dclaude` exactly like you would use `claude`:
+Use `nddt` exactly like you would use `claude`:
 
 ```bash
 # Interactive mode (default)
-dclaude                                    # Same as: claude
+nddt                                    # Same as: claude
 
 # One-off command
-dclaude "Fix the bug in app.js"            # Same as: claude "Fix the bug in app.js"
+nddt "Fix the bug in app.js"            # Same as: claude "Fix the bug in app.js"
 
 # Print mode (non-interactive)
-dclaude -p "Explain this function"         # Same as: claude -p "Explain this function"
+nddt -p "Explain this function"         # Same as: claude -p "Explain this function"
 
 # Continue previous conversation
-dclaude --continue                         # Same as: claude --continue
+nddt --continue                         # Same as: claude --continue
 
 # Use different model
-dclaude --model opus "Refactor this"       # Same as: claude --model opus "Refactor this"
+nddt --model opus "Refactor this"       # Same as: claude --model opus "Refactor this"
 
 # Help and options
-dclaude --help                             # Same as: claude --help (shows Claude's help)
+nddt --help                             # Same as: claude --help (shows Claude's help)
 
 # Check version
-dclaude --version                          # Same as: claude --version (shows Claude's version)
+nddt --version                          # Same as: claude --version (shows Claude's version)
 ```
 
-### DClaude-Specific Commands
+### nddt-Specific Commands
 
-DClaude adds special commands and flags:
+nddt adds special commands and flags:
 
 ```bash
-# Show DClaude version
-dclaude --dversion
+# Show nddt version
+nddt --dversion
 
-# Show DClaude help
-dclaude --dhelp
+# Show nddt help
+nddt --nddt-help
 
 # Check for and install updates
-dclaude --update
+nddt --update
 
 # Rebuild the Docker image (removes and rebuilds)
-dclaude --rebuild
+nddt --nddt-rebuild
 
 # Can combine with other commands
-dclaude --rebuild --dversion
+nddt --nddt-rebuild --dversion
 
 # YOLO mode - bypass all permission checks (shorthand for --dangerously-skip-permissions)
-dclaude --yolo "Refactor this entire codebase"
+nddt --yolo "Refactor this entire codebase"
 
 # Open bash shell inside the container
-dclaude shell
+nddt shell
 
 # Run a specific command in the container
-dclaude shell -c "git config --list"
+nddt shell -c "git config --list"
 ```
 
 ### Container Management
@@ -276,34 +276,34 @@ Manage containers and images:
 
 ```bash
 # Build the container image
-dclaude containers build
-dclaude containers build --build-arg DCLAUDE_EXTENSIONS=claude,codex
+nddt containers build
+nddt containers build --build-arg NDDT_EXTENSIONS=claude,codex
 
 # List all persistent containers with their status
-dclaude containers list
-dclaude containers ls              # Short form
+nddt containers list
+nddt containers ls              # Short form
 
 # Stop a running persistent container
-dclaude containers stop dclaude-persistent-myproject-a1b2c3d4
+nddt containers stop nddt-persistent-myproject-a1b2c3d4
 
 # Remove a persistent container
-dclaude containers remove dclaude-persistent-myproject-a1b2c3d4
-dclaude containers rm dclaude-persistent-myproject-a1b2c3d4  # Short form
+nddt containers remove nddt-persistent-myproject-a1b2c3d4
+nddt containers rm nddt-persistent-myproject-a1b2c3d4  # Short form
 
 # Remove all persistent containers
-dclaude containers clean
+nddt containers clean
 ```
 
-**Note:** Container management commands only work with persistent containers created using `DCLAUDE_PERSISTENT=true`. Ephemeral containers are automatically removed after each run.
+**Note:** Container management commands only work with persistent containers created using `NDDT_PERSISTENT=true`. Ephemeral containers are automatically removed after each run.
 
 ### Symlink-Based Extension Selection
 
 Create symlinks to run different AI agents as dedicated commands:
 
 ```bash
-# Create symlinks to dclaude
-ln -s /usr/local/bin/dclaude /usr/local/bin/codex
-ln -s /usr/local/bin/dclaude /usr/local/bin/gemini
+# Create symlinks to nddt
+ln -s /usr/local/bin/nddt /usr/local/bin/codex
+ln -s /usr/local/bin/nddt /usr/local/bin/gemini
 
 # Now use them directly (auto-builds on first run)
 codex "help me with this code"     # Uses codex extension
@@ -311,9 +311,9 @@ gemini "explain this function"     # Uses gemini extension
 ```
 
 Each symlink automatically:
-- Sets `DCLAUDE_EXTENSIONS` to match the binary name
-- Sets `DCLAUDE_COMMAND` to match the binary name
-- Builds and uses its own isolated image (`dclaude:codex-latest`, etc.)
+- Sets `NDDT_EXTENSIONS` to match the binary name
+- Sets `NDDT_COMMAND` to match the binary name
+- Builds and uses its own isolated image (`nddt:codex-latest`, etc.)
 
 See [docs/extensions.md](docs/extensions.md) for more details on extensions.
 
@@ -323,42 +323,42 @@ Control network access with a whitelist-based firewall. Particularly useful in C
 
 ```bash
 # List allowed domains
-dclaude firewall list
-dclaude firewall ls              # Short form
+nddt firewall list
+nddt firewall ls              # Short form
 
 # Add a domain to the whitelist
-dclaude firewall add example.com
+nddt firewall add example.com
 
 # Remove a domain from the whitelist
-dclaude firewall remove example.com
-dclaude firewall rm example.com  # Short form
+nddt firewall remove example.com
+nddt firewall rm example.com  # Short form
 
 # Reset to default allowed domains
-dclaude firewall reset
+nddt firewall reset
 
 # Show help
-dclaude firewall help
+nddt firewall help
 ```
 
 **Enable the firewall:**
 
 ```bash
 # Enable strict mode (blocks all non-whitelisted traffic)
-export DCLAUDE_FIREWALL=true
-export DCLAUDE_FIREWALL_MODE=strict
-dclaude
+export NDDT_FIREWALL=true
+export NDDT_FIREWALL_MODE=strict
+nddt
 
 # Or use permissive mode (logs but allows all traffic - for testing)
-export DCLAUDE_FIREWALL=true
-export DCLAUDE_FIREWALL_MODE=permissive
-dclaude
+export NDDT_FIREWALL=true
+export NDDT_FIREWALL_MODE=permissive
+nddt
 ```
 
 **⚠️ Important:** The firewall requires additional Docker permissions:
 - Automatically adds `--cap-add=NET_ADMIN` when enabled
 - This is required for iptables configuration
 
-**Configuration file:** `~/.dclaude/firewall/allowed-domains.txt`
+**Configuration file:** `~/.nddt/firewall/allowed-domains.txt`
 
 **Default allowed domains:**
 - Anthropic API (api.anthropic.com)
@@ -378,26 +378,26 @@ dclaude
 
 ### Persistent Mode
 
-By default, dclaude uses ephemeral containers that are removed after each run. Enable persistent mode to keep a long-running container per directory:
+By default, nddt uses ephemeral containers that are removed after each run. Enable persistent mode to keep a long-running container per directory:
 
 ```bash
 # Enable persistent mode
-export DCLAUDE_PERSISTENT=true
+export NDDT_PERSISTENT=true
 
 # First run creates a persistent container
-dclaude "Add a new feature"
+nddt "Add a new feature"
 
 # Subsequent runs reuse the same container (much faster!)
-dclaude "Continue working"
+nddt "Continue working"
 
 # The container name is shown in the status line
-# ✓ dclaude:claude-2.1.17 | Node 20.20.0 | Container:dclaude-persistent-myproject-a1b2c3d4
+# ✓ nddt:claude-2.1.17 | Node 20.20.0 | Container:nddt-persistent-myproject-a1b2c3d4
 
 # List your persistent containers
-dclaude containers list
+nddt containers list
 
 # Clean up when done with the project
-dclaude containers clean
+nddt containers clean
 ```
 
 **Benefits of persistent mode:**
@@ -407,16 +407,16 @@ dclaude containers clean
 - **Development continuity** - Pick up exactly where you left off
 
 **Container naming:**
-- Format: `dclaude-persistent-<dirname>-<hash>`
-- Example: `dclaude-persistent-myproject-a1b2c3d4`
+- Format: `nddt-persistent-<dirname>-<hash>`
+- Example: `nddt-persistent-myproject-a1b2c3d4`
 - Hash is based on full directory path for uniqueness
 
 ### Example Session
 
 ```bash
-$ dclaude "Create a simple Express server on port 3000"
+$ nddt "Create a simple Express server on port 3000"
 
-✓ dclaude:claude-2.1.17 | Node 20.20.0 | GH:- | SSH:- | GPG:- | Docker:-
+✓ nddt:claude-2.1.17 | Node 20.20.0 | GH:- | SSH:- | GPG:- | Docker:-
 
 I'll create an Express server for you.
 
@@ -436,30 +436,30 @@ The server will be available at http://localhost:3000
 |----------|---------|-------------|
 | **ANTHROPIC_API_KEY** | *(optional)* | Your Anthropic API key for authentication. Not needed if you've already run `claude login` locally (uses `~/.claude` config) |
 | **GH_TOKEN** | *(optional)* | GitHub personal access token for gh CLI. Required for private repos, PRs, and write operations. Get yours at [github.com/settings/tokens](https://github.com/settings/tokens) |
-| **DCLAUDE_EXTENSIONS** | `claude` | Comma-separated list of extensions to install. Example: `claude,codex,gemini`. See [docs/extensions.md](docs/extensions.md) |
-| **DCLAUDE_COMMAND** | *(auto)* | Command to run instead of default. Example: `codex`, `gemini`, `gt` |
-| **DCLAUDE_<EXT>_VERSION** | `stable`/`latest` | Version for specific extension. Example: `DCLAUDE_CLAUDE_VERSION=2.1.27`, `DCLAUDE_CODEX_VERSION=latest` |
-| **DCLAUDE_<EXT>_MOUNT_CONFIG** | `true` | Mount extension config dirs. Example: `DCLAUDE_CLAUDE_MOUNT_CONFIG=false` |
-| **DCLAUDE_NODE_VERSION** | `20` | Node.js version for the container. Use major version (`18`, `20`, `22`), `lts`, or `current` |
-| **DCLAUDE_GO_VERSION** | `latest` | Go version for the container. Use `latest` for newest stable, or specific version like `1.23.5`, `1.25.6`, etc. |
-| **DCLAUDE_UV_VERSION** | `latest` | UV (Python package manager) version. Use `latest` for newest stable, or specific version like `0.5.11`, `0.9.28`, etc. Supports `uv self update` inside containers. |
-| **DCLAUDE_GPG_FORWARD** | `false` | Enable GPG commit signing. Set to `true` to mount `~/.gnupg` |
-| **DCLAUDE_SSH_FORWARD** | `false` | Enable SSH forwarding. Use `agent` or `true` for agent forwarding (recommended - secure), or `keys` to mount entire `~/.ssh` directory (⚠️ exposes all private keys) |
-| **DCLAUDE_DOCKER_FORWARD** | `false` | Enable Docker support. Use `isolated` or `true` for isolated environment (recommended), or `host` to access host Docker daemon |
-| **DCLAUDE_ENV_VARS** | `ANTHROPIC_API_KEY,GH_TOKEN` | Comma-separated list of environment variables to pass to container. Example: `ANTHROPIC_API_KEY,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY` |
-| **DCLAUDE_ENV_FILE** | `.env` | Path to environment file. Example: `.env.production` or `/path/to/config.env` |
-| **DCLAUDE_GITHUB_DETECT** | `false` | Auto-detect GitHub token from `gh` CLI. Set to `true` to use token from `gh auth login` |
-| **DCLAUDE_PORTS** | *(none)* | Comma-separated list of container ports to expose. Example: `3000,8080,5432`. Automatically maps to available host ports and tells Claude the correct URLs |
-| **DCLAUDE_PORT_RANGE_START** | `30000` | Starting port number for automatic port allocation. Useful to avoid conflicts with other services |
-| **DCLAUDE_LOG** | `false` | Enable command logging. Set to `true` to log all commands with timestamps, working directory, and container info |
-| **DCLAUDE_LOG_FILE** | `dclaude.log` | Log file location (only used when `DCLAUDE_LOG=true`). Example: `/tmp/dclaude.log` or `~/logs/dclaude.log` |
-| **DCLAUDE_PERSISTENT** | `false` | Enable persistent container mode. Set to `true` to keep containers running across sessions. Each directory gets its own persistent container with preserved state, Docker images, and installed packages |
-| **DCLAUDE_MOUNT_WORKDIR** | `true` | Mount working directory to `/workspace` in container. Set to `false` to run without mounting the current directory (useful for isolated tasks) |
-| **DCLAUDE_MOUNT_CLAUDE_CONFIG** | `true` | Mount `~/.claude` directory and `~/.claude.json` file (authentication and session history). Set to `false` to run without Claude config (requires `ANTHROPIC_API_KEY` environment variable) |
-| **DCLAUDE_FIREWALL** | `false` | Enable network firewall (whitelist-based). Set to `true` to restrict outbound network access to allowed domains. **Requires `--cap-add=NET_ADMIN`** (automatically added when enabled). Particularly useful in CI/CD environments |
-| **DCLAUDE_FIREWALL_MODE** | `strict` | Firewall mode: `strict` (block non-whitelisted traffic), `permissive` (log but allow all traffic), or `off` (disable firewall). Default is `strict` when firewall is enabled |
-| **DCLAUDE_MODE** | `container` | Execution mode: `container` (Docker-based, default) or `shell` (direct host execution - not yet implemented) |
-| **DCLAUDE_PROVIDER** | `docker` | Provider type: `docker` (default) or `daytona` (experimental, see [docs/README-daytona.md](docs/README-daytona.md)) |
+| **NDDT_EXTENSIONS** | `claude` | Comma-separated list of extensions to install. Example: `claude,codex,gemini`. See [docs/extensions.md](docs/extensions.md) |
+| **NDDT_COMMAND** | *(auto)* | Command to run instead of default. Example: `codex`, `gemini`, `gt` |
+| **NDDT_<EXT>_VERSION** | `stable`/`latest` | Version for specific extension. Example: `NDDT_CLAUDE_VERSION=2.1.27`, `NDDT_CODEX_VERSION=latest` |
+| **NDDT_<EXT>_MOUNT_CONFIG** | `true` | Mount extension config dirs. Example: `NDDT_CLAUDE_MOUNT_CONFIG=false` |
+| **NDDT_NODE_VERSION** | `20` | Node.js version for the container. Use major version (`18`, `20`, `22`), `lts`, or `current` |
+| **NDDT_GO_VERSION** | `latest` | Go version for the container. Use `latest` for newest stable, or specific version like `1.23.5`, `1.25.6`, etc. |
+| **NDDT_UV_VERSION** | `latest` | UV (Python package manager) version. Use `latest` for newest stable, or specific version like `0.5.11`, `0.9.28`, etc. Supports `uv self update` inside containers. |
+| **NDDT_GPG_FORWARD** | `false` | Enable GPG commit signing. Set to `true` to mount `~/.gnupg` |
+| **NDDT_SSH_FORWARD** | `false` | Enable SSH forwarding. Use `agent` or `true` for agent forwarding (recommended - secure), or `keys` to mount entire `~/.ssh` directory (⚠️ exposes all private keys) |
+| **NDDT_DOCKER_FORWARD** | `false` | Enable Docker support. Use `isolated` or `true` for isolated environment (recommended), or `host` to access host Docker daemon |
+| **NDDT_ENV_VARS** | `ANTHROPIC_API_KEY,GH_TOKEN` | Comma-separated list of environment variables to pass to container. Example: `ANTHROPIC_API_KEY,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY` |
+| **NDDT_ENV_FILE** | `.env` | Path to environment file. Example: `.env.production` or `/path/to/config.env` |
+| **NDDT_GITHUB_DETECT** | `false` | Auto-detect GitHub token from `gh` CLI. Set to `true` to use token from `gh auth login` |
+| **NDDT_PORTS** | *(none)* | Comma-separated list of container ports to expose. Example: `3000,8080,5432`. Automatically maps to available host ports and tells Claude the correct URLs |
+| **NDDT_PORT_RANGE_START** | `30000` | Starting port number for automatic port allocation. Useful to avoid conflicts with other services |
+| **NDDT_LOG** | `false` | Enable command logging. Set to `true` to log all commands with timestamps, working directory, and container info |
+| **NDDT_LOG_FILE** | `nddt.log` | Log file location (only used when `NDDT_LOG=true`). Example: `/tmp/nddt.log` or `~/logs/nddt.log` |
+| **NDDT_PERSISTENT** | `false` | Enable persistent container mode. Set to `true` to keep containers running across sessions. Each directory gets its own persistent container with preserved state, Docker images, and installed packages |
+| **NDDT_MOUNT_WORKDIR** | `true` | Mount working directory to `/workspace` in container. Set to `false` to run without mounting the current directory (useful for isolated tasks) |
+| **NDDT_MOUNT_CLAUDE_CONFIG** | `true` | Mount `~/.claude` directory and `~/.claude.json` file (authentication and session history). Set to `false` to run without Claude config (requires `ANTHROPIC_API_KEY` environment variable) |
+| **NDDT_FIREWALL** | `false` | Enable network firewall (whitelist-based). Set to `true` to restrict outbound network access to allowed domains. **Requires `--cap-add=NET_ADMIN`** (automatically added when enabled). Particularly useful in CI/CD environments |
+| **NDDT_FIREWALL_MODE** | `strict` | Firewall mode: `strict` (block non-whitelisted traffic), `permissive` (log but allow all traffic), or `off` (disable firewall). Default is `strict` when firewall is enabled |
+| **NDDT_MODE** | `container` | Execution mode: `container` (Docker-based, default) or `shell` (direct host execution - not yet implemented) |
+| **NDDT_PROVIDER** | `docker` | Provider type: `docker` (default) or `daytona` (experimental, see [docs/README-daytona.md](docs/README-daytona.md)) |
 
 ### Quick Configuration Examples
 
@@ -467,21 +467,21 @@ The server will be available at http://localhost:3000
 # Basic usage
 export ANTHROPIC_API_KEY="your-key"
 export GH_TOKEN="your-github-token"
-dclaude
+nddt
 
 # With port mapping for web development
-export DCLAUDE_PORTS="3000,8080,5432"
-dclaude "Create an Express app"
+export NDDT_PORTS="3000,8080,5432"
+nddt "Create an Express app"
 
 # With SSH and Docker support
-export DCLAUDE_SSH_FORWARD=agent
-export DCLAUDE_DOCKER_FORWARD=isolated
-dclaude
+export NDDT_SSH_FORWARD=agent
+export NDDT_DOCKER_FORWARD=isolated
+nddt
 
 # Pin to specific versions
-export DCLAUDE_CLAUDE_VERSION=2.1.27
-export DCLAUDE_NODE_VERSION=18
-dclaude
+export NDDT_CLAUDE_VERSION=2.1.27
+export NDDT_NODE_VERSION=18
+nddt
 ```
 
 ## Common Use Cases
@@ -492,8 +492,8 @@ When Claude starts web services, it needs to tell you the correct host ports:
 
 ```bash
 # Enable port mapping
-export DCLAUDE_PORTS="3000,8080,5432"
-dclaude "Create a web server on port 3000"
+export NDDT_PORTS="3000,8080,5432"
+nddt "Create a web server on port 3000"
 
 # Status line shows: Ports:3000→30000,8080→30001
 # Claude will say: "Visit http://localhost:30000 in your browser"
@@ -501,7 +501,7 @@ dclaude "Create a web server on port 3000"
 
 **How it works:**
 - You specify container ports to expose
-- DClaude automatically maps them to available host ports
+- nddt automatically maps them to available host ports
 - Port mappings are passed to Claude via `--append-system-prompt`
 - Claude knows the correct URLs and tells you the host ports
 - Internal testing uses container ports, user URLs use host ports
@@ -509,10 +509,10 @@ dclaude "Create a web server on port 3000"
 **Common scenarios:**
 ```bash
 # Web development
-DCLAUDE_PORTS="3000,5173,8080" dclaude
+NDDT_PORTS="3000,5173,8080" nddt
 
 # Full stack (frontend, backend, database)
-DCLAUDE_PORTS="3000,8000,5432" dclaude
+NDDT_PORTS="3000,8000,5432" nddt
 ```
 
 ### SSH Key Forwarding
@@ -521,12 +521,12 @@ For git operations over SSH, pushing to private repos, etc:
 
 ```bash
 # Agent forwarding (recommended - more secure)
-export DCLAUDE_SSH_FORWARD=agent
-dclaude
+export NDDT_SSH_FORWARD=agent
+nddt
 
 # Or mount SSH keys directly (exposes all keys)
-export DCLAUDE_SSH_FORWARD=keys
-dclaude
+export NDDT_SSH_FORWARD=keys
+nddt
 ```
 
 **⚠️ Security Warning:**
@@ -546,12 +546,12 @@ Let Claude run Docker commands:
 
 ```bash
 # Isolated Docker environment (recommended)
-export DCLAUDE_DOCKER_FORWARD=isolated
-dclaude "Build and run a Docker container"
+export NDDT_DOCKER_FORWARD=isolated
+nddt "Build and run a Docker container"
 
 # Or access host Docker socket
-export DCLAUDE_DOCKER_FORWARD=host
-dclaude
+export NDDT_DOCKER_FORWARD=host
+nddt
 ```
 
 **Isolated vs Host mode:**
@@ -563,8 +563,8 @@ dclaude
 For signed commits:
 
 ```bash
-export DCLAUDE_GPG_FORWARD=true
-dclaude
+export NDDT_GPG_FORWARD=true
+nddt
 ```
 
 Your GPG keys are mounted and commits will be signed automatically.
@@ -575,20 +575,20 @@ Pin to specific tool versions:
 
 ```bash
 # Use specific Claude Code version
-export DCLAUDE_CLAUDE_VERSION=2.1.27
-dclaude
+export NDDT_CLAUDE_VERSION=2.1.27
+nddt
 
 # Use specific Node.js version
-export DCLAUDE_NODE_VERSION=18
-dclaude
+export NDDT_NODE_VERSION=18
+nddt
 
 # Per-extension versioning
-export DCLAUDE_CLAUDE_VERSION=2.1.27
-export DCLAUDE_CODEX_VERSION=latest
-dclaude containers build --build-arg DCLAUDE_EXTENSIONS=claude,codex
+export NDDT_CLAUDE_VERSION=2.1.27
+export NDDT_CODEX_VERSION=latest
+nddt containers build --build-arg NDDT_EXTENSIONS=claude,codex
 
 # Use stable version (default)
-dclaude  # Automatically uses stable version
+nddt  # Automatically uses stable version
 ```
 
 ### Custom Environment Variables
@@ -597,32 +597,32 @@ Pass additional environment variables to the container:
 
 ```bash
 # Pass AWS credentials
-export DCLAUDE_ENV_VARS="ANTHROPIC_API_KEY,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_REGION"
+export NDDT_ENV_VARS="ANTHROPIC_API_KEY,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_REGION"
 export AWS_ACCESS_KEY_ID="your-key"
 export AWS_SECRET_ACCESS_KEY="your-secret"
 export AWS_REGION="us-east-1"
-dclaude
+nddt
 ```
 
 ### Aliases and Shortcuts
 
-Create shell aliases for common dclaude configurations:
+Create shell aliases for common nddt configurations:
 
 ```bash
 # Add to ~/.bashrc or ~/.zshrc
 
 # YOLO mode - bypasses all permission prompts (use with caution!)
-# Note: dclaude has built-in --yolo flag, this alias just makes it shorter
-alias dclaude-yolo='dclaude --yolo'
+# Note: nddt has built-in --yolo flag, this alias just makes it shorter
+alias nddt-yolo='nddt --yolo'
 
 # Dev mode - with Docker and port mapping
-alias dclaude-dev='DCLAUDE_DOCKER_FORWARD=isolated DCLAUDE_PORTS="3000,8080,5432" dclaude'
+alias nddt-dev='NDDT_DOCKER_FORWARD=isolated NDDT_PORTS="3000,8080,5432" nddt'
 
 # Opus mode - always use Claude Opus
-alias dclaude-opus='dclaude --model opus'
+alias nddt-opus='nddt --model opus'
 
 # Quick shell access
-alias dshell='dclaude shell'
+alias dshell='nddt shell'
 ```
 
 **⚠️ Warning about YOLO mode:**
@@ -635,15 +635,15 @@ alias dshell='dclaude shell'
 **Usage:**
 ```bash
 # Use --yolo flag directly (no alias needed)
-dclaude --yolo "Refactor this entire codebase"
+nddt --yolo "Refactor this entire codebase"
 
 # Or set up aliases for convenience
 source ~/.bashrc  # or source ~/.zshrc
 
 # Then use them
-dclaude-yolo "Refactor this entire codebase"
-dclaude-dev "Create a full-stack app"
-dclaude-opus "Complex architectural question"
+nddt-yolo "Refactor this entire codebase"
+nddt-dev "Create a full-stack app"
+nddt-opus "Complex architectural question"
 dshell  # Quick shell access
 ```
 
@@ -651,17 +651,17 @@ dshell  # Quick shell access
 
 ### Binary Killed with Signal 9 (macOS)
 
-If you see `Killed: 9` when running dclaude on macOS, the binary needs to be code-signed:
+If you see `Killed: 9` when running nddt on macOS, the binary needs to be code-signed:
 
 ```bash
 # If you forgot to run codesign during installation
-codesign --sign - --force /usr/local/bin/dclaude
+codesign --sign - --force /usr/local/bin/nddt
 
 # Or re-download with proper signing
-curl -fsSL https://github.com/jedi4ever/dclaude/releases/latest/download/dclaude-darwin-arm64 -o dclaude
-chmod +x dclaude
-xattr -c dclaude && codesign --sign - --force dclaude
-sudo mv dclaude /usr/local/bin/
+curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-darwin-arm64 -o nddt
+chmod +x nddt
+xattr -c nddt && codesign --sign - --force nddt
+sudo mv nddt /usr/local/bin/
 ```
 
 **Why this happens:**
@@ -678,15 +678,15 @@ If Claude Code reports authentication errors:
 # Configure Claude locally (one-time setup)
 claude login
 
-# Then dclaude will automatically use your credentials
-dclaude
+# Then nddt will automatically use your credentials
+nddt
 ```
 
 **Option 2: Use API key**
 ```bash
 # Set API key in environment
 export ANTHROPIC_API_KEY='your-key'
-dclaude
+nddt
 ```
 
 ### Image Not Found
@@ -694,17 +694,17 @@ dclaude
 The image is built automatically on first run. If you see "image not found":
 
 ```bash
-dclaude  # Will auto-build
+nddt  # Will auto-build
 ```
 
 Force rebuild:
 ```bash
-# Easiest way - use --rebuild flag
-dclaude --rebuild
+# Easiest way - use --nddt-rebuild flag
+nddt --nddt-rebuild
 
 # Or manually remove and rebuild
-docker rmi dclaude:latest
-dclaude  # Rebuilds automatically
+docker rmi nddt:latest
+nddt  # Rebuilds automatically
 ```
 
 ### Permission Issues
@@ -727,7 +727,7 @@ Your local `.gitconfig` is automatically mounted. Check it exists:
 ls -la ~/.gitconfig
 
 # Test inside container
-dclaude shell -c "git config --global user.name"
+nddt shell -c "git config --global user.name"
 ```
 
 ### Port Conflicts
@@ -736,28 +736,28 @@ If ports are already in use:
 
 ```bash
 # Use different port range
-export DCLAUDE_PORT_RANGE_START=40000
-export DCLAUDE_PORTS="3000,8080"
-dclaude
+export NDDT_PORT_RANGE_START=40000
+export NDDT_PORTS="3000,8080"
+nddt
 ```
 
 ### Debugging
 
 ```bash
 # Enable logging
-export DCLAUDE_LOG=true
-dclaude
+export NDDT_LOG=true
+nddt
 
 # Check logs
-cat dclaude.log
+cat nddt.log
 
 # Open shell to inspect container
-dclaude shell
+nddt shell
 ```
 
 ## How It Works
 
-DClaude is a Go binary that:
+nddt is a Go binary that:
 
 1. **Checks Requirements** - Verifies Docker is available
 2. **Version Detection** - Queries npm registry for Claude Code versions via HTTP
@@ -793,37 +793,37 @@ For technical details, architecture, and development guide, see [docs/README-dev
 ### Create a Web Application
 
 ```bash
-export DCLAUDE_PORTS="3000"
-dclaude "Create a simple Express server with a /hello endpoint"
+export NDDT_PORTS="3000"
+nddt "Create a simple Express server with a /hello endpoint"
 ```
 
 ### Work with Private GitHub Repos
 
 ```bash
 export GH_TOKEN="your-token"
-export DCLAUDE_SSH_FORWARD=agent
-dclaude "Clone my private repo and analyze the code structure"
+export NDDT_SSH_FORWARD=agent
+nddt "Clone my private repo and analyze the code structure"
 ```
 
 ### Build Docker Images
 
 ```bash
-export DCLAUDE_DOCKER_FORWARD=isolated
-dclaude "Create a Dockerfile for this Node.js app and build it"
+export NDDT_DOCKER_FORWARD=isolated
+nddt "Create a Dockerfile for this Node.js app and build it"
 ```
 
 ### Sign Git Commits
 
 ```bash
-export DCLAUDE_GPG_FORWARD=true
-dclaude "Make a commit with GPG signature"
+export NDDT_GPG_FORWARD=true
+nddt "Make a commit with GPG signature"
 ```
 
 ### Debug Container Environment
 
 ```bash
 # Open shell
-dclaude shell
+nddt shell
 
 # Inside container
 echo $ANTHROPIC_API_KEY  # Check env vars

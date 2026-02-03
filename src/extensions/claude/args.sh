@@ -1,6 +1,6 @@
 #!/bin/bash
 # Claude Code argument transformer
-# Transforms generic dclaude args to Claude-specific args
+# Transforms generic nddt args to Claude-specific args
 
 ARGS=()
 

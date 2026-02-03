@@ -27,7 +27,7 @@ jobs:
         run: make build
 
       - name: Test binary
-        run: ./dist/dclaude --dversion
+        run: ./dist/nddt --dversion
 
       - name: Run tests (if any)
         run: |

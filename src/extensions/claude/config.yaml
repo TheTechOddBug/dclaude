@@ -8,9 +8,9 @@ env_vars:
   - ANTHROPIC_API_KEY
 mounts:
   - source: ~/.claude
-    target: /home/dclaude/.claude
+    target: /home/nddt/.claude
   - source: ~/.claude.json
-    target: /home/dclaude/.claude.json
+    target: /home/nddt/.claude.json
 flags:
   - flag: "--yolo"
     description: "Bypass permission checks"

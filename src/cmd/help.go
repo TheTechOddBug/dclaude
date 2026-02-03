@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jedi4ever/dclaude/provider/docker"
+	"github.com/jedi4ever/nddt/provider/docker"
 )
 
 // PrintHelp displays usage information
@@ -14,11 +14,11 @@ func PrintHelp(version string) {
 
 // PrintHelpWithFlags displays usage information with extension-specific flags
 func PrintHelpWithFlags(version, imageName, command string) {
-	fmt.Printf(`dclaude - Run AI coding agents in containerized environments
+	fmt.Printf(`nddt - Run AI coding agents in containerized environments
 
 Version: %s
 
-Usage: dclaude [options] [prompt]
+Usage: nddt [options] [prompt]
 
 Commands:
   shell                              Open bash shell in environment
@@ -26,9 +26,9 @@ Commands:
   containers [list|stop|rm|clean]    Manage persistent environments
   firewall [list|add|remove|reset]   Manage network firewall domains
   --update                           Check for and install updates
-  --rebuild                          Rebuild the environment (Docker only)
-  --dversion                         Show dclaude version
-  --dhelp                            Show this help
+  --nddt-rebuild                     Rebuild the environment (Docker only)
+  --dversion                         Show nddt version
+  --nddt-help                        Show this help
 
 `, version)
 
@@ -44,47 +44,47 @@ Commands:
 
 	fmt.Print(`
 Environment Variables:
-  DCLAUDE_PROVIDER            Provider type: docker or daytona (default: docker)
-  DCLAUDE_NODE_VERSION        Node.js version (default: 22)
-  DCLAUDE_GO_VERSION          Go version (default: latest)
-  DCLAUDE_UV_VERSION          UV Python package manager version (default: latest)
-  DCLAUDE_ENV_VARS            Comma-separated env vars to pass (default: ANTHROPIC_API_KEY,GH_TOKEN)
-  DCLAUDE_GITHUB_DETECT       Auto-detect GitHub token from gh CLI (default: false)
-  DCLAUDE_PORTS               Comma-separated container ports to expose
-  DCLAUDE_PORT_RANGE_START    Starting port for auto allocation (default: 30000)
-  DCLAUDE_SSH_FORWARD         SSH forwarding mode: agent, keys, or empty
-  DCLAUDE_GPG_FORWARD         Enable GPG forwarding (true/false)
-  DCLAUDE_DIND_MODE           Docker-in-Docker mode: host, isolated (default: none)
-  DCLAUDE_ENV_FILE            Path to .env file (default: .env)
-  DCLAUDE_LOG                 Enable command logging (default: false)
-  DCLAUDE_LOG_FILE            Log file path
-  DCLAUDE_PERSISTENT          Enable persistent container mode (true/false)
-  DCLAUDE_WORKDIR             Override working directory (default: current directory)
-  DCLAUDE_WORKDIR_AUTOMOUNT   Auto-mount working directory to /workspace (default: true)
-  DCLAUDE_FIREWALL            Enable network firewall (default: false, requires --cap-add=NET_ADMIN)
-  DCLAUDE_FIREWALL_MODE       Firewall mode: strict, permissive, off (default: strict)
-  DCLAUDE_MODE                Execution mode: container or shell (default: container)
-  DCLAUDE_EXTENSIONS          Extensions to install at build time (e.g., claude,codex,gemini)
-  DCLAUDE_COMMAND             Command to run instead of claude (e.g., codex, gemini)
+  NDDT_PROVIDER            Provider type: docker or daytona (default: docker)
+  NDDT_NODE_VERSION        Node.js version (default: 22)
+  NDDT_GO_VERSION          Go version (default: latest)
+  NDDT_UV_VERSION          UV Python package manager version (default: latest)
+  NDDT_ENV_VARS            Comma-separated env vars to pass (default: ANTHROPIC_API_KEY,GH_TOKEN)
+  NDDT_GITHUB_DETECT       Auto-detect GitHub token from gh CLI (default: false)
+  NDDT_PORTS               Comma-separated container ports to expose
+  NDDT_PORT_RANGE_START    Starting port for auto allocation (default: 30000)
+  NDDT_SSH_FORWARD         SSH forwarding mode: agent, keys, or empty
+  NDDT_GPG_FORWARD         Enable GPG forwarding (true/false)
+  NDDT_DIND_MODE           Docker-in-Docker mode: host, isolated (default: none)
+  NDDT_ENV_FILE            Path to .env file (default: .env)
+  NDDT_LOG                 Enable command logging (default: false)
+  NDDT_LOG_FILE            Log file path
+  NDDT_PERSISTENT          Enable persistent container mode (true/false)
+  NDDT_WORKDIR             Override working directory (default: current directory)
+  NDDT_WORKDIR_AUTOMOUNT   Auto-mount working directory to /workspace (default: true)
+  NDDT_FIREWALL            Enable network firewall (default: false, requires --cap-add=NET_ADMIN)
+  NDDT_FIREWALL_MODE       Firewall mode: strict, permissive, off (default: strict)
+  NDDT_MODE                Execution mode: container or shell (default: container)
+  NDDT_EXTENSIONS          Extensions to install at build time (e.g., claude,codex,gemini)
+  NDDT_COMMAND             Command to run instead of claude (e.g., codex, gemini)
 
 Per-Extension Configuration:
-  DCLAUDE_<EXT>_VERSION       Version for extension (e.g., DCLAUDE_CLAUDE_VERSION=1.0.5)
+  NDDT_<EXT>_VERSION       Version for extension (e.g., NDDT_CLAUDE_VERSION=1.0.5)
                               Default versions defined in each extension's config.yaml
-  DCLAUDE_<EXT>_AUTOMOUNT     Auto-mount extension config (e.g., DCLAUDE_CLAUDE_AUTOMOUNT=false)
+  NDDT_<EXT>_AUTOMOUNT     Auto-mount extension config (e.g., NDDT_CLAUDE_AUTOMOUNT=false)
 
 Build Command:
-  dclaude containers build [--build-arg KEY=VALUE]...
+  nddt containers build [--build-arg KEY=VALUE]...
                               Build the container image with optional build args
-                              Example: dclaude containers build --build-arg DCLAUDE_EXTENSIONS=gastown
+                              Example: nddt containers build --build-arg NDDT_EXTENSIONS=gastown
 
 Examples:
-  dclaude --dhelp
-  dclaude "Fix the bug in app.js"
-  dclaude --yolo "Refactor this entire codebase"
-  dclaude --help              # Shows agent's help
-  dclaude shell
-  DCLAUDE_COMMAND=codex dclaude   # Run Codex instead of Claude
-  DCLAUDE_COMMAND=gemini dclaude  # Run Gemini instead of Claude
+  nddt --nddt-help
+  nddt "Fix the bug in app.js"
+  nddt --yolo "Refactor this entire codebase"
+  nddt --help              # Shows agent's help
+  nddt shell
+  NDDT_COMMAND=codex nddt   # Run Codex instead of Claude
+  NDDT_COMMAND=gemini nddt  # Run Gemini instead of Claude
 `)
 }
 
@@ -109,7 +109,7 @@ func printExtensionFlags(imageName, command string) {
 
 // GetActiveCommand returns the active command from env or default
 func GetActiveCommand() string {
-	if cmd := os.Getenv("DCLAUDE_COMMAND"); cmd != "" {
+	if cmd := os.Getenv("NDDT_COMMAND"); cmd != "" {
 		return cmd
 	}
 	return "claude"

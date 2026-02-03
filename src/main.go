@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/jedi4ever/dclaude/cmd"
-	"github.com/jedi4ever/dclaude/internal/util"
+	"github.com/jedi4ever/nddt/cmd"
+	"github.com/jedi4ever/nddt/internal/util"
 )
 
 // Version can be overridden at build time with -ldflags "-X main.Version=x.y.z"

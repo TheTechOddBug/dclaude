@@ -23,14 +23,14 @@ func HandleFirewallCommand(args []string) {
 	case "add":
 		if len(args) < 2 {
 			fmt.Println("Error: domain required")
-			fmt.Println("Usage: dclaude firewall add <domain>")
+			fmt.Println("Usage: nddt firewall add <domain>")
 			os.Exit(1)
 		}
 		addAllowedDomain(args[1])
 	case "remove", "rm":
 		if len(args) < 2 {
 			fmt.Println("Error: domain required")
-			fmt.Println("Usage: dclaude firewall remove <domain>")
+			fmt.Println("Usage: nddt firewall remove <domain>")
 			os.Exit(1)
 		}
 		removeAllowedDomain(args[1])
@@ -48,9 +48,9 @@ func HandleFirewallCommand(args []string) {
 func getFirewallConfigPath() string {
 	currentUser, err := user.Current()
 	if err != nil {
-		return filepath.Join(os.Getenv("HOME"), ".dclaude", "firewall", "allowed-domains.txt")
+		return filepath.Join(os.Getenv("HOME"), ".nddt", "firewall", "allowed-domains.txt")
 	}
-	return filepath.Join(currentUser.HomeDir, ".dclaude", "firewall", "allowed-domains.txt")
+	return filepath.Join(currentUser.HomeDir, ".nddt", "firewall", "allowed-domains.txt")
 }
 
 func ensureFirewallConfigExists() error {
@@ -64,7 +64,7 @@ func ensureFirewallConfigExists() error {
 
 	// Create default config if it doesn't exist
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		defaultConfig := `# Default allowed domains for DClaude firewall
+		defaultConfig := `# Default allowed domains for nddt firewall
 # Lines starting with # are comments
 
 # Anthropic API
@@ -209,7 +209,7 @@ func removeAllowedDomain(domain string) {
 func resetToDefaults() {
 	configPath := getFirewallConfigPath()
 
-	defaultConfig := `# Default allowed domains for DClaude firewall
+	defaultConfig := `# Default allowed domains for nddt firewall
 # Lines starting with # are comments
 
 # Anthropic API
@@ -259,9 +259,9 @@ unpkg.com
 }
 
 func printFirewallHelp() {
-	fmt.Println(`dclaude firewall - Manage network firewall allowed domains
+	fmt.Println(`nddt firewall - Manage network firewall allowed domains
 
-Usage: dclaude firewall <command> [args]
+Usage: nddt firewall <command> [args]
 
 Commands:
   list, ls               List all allowed domains
@@ -271,17 +271,17 @@ Commands:
   help                   Show this help
 
 Examples:
-  dclaude firewall list
-  dclaude firewall add example.com
-  dclaude firewall rm example.com
-  dclaude firewall reset
+  nddt firewall list
+  nddt firewall add example.com
+  nddt firewall rm example.com
+  nddt firewall reset
 
-Configuration file: ~/.dclaude/firewall/allowed-domains.txt
+Configuration file: ~/.nddt/firewall/allowed-domains.txt
 
 To enable the firewall:
-  export DCLAUDE_FIREWALL=true
-  export DCLAUDE_FIREWALL_MODE=strict  # or 'permissive' or 'off'
-  dclaude
+  export NDDT_FIREWALL=true
+  export NDDT_FIREWALL_MODE=strict  # or 'permissive' or 'off'
+  nddt
 
 Note: The firewall works particularly well in CI/CD environments where you want
 to restrict network access to only approved domains.

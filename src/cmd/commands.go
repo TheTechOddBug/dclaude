@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/jedi4ever/dclaude/provider"
+	"github.com/jedi4ever/nddt/provider"
 )
 
 // HandleContainersCommand handles the containers subcommand using a provider
@@ -31,7 +31,7 @@ func HandleContainersCommand(prov provider.Provider, cfg *provider.Config, args 
 		}
 	case "stop":
 		if len(args) < 2 {
-			fmt.Println("Usage: dclaude containers stop <name>")
+			fmt.Println("Usage: nddt containers stop <name>")
 			os.Exit(1)
 		}
 		if err := prov.Stop(args[1]); err != nil {
@@ -40,7 +40,7 @@ func HandleContainersCommand(prov provider.Provider, cfg *provider.Config, args 
 		}
 	case "remove", "rm":
 		if len(args) < 2 {
-			fmt.Println("Usage: dclaude containers remove <name>")
+			fmt.Println("Usage: nddt containers remove <name>")
 			os.Exit(1)
 		}
 		if err := prov.Remove(args[1]); err != nil {
@@ -73,7 +73,7 @@ func HandleContainersCommand(prov provider.Provider, cfg *provider.Config, args 
 		}
 		fmt.Println("✓ Cleaned")
 	default:
-		fmt.Println(`Usage: dclaude containers [build|list|stop|remove|clean]
+		fmt.Println(`Usage: nddt containers [build|list|stop|remove|clean]
 
 Commands:
   build       - Build the container image
@@ -94,7 +94,7 @@ func handleBuildSubcommand(prov provider.Provider, cfg *provider.Config, args []
 			if len(parts) == 2 {
 				key, val := parts[0], parts[1]
 				switch {
-				case key == "DCLAUDE_EXTENSIONS":
+				case key == "NDDT_EXTENSIONS":
 					cfg.Extensions = val
 				case key == "NODE_VERSION":
 					cfg.NodeVersion = val

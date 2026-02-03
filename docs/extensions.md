@@ -1,6 +1,6 @@
-# DClaude Extensions
+# nddt Extensions
 
-Extensions allow you to add tools and AI agents to your DClaude container image. The base image provides infrastructure (Node.js, Go, Python/UV, Git, GitHub CLI), and extensions add the actual tools.
+Extensions allow you to add tools and AI agents to your nddt container image. The base image provides infrastructure (Node.js, Go, Python/UV, Git, GitHub CLI), and extensions add the actual tools.
 
 ## Available Extensions
 
@@ -33,19 +33,19 @@ Use the `containers build` command with `--build-arg` to include extensions:
 
 ```bash
 # Default build (installs claude extension)
-dclaude containers build
+nddt containers build
 
 # Build with gastown (automatically includes claude and beads dependencies)
-dclaude containers build --build-arg DCLAUDE_EXTENSIONS=gastown
+nddt containers build --build-arg NDDT_EXTENSIONS=gastown
 
 # Build with multiple extensions
-dclaude containers build --build-arg DCLAUDE_EXTENSIONS=claude,tessl
+nddt containers build --build-arg NDDT_EXTENSIONS=claude,tessl
 
 # Build minimal image with only tessl (no claude)
-dclaude containers build --build-arg DCLAUDE_EXTENSIONS=tessl
+nddt containers build --build-arg NDDT_EXTENSIONS=tessl
 
 # Via environment variable
-DCLAUDE_EXTENSIONS=gastown dclaude containers build
+NDDT_EXTENSIONS=gastown nddt containers build
 ```
 
 ### Image Naming Convention
@@ -54,13 +54,13 @@ Docker images are automatically named based on the installed extensions and thei
 
 ```bash
 # Single extension
-dclaude:claude-2.1.17
+nddt:claude-2.1.17
 
 # Multiple extensions (sorted alphabetically)
-dclaude:claude-2.1.17_codex-latest
+nddt:claude-2.1.17_codex-latest
 
 # Different combination = different image
-dclaude:gemini-latest_tessl-latest
+nddt:gemini-latest_tessl-latest
 ```
 
 This ensures that different extension combinations always get their own isolated images.
@@ -72,7 +72,7 @@ Extensions can depend on other extensions. Dependencies are automatically resolv
 For example, `gastown` depends on `beads`, so running:
 
 ```bash
-dclaude build --build-arg DCLAUDE_EXTENSIONS=gastown
+nddt build --build-arg NDDT_EXTENSIONS=gastown
 ```
 
 Will automatically install both `beads` and `gastown`.
@@ -83,39 +83,39 @@ After building, you can verify installed extensions:
 
 ```bash
 # Check extension metadata
-dclaude shell -c "cat ~/.dclaude/extensions.json"
+nddt shell -c "cat ~/.nddt/extensions.json"
 
 # Check specific tools
-dclaude shell -c "which gt bd tessl"
+nddt shell -c "which gt bd tessl"
 ```
 
 ### Symlink-Based Extension Selection
 
-You can create symlinks to the `dclaude` binary with names matching your extensions. When invoked via a symlink, dclaude automatically uses that extension:
+You can create symlinks to the `nddt` binary with names matching your extensions. When invoked via a symlink, nddt automatically uses that extension:
 
 ```bash
 # Create symlinks
-ln -s dclaude codex
-ln -s dclaude gemini
-ln -s dclaude claude-flow
+ln -s nddt codex
+ln -s nddt gemini
+ln -s nddt claude-flow
 
 # Now these are equivalent:
 ./codex "help me with this code"           # Uses codex extension
-DCLAUDE_EXTENSIONS=codex dclaude "..."     # Same result
+NDDT_EXTENSIONS=codex nddt "..."     # Same result
 
 ./gemini "explain this function"           # Uses gemini extension
-DCLAUDE_EXTENSIONS=gemini dclaude "..."    # Same result
+NDDT_EXTENSIONS=gemini nddt "..."    # Same result
 ```
 
 **How it works:**
 - Detects the binary name from how it was invoked
-- If not "dclaude", sets `DCLAUDE_EXTENSIONS` and `DCLAUDE_COMMAND` to match the binary name
+- If not "nddt", sets `NDDT_EXTENSIONS` and `NDDT_COMMAND` to match the binary name
 - Environment variables can still override this behavior
 
 This is useful for:
 - Creating dedicated commands for different AI agents
 - Simplifying workflows when you frequently use a specific agent
-- Installing multiple "binaries" from a single dclaude installation
+- Installing multiple "binaries" from a single nddt installation
 
 ### Per-Extension Configuration
 
@@ -123,27 +123,27 @@ Each extension can be configured individually via environment variables:
 
 ```bash
 # Set version for a specific extension
-DCLAUDE_CLAUDE_VERSION=2.0.0 dclaude containers build
-DCLAUDE_CODEX_VERSION=0.1.0 dclaude containers build
+NDDT_CLAUDE_VERSION=2.0.0 nddt containers build
+NDDT_CODEX_VERSION=0.1.0 nddt containers build
 
 # Disable config directory mounting for an extension
-DCLAUDE_CLAUDE_MOUNT_CONFIG=false dclaude
+NDDT_CLAUDE_MOUNT_CONFIG=false nddt
 
 # Multiple extensions with specific versions
-DCLAUDE_EXTENSIONS=claude,codex \
-  DCLAUDE_CLAUDE_VERSION=2.1.0 \
-  DCLAUDE_CODEX_VERSION=latest \
-  dclaude containers build
+NDDT_EXTENSIONS=claude,codex \
+  NDDT_CLAUDE_VERSION=2.1.0 \
+  NDDT_CODEX_VERSION=latest \
+  nddt containers build
 ```
 
 | Variable Pattern | Description |
 |-----------------|-------------|
-| `DCLAUDE_<EXT>_VERSION` | Version to install (e.g., `2.1.0`, `latest`, `stable`) |
-| `DCLAUDE_<EXT>_MOUNT_CONFIG` | Mount extension config dirs (`true`/`false`) |
+| `NDDT_<EXT>_VERSION` | Version to install (e.g., `2.1.0`, `latest`, `stable`) |
+| `NDDT_<EXT>_MOUNT_CONFIG` | Mount extension config dirs (`true`/`false`) |
 
 ### Automatic Environment Variable Forwarding
 
-Extensions can declare which environment variables they need in their `config.yaml`. When running dclaude, these variables are automatically forwarded from your host to the container - no need to specify them manually.
+Extensions can declare which environment variables they need in their `config.yaml`. When running nddt, these variables are automatically forwarded from your host to the container - no need to specify them manually.
 
 **Example extension configs:**
 
@@ -164,8 +164,8 @@ env_vars:
 
 **How it works:**
 
-1. When you build an image, each extension's `env_vars` are collected into `~/.dclaude/extensions.json`
-2. At runtime, dclaude reads this metadata and automatically forwards listed variables from host to container
+1. When you build an image, each extension's `env_vars` are collected into `~/.nddt/extensions.json`
+2. At runtime, nddt reads this metadata and automatically forwards listed variables from host to container
 3. Variables are only forwarded if they're set on the host (empty values are skipped)
 
 **Benefits:**
@@ -173,7 +173,7 @@ env_vars:
 - No need to remember which API keys each tool needs
 - Just set the variable on your host once, it's automatically available in containers
 - Different extensions in the same image can have different env vars
-- Users can still add additional variables via `DCLAUDE_FORWARD_ENV`
+- Users can still add additional variables via `NDDT_FORWARD_ENV`
 
 **Example:**
 
@@ -183,11 +183,11 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 export OPENAI_API_KEY="sk-..."
 
 # Build with both extensions
-dclaude containers build --build-arg DCLAUDE_EXTENSIONS=claude,codex
+nddt containers build --build-arg NDDT_EXTENSIONS=claude,codex
 
 # Run - both API keys are automatically forwarded
-dclaude "help me with this code"        # Uses ANTHROPIC_API_KEY
-DCLAUDE_COMMAND=codex dclaude "..."     # Uses OPENAI_API_KEY
+nddt "help me with this code"        # Uses ANTHROPIC_API_KEY
+NDDT_COMMAND=codex nddt "..."     # Uses OPENAI_API_KEY
 ```
 
 ## Creating Extensions
@@ -314,13 +314,13 @@ Setup scripts run once per container session. In persistent mode, they only run 
 ### Testing Your Extension
 
 1. Create the extension directory and files
-2. Build dclaude: `make build`
-3. Build image with extension: `./dist/dclaude containers build --build-arg DCLAUDE_EXTENSIONS=myextension`
-4. Verify: `./dist/dclaude shell -c "which mycommand"`
+2. Build nddt: `make build`
+3. Build image with extension: `./dist/nddt containers build --build-arg NDDT_EXTENSIONS=myextension`
+4. Verify: `./dist/nddt shell -c "which mycommand"`
 
 ## Extension Metadata
 
-When extensions are installed, metadata is written to `~/.dclaude/extensions.json`:
+When extensions are installed, metadata is written to `~/.nddt/extensions.json`:
 
 ```json
 {
@@ -364,35 +364,35 @@ You can build images with different AI coding agents and switch between them:
 
 ```bash
 # Build with multiple AI agents
-dclaude containers build --build-arg DCLAUDE_EXTENSIONS=claude,codex,gemini,copilot
+nddt containers build --build-arg NDDT_EXTENSIONS=claude,codex,gemini,copilot
 
 # Run Claude (default)
-dclaude
+nddt
 
 # Run OpenAI Codex
-DCLAUDE_COMMAND=codex dclaude
+NDDT_COMMAND=codex nddt
 
 # Run Google Gemini
-DCLAUDE_COMMAND=gemini dclaude
+NDDT_COMMAND=gemini nddt
 
 # Run GitHub Copilot
-DCLAUDE_COMMAND=copilot dclaude
+NDDT_COMMAND=copilot nddt
 
 # Run Sourcegraph Amp
-DCLAUDE_COMMAND=amp dclaude
+NDDT_COMMAND=amp nddt
 
 # Run Cursor Agent
-DCLAUDE_COMMAND=cursor dclaude
+NDDT_COMMAND=cursor nddt
 ```
 
 **Using symlinks for dedicated agent commands:**
 
 ```bash
 # Create symlinks for each agent
-cd /usr/local/bin  # or wherever dclaude is installed
-ln -s dclaude codex
-ln -s dclaude gemini
-ln -s dclaude copilot
+cd /usr/local/bin  # or wherever nddt is installed
+ln -s nddt codex
+ln -s nddt gemini
+ln -s nddt copilot
 
 # Build images for each (first run will auto-build)
 codex containers build
@@ -403,7 +403,7 @@ codex "refactor this function"
 gemini "explain this code"
 ```
 
-Each symlink automatically builds and uses its own isolated image (`dclaude:codex-latest`, `dclaude:gemini-latest`, etc.).
+Each symlink automatically builds and uses its own isolated image (`nddt:codex-latest`, `nddt:gemini-latest`, etc.).
 
 ### Cursor Extension
 
@@ -411,15 +411,15 @@ Cursor CLI provides an AI-powered code editor agent:
 
 ```bash
 # Build with cursor only
-dclaude containers build --build-arg DCLAUDE_EXTENSIONS=cursor
+nddt containers build --build-arg NDDT_EXTENSIONS=cursor
 
 # Run cursor agent
-DCLAUDE_COMMAND=cursor dclaude
+NDDT_COMMAND=cursor nddt
 # or
-DCLAUDE_COMMAND=agent dclaude
+NDDT_COMMAND=agent nddt
 
 # Or use symlink
-ln -s dclaude cursor
+ln -s nddt cursor
 ./cursor "help me with this code"
 ```
 
@@ -429,13 +429,13 @@ Gastown provides multi-agent orchestration for Claude Code:
 
 ```bash
 # Build with gastown
-dclaude containers build --build-arg DCLAUDE_EXTENSIONS=gastown
+nddt containers build --build-arg NDDT_EXTENSIONS=gastown
 
 # Run gastown instead of claude
-DCLAUDE_COMMAND=gt dclaude
+NDDT_COMMAND=gt nddt
 
 # Or use shell mode
-dclaude shell
+nddt shell
 gt --help
 ```
 
@@ -445,10 +445,10 @@ Tessl is an agent enablement platform with a skills package manager:
 
 ```bash
 # Build with tessl
-dclaude containers build --build-arg DCLAUDE_EXTENSIONS=tessl
+nddt containers build --build-arg NDDT_EXTENSIONS=tessl
 
 # Use tessl
-dclaude shell
+nddt shell
 tessl init           # Authenticate
 tessl skill search   # Find skills
 tessl mcp            # Start MCP server
@@ -467,4 +467,4 @@ If you see permission errors during installation:
 If an extension is not recognized:
 - Ensure the directory name matches the extension name in `config.yaml`
 - Check that `config.yaml` exists (install.sh and setup.sh are optional)
-- Rebuild dclaude with `make build` to embed the new extension
+- Rebuild nddt with `make build` to embed the new extension

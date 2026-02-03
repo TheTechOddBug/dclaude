@@ -1,8 +1,8 @@
-# Publishing dclaude to Homebrew
+# Publishing nddt to Homebrew
 
 ## Overview
 
-dclaude will be published as a Homebrew formula in a custom tap (repository).
+nddt will be published as a Homebrew formula in a custom tap (repository).
 
 ## Steps to Publish
 
@@ -20,7 +20,7 @@ git push origin v1.1.0
 ```
 
 Then go to GitHub and create a release:
-- Go to: https://github.com/jedi4ever/dclaude/releases/new
+- Go to: https://github.com/jedi4ever/nddt/releases/new
 - Tag: `v1.1.0`
 - Title: `v1.1.0`
 - Description: Release notes (features, bug fixes, etc.)
@@ -30,12 +30,12 @@ Then go to GitHub and create a release:
 
 ```bash
 # Download the tarball
-curl -L https://github.com/jedi4ever/dclaude/archive/refs/tags/v1.1.0.tar.gz -o dclaude-1.1.0.tar.gz
+curl -L https://github.com/jedi4ever/nddt/archive/refs/tags/v1.1.0.tar.gz -o nddt-1.1.0.tar.gz
 
 # Calculate SHA256
-shasum -a 256 dclaude-1.1.0.tar.gz
+shasum -a 256 nddt-1.1.0.tar.gz
 
-# Copy the hash and update Formula/dclaude.rb
+# Copy the hash and update Formula/nddt.rb
 ```
 
 ### 3. Create Homebrew Tap Repository
@@ -56,13 +56,13 @@ cd homebrew-tap
 
 # Copy the formula
 mkdir -p Formula
-cp /path/to/dclaude/Formula/dclaude.rb Formula/
+cp /path/to/nddt/Formula/nddt.rb Formula/
 
-# Update the SHA256 in Formula/dclaude.rb with the hash from step 2
+# Update the SHA256 in Formula/nddt.rb with the hash from step 2
 
 # Commit and push
-git add Formula/dclaude.rb
-git commit -m "Add dclaude formula v1.1.0"
+git add Formula/nddt.rb
+git commit -m "Add nddt formula v1.1.0"
 git push
 ```
 
@@ -72,26 +72,26 @@ git push
 # Add your tap
 brew tap jedi4ever/tap
 
-# Install dclaude
-brew install dclaude
+# Install nddt
+brew install nddt
 
 # Test it
-dclaude --version
+nddt --version
 ```
 
 ## Users Install With
 
-Once published, users can install dclaude with:
+Once published, users can install nddt with:
 
 ```bash
 # Add the tap (one time)
 brew tap jedi4ever/tap
 
-# Install dclaude
-brew install dclaude
+# Install nddt
+brew install nddt
 
 # Use it
-dclaude --version
+nddt --version
 ```
 
 ## Updating the Formula
@@ -100,16 +100,16 @@ When releasing a new version:
 
 1. Create new GitHub release with new tag (e.g., `v1.2.0`)
 2. Download the new tarball and calculate SHA256
-3. Update `Formula/dclaude.rb`:
+3. Update `Formula/nddt.rb`:
    - Change `version` line
    - Change `url` to new tag
    - Update `sha256` with new hash
 4. Commit and push to homebrew-tap
-5. Users update with: `brew update && brew upgrade dclaude`
+5. Users update with: `brew update && brew upgrade nddt`
 
 ## Optional: Submit to Homebrew Core
 
-To get dclaude into the main Homebrew repository (so users don't need to tap):
+To get nddt into the main Homebrew repository (so users don't need to tap):
 
 1. Test the formula thoroughly
 2. Read: https://docs.brew.sh/Formula-Cookbook
@@ -126,11 +126,11 @@ Requirements for homebrew-core:
 
 ```bash
 # Local testing
-brew install --build-from-source Formula/dclaude.rb
-brew test dclaude
-brew audit --strict dclaude
+brew install --build-from-source Formula/nddt.rb
+brew test nddt
+brew audit --strict nddt
 
 # Uninstall for testing
-brew uninstall dclaude
+brew uninstall nddt
 brew untap jedi4ever/tap
 ```

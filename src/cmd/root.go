@@ -6,26 +6,26 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jedi4ever/dclaude/config"
-	"github.com/jedi4ever/dclaude/core"
-	"github.com/jedi4ever/dclaude/internal/update"
-	"github.com/jedi4ever/dclaude/provider"
+	"github.com/jedi4ever/nddt/config"
+	"github.com/jedi4ever/nddt/core"
+	"github.com/jedi4ever/nddt/internal/update"
+	"github.com/jedi4ever/nddt/provider"
 )
 
 // Execute is the main entry point for the CLI
 func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion string, defaultPortRangeStart int) {
 	// Detect binary name for symlink-based extension selection
-	// If binary is named "codex", "gemini", etc. (not "dclaude"), use that as the extension
+	// If binary is named "codex", "gemini", etc. (not "nddt"), use that as the extension
 	binaryName := filepath.Base(os.Args[0])
 	binaryName = strings.TrimSuffix(binaryName, filepath.Ext(binaryName)) // Remove .exe on Windows
 
-	if binaryName != "dclaude" && binaryName != "" {
+	if binaryName != "nddt" && binaryName != "" {
 		// Set extension and command based on binary name if not already set
-		if os.Getenv("DCLAUDE_EXTENSIONS") == "" {
-			os.Setenv("DCLAUDE_EXTENSIONS", binaryName)
+		if os.Getenv("NDDT_EXTENSIONS") == "" {
+			os.Setenv("NDDT_EXTENSIONS", binaryName)
 		}
-		if os.Getenv("DCLAUDE_COMMAND") == "" {
-			os.Setenv("DCLAUDE_COMMAND", binaryName)
+		if os.Getenv("NDDT_COMMAND") == "" {
+			os.Setenv("NDDT_COMMAND", binaryName)
 		}
 	}
 
@@ -36,12 +36,12 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 	if len(args) > 0 {
 		switch args[0] {
 		case "--update":
-			update.UpdateDClaude(version)
+			update.UpdateNddt(version)
 			return
 		case "--dversion":
-			fmt.Printf("dclaude version %s\n", version)
+			fmt.Printf("nddt version %s\n", version)
 			return
-		case "--dhelp":
+		case "--nddt-help":
 			// Try to show help with extension-specific flags
 			cfg := config.LoadConfig(defaultNodeVersion, defaultGoVersion, defaultUvVersion, defaultPortRangeStart)
 			providerCfg := &provider.Config{
@@ -87,9 +87,9 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 	// Load configuration
 	cfg := config.LoadConfig(defaultNodeVersion, defaultGoVersion, defaultUvVersion, defaultPortRangeStart)
 
-	// Check for --rebuild flag
+	// Check for --nddt-rebuild flag
 	rebuildImage := false
-	if len(args) > 0 && args[0] == "--rebuild" {
+	if len(args) > 0 && args[0] == "--nddt-rebuild" {
 		rebuildImage = true
 		args = args[1:]
 	}
