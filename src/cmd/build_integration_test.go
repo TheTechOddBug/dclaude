@@ -168,23 +168,19 @@ func TestBuildCommand_Integration_Binary(t *testing.T) {
 		t.Skip("Binary does not exist after build attempt, skipping")
 	}
 
-	testImageName := "addt-test-binary-integration"
-	removeImage(testImageName)
-	defer removeImage(testImageName)
-
-	// Run the actual binary
+	// Run the actual binary to build claude extension
+	// The image name will be auto-generated (e.g., addt:claude-X.Y.Z)
 	cmd := exec.Command(binaryPath, "build", "claude")
-	cmd.Env = append(os.Environ(),
-		"ADDT_IMAGE_NAME="+testImageName,
-	)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("addt build command failed: %v\nOutput: %s", err, string(output))
 	}
 
-	if !imageExists(testImageName) {
-		t.Errorf("Expected image %s to exist after binary build\nOutput: %s", testImageName, string(output))
+	// Verify the build produced output indicating success
+	outputStr := string(output)
+	if !strings.Contains(outputStr, "Image tagged as:") && !strings.Contains(outputStr, "Using cached") {
+		t.Errorf("Expected build success output, got: %s", outputStr)
 	}
 }
 
