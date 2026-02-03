@@ -90,10 +90,10 @@ Examples:
   claude addt build                # Build container image
   claude addt shell                # Open shell in container
 
-Multiple agents (symlink addt in ~/bin to avoid overriding real installs):
+Multiple agents via symlinks (avoids overriding real installs):
   mkdir -p ~/bin && ln -s /usr/local/bin/addt ~/bin/claude
   ln -s /usr/local/bin/addt ~/bin/codex
-  ln -s /usr/local/bin/addt ~/bin/gemini
+  ln -s /usr/local/bin/addt ~/bin/addt-claude   # Also supports addt-<extension> naming
 `)
 }
 

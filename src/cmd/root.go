@@ -15,17 +15,26 @@ import (
 // Execute is the main entry point for the CLI
 func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion string, defaultPortRangeStart int) {
 	// Detect binary name for symlink-based extension selection
-	// If binary is named "codex", "gemini", etc. (not "addt"), use that as the extension
+	// Supports: "claude", "codex", "addt-claude", "addt-codex", etc.
 	binaryName := filepath.Base(os.Args[0])
 	binaryName = strings.TrimSuffix(binaryName, filepath.Ext(binaryName)) // Remove .exe on Windows
 
-	if binaryName != "addt" && binaryName != "" {
+	// Extract extension name from binary name
+	// "addt-claude" -> "claude", "claude" -> "claude", "addt" -> ""
+	extensionFromBinary := ""
+	if strings.HasPrefix(binaryName, "addt-") {
+		extensionFromBinary = strings.TrimPrefix(binaryName, "addt-")
+	} else if binaryName != "addt" && binaryName != "" {
+		extensionFromBinary = binaryName
+	}
+
+	if extensionFromBinary != "" {
 		// Set extension and command based on binary name if not already set
 		if os.Getenv("ADDT_EXTENSIONS") == "" {
-			os.Setenv("ADDT_EXTENSIONS", binaryName)
+			os.Setenv("ADDT_EXTENSIONS", extensionFromBinary)
 		}
 		if os.Getenv("ADDT_COMMAND") == "" {
-			os.Setenv("ADDT_COMMAND", binaryName)
+			os.Setenv("ADDT_COMMAND", extensionFromBinary)
 		}
 	} else if os.Getenv("ADDT_EXTENSIONS") != "" && os.Getenv("ADDT_COMMAND") == "" {
 		// If ADDT_EXTENSIONS is set but ADDT_COMMAND is not, look up the entrypoint
