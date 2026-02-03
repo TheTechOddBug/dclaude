@@ -2,6 +2,7 @@ package docker
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -205,6 +206,16 @@ func (p *DockerProvider) BuildImage(embeddedDockerfile, embeddedEntrypoint []byt
 		return fmt.Errorf("failed to write extensions: %w", err)
 	}
 
+	// Copy local extensions (override embedded ones with same name)
+	localExtsDir := p.GetLocalExtensionsDir()
+	if localExtsDir != "" {
+		if _, err := os.Stat(localExtsDir); err == nil {
+			if err := p.copyLocalExtensions(localExtsDir, extensionsDir); err != nil {
+				fmt.Printf("Warning: failed to copy local extensions: %v\n", err)
+			}
+		}
+	}
+
 	scriptDir := buildDir
 
 	// Build EXTENSION_VERSIONS string from map (e.g., "claude:stable,codex:latest")
@@ -341,4 +352,101 @@ func (p *DockerProvider) addVersionLabels(cfg interface{}, versions map[string]s
 			fmt.Printf("Warning: failed to tag with claude version: %v\n", err)
 		}
 	}
+}
+
+// GetLocalExtensionsDir returns the path to local extensions directory (~/.addt/extensions)
+func (p *DockerProvider) GetLocalExtensionsDir() string {
+	currentUser, err := user.Current()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(currentUser.HomeDir, ".addt", "extensions")
+}
+
+// copyLocalExtensions copies local extensions to the build directory, overwriting embedded ones
+func (p *DockerProvider) copyLocalExtensions(srcDir, destDir string) error {
+	entries, err := os.ReadDir(srcDir)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		extName := entry.Name()
+		srcExtDir := filepath.Join(srcDir, extName)
+		destExtDir := filepath.Join(destDir, extName)
+
+		// Check if this extension has a config.yaml (valid extension)
+		if _, err := os.Stat(filepath.Join(srcExtDir, "config.yaml")); err != nil {
+			continue // Skip directories without config.yaml
+		}
+
+		// Remove existing extension directory if it exists (to fully replace)
+		os.RemoveAll(destExtDir)
+
+		// Copy the entire extension directory
+		if err := copyDir(srcExtDir, destExtDir); err != nil {
+			return fmt.Errorf("failed to copy extension %s: %w", extName, err)
+		}
+
+		fmt.Printf("  Including local extension: %s\n", extName)
+	}
+
+	return nil
+}
+
+// copyDir recursively copies a directory
+func copyDir(src, dst string) error {
+	if err := os.MkdirAll(dst, 0755); err != nil {
+		return err
+	}
+
+	entries, err := os.ReadDir(src)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		srcPath := filepath.Join(src, entry.Name())
+		dstPath := filepath.Join(dst, entry.Name())
+
+		if entry.IsDir() {
+			if err := copyDir(srcPath, dstPath); err != nil {
+				return err
+			}
+		} else {
+			if err := copyFile(srcPath, dstPath); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// copyFile copies a single file
+func copyFile(src, dst string) error {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	// Get source file info for permissions
+	srcInfo, err := srcFile.Stat()
+	if err != nil {
+		return err
+	}
+
+	dstFile, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, srcInfo.Mode())
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	_, err = io.Copy(dstFile, srcFile)
+	return err
 }

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/user"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -34,6 +36,7 @@ type ExtensionConfig struct {
 	EnvVars        []string         `yaml:"env_vars"`
 	Mounts         []ExtensionMount `yaml:"mounts"`
 	Flags          []ExtensionFlag  `yaml:"flags"`
+	IsLocal        bool             `yaml:"-"` // Not from YAML, indicates local extension
 }
 
 // PrintVersion prints addt version and loaded extension version
@@ -110,8 +113,8 @@ func ListExtensions() {
 	}
 
 	// Print header
-	fmt.Printf("  #  %-*s  %-*s  %-*s  %s\n", maxName, "Name", maxEntry, "Entrypoint", maxVer, "Version", "Description")
-	fmt.Printf("  -  %-*s  %-*s  %-*s  %s\n", maxName, strings.Repeat("-", maxName), maxEntry, strings.Repeat("-", maxEntry), maxVer, strings.Repeat("-", maxVer), "-----------")
+	fmt.Printf("  #  %-*s  %-*s  %-*s  %-6s  %s\n", maxName, "Name", maxEntry, "Entrypoint", maxVer, "Version", "Source", "Description")
+	fmt.Printf("  -  %-*s  %-*s  %-*s  %-6s  %s\n", maxName, strings.Repeat("-", maxName), maxEntry, strings.Repeat("-", maxEntry), maxVer, strings.Repeat("-", maxVer), "------", "-----------")
 
 	// Print rows
 	for i, ext := range exts {
@@ -119,9 +122,18 @@ func ListExtensions() {
 		if version == "" {
 			version = "latest"
 		}
-		fmt.Printf("%3d  %-*s  %-*s  %-*s  %s\n", i+1, maxName, ext.Name, maxEntry, ext.Entrypoint, maxVer, version, ext.Description)
+		source := "built-in"
+		if ext.IsLocal {
+			source = "local"
+		}
+		fmt.Printf("%3d  %-*s  %-*s  %-*s  %-6s  %s\n", i+1, maxName, ext.Name, maxEntry, ext.Entrypoint, maxVer, version, source, ext.Description)
 	}
 
+	// Show local extensions directory info
+	localDir := GetLocalExtensionsDir()
+	if localDir != "" {
+		fmt.Printf("\nLocal extensions directory: %s\n", localDir)
+	}
 }
 
 // ShowExtensionInfo displays detailed info about a specific extension
@@ -144,10 +156,16 @@ func ShowExtensionInfo(name string) {
 
 			fmt.Printf("  %s\n\n", ext.Description)
 
+			source := "built-in"
+			if ext.IsLocal {
+				source = "local (~/.addt/extensions/" + ext.Name + ")"
+			}
+
 			fmt.Println("Configuration:")
 			fmt.Printf("  Entrypoint:  %s\n", ext.Entrypoint)
 			fmt.Printf("  Version:     %s\n", version)
 			fmt.Printf("  Auto-mount:  %v\n", ext.AutoMount)
+			fmt.Printf("  Source:      %s\n", source)
 
 			if len(ext.Dependencies) > 0 {
 				fmt.Printf("  Depends on:  %s\n", strings.Join(ext.Dependencies, ", "))
@@ -205,10 +223,11 @@ func GetEntrypointForExtension(extName string) string {
 	return extName
 }
 
-// getExtensions reads all extension configs from embedded filesystem
+// getExtensions reads all extension configs from embedded filesystem and local ~/.addt/extensions/
 func getExtensions() ([]ExtensionConfig, error) {
-	var configs []ExtensionConfig
+	configMap := make(map[string]ExtensionConfig)
 
+	// First, read embedded extensions
 	entries, err := fs.ReadDir(extensions.FS, ".")
 	if err != nil {
 		return nil, err
@@ -230,6 +249,39 @@ func getExtensions() ([]ExtensionConfig, error) {
 			continue // Skip invalid configs
 		}
 
+		cfg.IsLocal = false
+		configMap[cfg.Name] = cfg
+	}
+
+	// Then, read local extensions (override embedded ones with same name)
+	localExtsDir := GetLocalExtensionsDir()
+	if localExtsDir != "" {
+		if entries, err := os.ReadDir(localExtsDir); err == nil {
+			for _, entry := range entries {
+				if !entry.IsDir() {
+					continue
+				}
+
+				configPath := filepath.Join(localExtsDir, entry.Name(), "config.yaml")
+				data, err := os.ReadFile(configPath)
+				if err != nil {
+					continue // Skip directories without config.yaml
+				}
+
+				var cfg ExtensionConfig
+				if err := yaml.Unmarshal(data, &cfg); err != nil {
+					continue // Skip invalid configs
+				}
+
+				cfg.IsLocal = true
+				configMap[cfg.Name] = cfg // Override embedded extension if exists
+			}
+		}
+	}
+
+	// Convert map to slice
+	var configs []ExtensionConfig
+	for _, cfg := range configMap {
 		configs = append(configs, cfg)
 	}
 
@@ -239,4 +291,13 @@ func getExtensions() ([]ExtensionConfig, error) {
 	})
 
 	return configs, nil
+}
+
+// GetLocalExtensionsDir returns the path to local extensions directory (~/.addt/extensions)
+func GetLocalExtensionsDir() string {
+	currentUser, err := user.Current()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(currentUser.HomeDir, ".addt", "extensions")
 }
