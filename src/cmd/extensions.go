@@ -77,9 +77,9 @@ func ListExtensions() {
 	}
 
 	// Find max lengths for alignment
-	maxName := 4 // "Name"
+	maxName := 4   // "Name"
 	maxEntry := 10 // "Entrypoint"
-	maxVer := 7 // "Version"
+	maxVer := 7    // "Version"
 	for _, ext := range exts {
 		if len(ext.Name) > maxName {
 			maxName = len(ext.Name)
@@ -111,6 +111,26 @@ func ListExtensions() {
 
 	fmt.Println()
 	fmt.Println("Usage: ln -s /usr/local/bin/addt ~/bin/<entrypoint>")
+}
+
+// GetEntrypointForExtension returns the entrypoint command for a given extension name
+// If extension not found, returns the extension name itself as fallback
+func GetEntrypointForExtension(extName string) string {
+	exts, err := getExtensions()
+	if err != nil {
+		return extName
+	}
+
+	for _, ext := range exts {
+		if ext.Name == extName {
+			if ext.Entrypoint != "" {
+				return ext.Entrypoint
+			}
+			return extName
+		}
+	}
+
+	return extName
 }
 
 // getExtensions reads all extension configs from embedded filesystem

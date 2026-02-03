@@ -28,10 +28,12 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 			os.Setenv("ADDT_COMMAND", binaryName)
 		}
 	} else if os.Getenv("ADDT_EXTENSIONS") != "" && os.Getenv("ADDT_COMMAND") == "" {
-		// If ADDT_EXTENSIONS is set but ADDT_COMMAND is not, use first extension as command
+		// If ADDT_EXTENSIONS is set but ADDT_COMMAND is not, look up the entrypoint
 		extensions := os.Getenv("ADDT_EXTENSIONS")
 		firstExt := strings.Split(extensions, ",")[0]
-		os.Setenv("ADDT_COMMAND", firstExt)
+		// Get the actual entrypoint command (e.g., "kiro" -> "kiro-cli", "beads" -> "bd")
+		entrypoint := GetEntrypointForExtension(firstExt)
+		os.Setenv("ADDT_COMMAND", entrypoint)
 	}
 
 	// Parse command line arguments
