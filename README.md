@@ -122,6 +122,12 @@ brew tap jedi4ever/tap
 brew install addt
 ```
 
+### mise
+
+```bash
+mise use -g github:jedi4ever/addt
+```
+
 ### Verify Installation
 
 ```bash
