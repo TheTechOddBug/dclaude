@@ -165,10 +165,11 @@ claude --help
 These flags control the container, not the agent:
 
 ```bash
-claude --nddt-version      # Show nddt version
-claude --nddt-help         # Show nddt help (not agent help)
-claude --nddt-rebuild      # Rebuild the Docker image
-claude --nddt-update       # Check for nddt updates
+claude --nddt-version          # Show nddt version
+claude --nddt-help             # Show nddt help (not agent help)
+claude --nddt-rebuild          # Rebuild the Docker image
+claude --nddt-update           # Check for nddt updates
+claude --nddt-list-extensions  # List available extensions
 
 # YOLO mode - bypass all permission checks
 claude --yolo "Refactor this entire codebase"

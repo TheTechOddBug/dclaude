@@ -28,6 +28,7 @@ Commands:
   --nddt-update                      Check for and install updates
   --nddt-rebuild                     Rebuild the environment (Docker only)
   --nddt-version                     Show nddt version
+  --nddt-list-extensions             List available extensions
   --nddt-help                        Show this help
 
 `, version)

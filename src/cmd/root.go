@@ -41,6 +41,9 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 		case "--nddt-version":
 			fmt.Printf("nddt version %s\n", version)
 			return
+		case "--nddt-list-extensions":
+			ListExtensions()
+			return
 		case "--nddt-help":
 			// Try to show help with extension-specific flags
 			cfg := config.LoadConfig(defaultNodeVersion, defaultGoVersion, defaultUvVersion, defaultPortRangeStart)
