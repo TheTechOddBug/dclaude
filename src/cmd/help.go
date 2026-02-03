@@ -20,15 +20,17 @@ Version: %s
 
 Usage: nddt [options] [prompt]
 
-Commands:
-  shell                              Open bash shell in environment
-  containers build [--build-arg ...] Build the container image
-  containers [list|stop|rm|clean]    Manage persistent environments
-  firewall [list|add|remove|reset]   Manage network firewall domains
-  --nddt-update                      Check for and install updates
-  --nddt-rebuild                     Rebuild the environment (Docker only)
+nddt subcommands (container management):
+  nddt build [--build-arg ...]       Build the container image
+  nddt shell                         Open bash shell in container
+  nddt containers [list|stop|rm]     Manage persistent containers
+  nddt firewall [list|add|rm|reset]  Manage network firewall
+
+Flags:
   --nddt-version                     Show nddt version
   --nddt-list-extensions             List available extensions
+  --nddt-update                      Check for and install updates
+  --nddt-rebuild                     Rebuild the container image
   --nddt-help                        Show this help
 
 `, version)
@@ -79,13 +81,18 @@ Build Command:
                               Example: nddt containers build --build-arg NDDT_EXTENSIONS=gastown
 
 Examples:
-  nddt --nddt-help
-  nddt "Fix the bug in app.js"
-  nddt --yolo "Refactor this entire codebase"
-  nddt --help              # Shows agent's help
-  nddt shell
-  NDDT_COMMAND=codex nddt   # Run Codex instead of Claude
-  NDDT_COMMAND=gemini nddt  # Run Gemini instead of Claude
+  claude "Fix the bug in app.js"
+  claude --yolo "Refactor this entire codebase"
+  claude --help                    # Shows agent's help
+  claude --nddt-help               # Shows nddt help
+  claude --nddt-list-extensions    # List available extensions
+  claude nddt build                # Build container image
+  claude nddt shell                # Open shell in container
+
+Multiple agents (symlink nddt in ~/bin to avoid overriding real installs):
+  mkdir -p ~/bin && ln -s /usr/local/bin/nddt ~/bin/claude
+  ln -s /usr/local/bin/nddt ~/bin/codex
+  ln -s /usr/local/bin/nddt ~/bin/gemini
 `)
 }
 

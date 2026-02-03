@@ -62,7 +62,7 @@ func ListExtensions() {
 	}
 
 	fmt.Println()
-	fmt.Println("Usage: ln -s /usr/local/bin/claude /usr/local/bin/<entrypoint>")
+	fmt.Println("Usage: ln -s /usr/local/bin/nddt ~/bin/<entrypoint>")
 }
 
 // getExtensions reads all extension configs from embedded filesystem

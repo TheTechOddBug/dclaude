@@ -63,27 +63,119 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 				PrintHelp(version)
 			}
 			return
-		case "containers":
-			// Load config for provider
-			cfg := config.LoadConfig(defaultNodeVersion, defaultGoVersion, defaultUvVersion, defaultPortRangeStart)
-			providerCfg := &provider.Config{
-				ExtensionVersions: cfg.ExtensionVersions,
-				NodeVersion:       cfg.NodeVersion,
-				GoVersion:         cfg.GoVersion,
-				UvVersion:         cfg.UvVersion,
-				Provider:          cfg.Provider,
-				Extensions:        cfg.Extensions,
+		case "nddt":
+			// nddt subcommand namespace for container management
+			if len(args) < 2 {
+				fmt.Println("Usage: <agent> nddt <command>")
+				fmt.Println()
+				fmt.Println("Commands:")
+				fmt.Println("  build [--build-arg ...]   Build the container image")
+				fmt.Println("  shell                     Open bash shell in container")
+				fmt.Println("  containers <subcommand>   Manage containers (list, stop, rm, clean)")
+				fmt.Println("  firewall <subcommand>     Manage firewall (list, add, remove, reset)")
+				return
 			}
-			prov, err := NewProvider(cfg.Provider, providerCfg)
-			if err != nil {
-				fmt.Printf("Error: %v\n", err)
+			subCmd := args[1]
+			subArgs := args[2:]
+
+			switch subCmd {
+			case "build":
+				// Build container image
+				cfg := config.LoadConfig(defaultNodeVersion, defaultGoVersion, defaultUvVersion, defaultPortRangeStart)
+				providerCfg := &provider.Config{
+					ExtensionVersions: cfg.ExtensionVersions,
+					NodeVersion:       cfg.NodeVersion,
+					GoVersion:         cfg.GoVersion,
+					UvVersion:         cfg.UvVersion,
+					Provider:          cfg.Provider,
+					Extensions:        cfg.Extensions,
+				}
+				prov, err := NewProvider(cfg.Provider, providerCfg)
+				if err != nil {
+					fmt.Printf("Error: %v\n", err)
+					os.Exit(1)
+				}
+				HandleBuildCommand(prov, providerCfg, subArgs)
+				return
+
+			case "shell":
+				// Handle shell command - need to load config and run
+				cfg := config.LoadConfig(defaultNodeVersion, defaultGoVersion, defaultUvVersion, defaultPortRangeStart)
+				providerCfg := &provider.Config{
+					ExtensionVersions:  cfg.ExtensionVersions,
+					ExtensionAutomount: cfg.ExtensionAutomount,
+					NodeVersion:        cfg.NodeVersion,
+					GoVersion:          cfg.GoVersion,
+					UvVersion:          cfg.UvVersion,
+					EnvVars:            cfg.EnvVars,
+					GitHubDetect:       cfg.GitHubDetect,
+					Ports:              cfg.Ports,
+					PortRangeStart:     cfg.PortRangeStart,
+					SSHForward:         cfg.SSHForward,
+					GPGForward:         cfg.GPGForward,
+					DindMode:           cfg.DindMode,
+					EnvFile:            cfg.EnvFile,
+					LogEnabled:         cfg.LogEnabled,
+					LogFile:            cfg.LogFile,
+					ImageName:          cfg.ImageName,
+					Persistent:         cfg.Persistent,
+					WorkdirAutomount:   cfg.WorkdirAutomount,
+					Workdir:            cfg.Workdir,
+					FirewallEnabled:    cfg.FirewallEnabled,
+					FirewallMode:       cfg.FirewallMode,
+					Mode:               cfg.Mode,
+					Provider:           cfg.Provider,
+					Extensions:         cfg.Extensions,
+					Command:            cfg.Command,
+				}
+				prov, err := NewProvider(cfg.Provider, providerCfg)
+				if err != nil {
+					fmt.Printf("Error: %v\n", err)
+					os.Exit(1)
+				}
+				if err := prov.Initialize(providerCfg); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					os.Exit(1)
+				}
+				providerCfg.ImageName = prov.DetermineImageName()
+				if err := prov.BuildIfNeeded(false); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					os.Exit(1)
+				}
+				orch := core.NewOrchestrator(prov, providerCfg)
+				if err := orch.RunClaude(subArgs, true); err != nil {
+					os.Exit(1)
+				}
+				prov.Cleanup()
+				return
+
+			case "containers":
+				cfg := config.LoadConfig(defaultNodeVersion, defaultGoVersion, defaultUvVersion, defaultPortRangeStart)
+				providerCfg := &provider.Config{
+					ExtensionVersions: cfg.ExtensionVersions,
+					NodeVersion:       cfg.NodeVersion,
+					GoVersion:         cfg.GoVersion,
+					UvVersion:         cfg.UvVersion,
+					Provider:          cfg.Provider,
+					Extensions:        cfg.Extensions,
+				}
+				prov, err := NewProvider(cfg.Provider, providerCfg)
+				if err != nil {
+					fmt.Printf("Error: %v\n", err)
+					os.Exit(1)
+				}
+				HandleContainersCommand(prov, providerCfg, subArgs)
+				return
+
+			case "firewall":
+				HandleFirewallCommand(subArgs)
+				return
+
+			default:
+				fmt.Printf("Unknown nddt command: %s\n", subCmd)
+				fmt.Println("Run '<agent> nddt' for usage")
 				os.Exit(1)
 			}
-			HandleContainersCommand(prov, providerCfg, args[1:])
-			return
-		case "firewall":
-			HandleFirewallCommand(args[1:])
-			return
 		}
 	}
 
@@ -94,13 +186,6 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 	rebuildImage := false
 	if len(args) > 0 && args[0] == "--nddt-rebuild" {
 		rebuildImage = true
-		args = args[1:]
-	}
-
-	// Check for "shell" command
-	openShell := false
-	if len(args) > 0 && args[0] == "shell" {
-		openShell = true
 		args = args[1:]
 	}
 
@@ -173,7 +258,7 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 	}
 
 	// Run via orchestrator
-	if err := orch.RunClaude(args, openShell); err != nil {
+	if err := orch.RunClaude(args, false); err != nil {
 		os.Exit(1)
 	}
 

@@ -8,30 +8,34 @@ Supports **Claude Code**, **Codex**, **Gemini CLI**, and more via extensions.
 
 ```bash
 # 1. Download (macOS Apple Silicon)
-curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-darwin-arm64 -o claude
-chmod +x claude
-xattr -c claude && codesign --sign - --force claude
-sudo mv claude /usr/local/bin/
+curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-darwin-arm64 -o nddt
+chmod +x nddt
+xattr -c nddt && codesign --sign - --force nddt
+sudo mv nddt /usr/local/bin/
 
-# 2. Use it exactly like the real claude
-claude "Fix the bug in app.js"
-claude --help
-claude --continue
+# 2. Use it directly or via symlink
+nddt "Fix the bug in app.js"           # Uses default (claude)
+nddt --nddt-list-extensions            # See all available agents
 ```
 
-**That's it.** The binary auto-detects its name and runs the matching agent in a container.
+**That's it.** First run auto-builds the container.
 
 ```bash
-# Want multiple agents? Create symlinks:
-sudo ln -s /usr/local/bin/claude /usr/local/bin/codex
-sudo ln -s /usr/local/bin/claude /usr/local/bin/gemini
+# Want to use as a specific agent? Create symlinks in ~/bin (won't override real installs):
+mkdir -p ~/bin
+ln -s /usr/local/bin/nddt ~/bin/claude
+ln -s /usr/local/bin/nddt ~/bin/codex
+ln -s /usr/local/bin/nddt ~/bin/gemini
 
-# Now use them directly:
-codex "help me with this code"
-gemini "explain this function"
+# Add ~/bin to PATH (add to ~/.bashrc or ~/.zshrc)
+export PATH="$HOME/bin:$PATH"
+
+# Now use them:
+claude "help me with this code"
+codex "explain this function"
 ```
 
-Each name runs its own containerized agent with isolated config and Docker images.
+Each symlink name runs its own containerized agent with isolated config and Docker images.
 
 ## How It Works
 
@@ -69,62 +73,52 @@ Each name runs its own containerized agent with isolated config and Docker image
 
 ## Installation
 
-Download and name the binary after the agent you want to use:
-
 ### macOS Apple Silicon (M1/M2/M3)
 
 ```bash
-# Download and install as "claude"
-curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-darwin-arm64 -o claude
-chmod +x claude
-xattr -c claude && codesign --sign - --force claude
-sudo mv claude /usr/local/bin/
-
-# Add more agents via symlinks
-sudo ln -s /usr/local/bin/claude /usr/local/bin/codex
-sudo ln -s /usr/local/bin/claude /usr/local/bin/gemini
+curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-darwin-arm64 -o nddt
+chmod +x nddt
+xattr -c nddt && codesign --sign - --force nddt
+sudo mv nddt /usr/local/bin/
 ```
 
 ### macOS Intel
 
 ```bash
-curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-darwin-amd64 -o claude
-chmod +x claude
-xattr -c claude && codesign --sign - --force claude
-sudo mv claude /usr/local/bin/
+curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-darwin-amd64 -o nddt
+chmod +x nddt
+xattr -c nddt && codesign --sign - --force nddt
+sudo mv nddt /usr/local/bin/
 ```
 
 ### Linux x86_64
 
 ```bash
-curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-linux-amd64 -o claude
-chmod +x claude
-sudo mv claude /usr/local/bin/
+curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-linux-amd64 -o nddt
+chmod +x nddt
+sudo mv nddt /usr/local/bin/
 ```
 
 ### Linux ARM64
 
 ```bash
-curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-linux-arm64 -o claude
-chmod +x claude
-sudo mv claude /usr/local/bin/
+curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-linux-arm64 -o nddt
+chmod +x nddt
+sudo mv nddt /usr/local/bin/
 ```
 
-### Homebrew (Alternative)
+### Homebrew
 
 ```bash
 brew tap jedi4ever/tap
 brew install nddt
-
-# Then symlink to desired name
-sudo ln -s $(brew --prefix)/bin/nddt /usr/local/bin/claude
 ```
 
 ### Verify Installation
 
 ```bash
-claude --nddt-version    # Shows nddt version
-claude --version         # Shows Claude Code version (inside container)
+nddt --nddt-version         # Shows nddt version
+nddt --nddt-list-extensions # List available agents
 ```
 
 **Upgrading:**
@@ -132,10 +126,10 @@ claude --version         # Shows Claude Code version (inside container)
 Re-run the installation command with codesign to avoid corruption:
 
 ```bash
-curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-darwin-arm64 -o claude
-chmod +x claude
-xattr -c claude && codesign --sign - --force claude
-sudo mv claude /usr/local/bin/
+curl -fsSL https://github.com/jedi4ever/nddt/releases/latest/download/nddt-darwin-arm64 -o nddt
+chmod +x nddt
+xattr -c nddt && codesign --sign - --force nddt
+sudo mv nddt /usr/local/bin/
 ```
 
 ### Build from Source
@@ -144,7 +138,7 @@ sudo mv claude /usr/local/bin/
 git clone https://github.com/jedi4ever/nddt.git
 cd nddt
 make build
-sudo cp dist/nddt /usr/local/bin/claude
+sudo cp dist/nddt /usr/local/bin/
 ```
 
 ## Usage
@@ -175,41 +169,29 @@ claude --nddt-list-extensions  # List available extensions
 claude --yolo "Refactor this entire codebase"
 ```
 
-### Container Management
+### nddt Subcommands
+
+Container management commands live under the `nddt` subcommand:
 
 ```bash
-claude containers build          # Rebuild the container image
-claude containers list           # List persistent containers
-claude containers stop <name>    # Stop a container
-claude containers rm <name>      # Remove a container
-claude containers clean          # Remove all persistent containers
+claude nddt build                    # Build the container image
+claude nddt build --build-arg NDDT_EXTENSIONS=claude,codex
+
+claude nddt shell                    # Open bash shell in container
+claude nddt shell -c "git status"    # Run a command in container
+
+claude nddt containers list          # List persistent containers
+claude nddt containers stop <name>   # Stop a container
+claude nddt containers rm <name>     # Remove a container
+claude nddt containers clean         # Remove all persistent containers
+
+claude nddt firewall list            # List allowed domains
+claude nddt firewall add example.com # Add domain to whitelist
+claude nddt firewall rm example.com  # Remove domain
+claude nddt firewall reset           # Reset to defaults
 ```
 
-### Shell Access
-
-```bash
-claude shell                     # Open bash shell in container
-claude shell -c "git status"     # Run a command in container
-```
-
-### Network Firewall
-
-Whitelist-based outbound traffic control (useful for CI/CD):
-
-```bash
-# Enable firewall
-export NDDT_FIREWALL=true
-export NDDT_FIREWALL_MODE=strict   # or: permissive, off
-claude
-
-# Manage allowed domains
-claude firewall list
-claude firewall add example.com
-claude firewall remove example.com
-claude firewall reset
-```
-
-Config file: `~/.nddt/firewall/allowed-domains.txt`
+Firewall config: `~/.nddt/firewall/allowed-domains.txt`
 
 
 

@@ -17,7 +17,8 @@ func HandleContainersCommand(prov provider.Provider, cfg *provider.Config, args 
 	action := args[0]
 	switch action {
 	case "build":
-		handleBuildSubcommand(prov, cfg, args[1:])
+		// Redirect to nddt build for backwards compatibility
+		HandleBuildCommand(prov, cfg, args[1:])
 	case "list", "ls":
 		envs, err := prov.List()
 		if err != nil {
@@ -73,20 +74,19 @@ func HandleContainersCommand(prov provider.Provider, cfg *provider.Config, args 
 		}
 		fmt.Println("✓ Cleaned")
 	default:
-		fmt.Println(`Usage: nddt containers [build|list|stop|remove|clean]
+		fmt.Println(`Usage: <agent> nddt containers [list|stop|rm|clean]
 
 Commands:
-  build       - Build the container image
-  list, ls    - List all persistent environments
-  stop <name> - Stop a persistent environment
-  remove <name> - Remove a persistent environment
-  clean       - Remove all persistent environments`)
+  list, ls      - List all persistent containers
+  stop <name>   - Stop a persistent container
+  rm <name>     - Remove a persistent container
+  clean         - Remove all persistent containers`)
 		os.Exit(1)
 	}
 }
 
-// handleBuildSubcommand handles the build subcommand within containers
-func handleBuildSubcommand(prov provider.Provider, cfg *provider.Config, args []string) {
+// HandleBuildCommand handles the build command
+func HandleBuildCommand(prov provider.Provider, cfg *provider.Config, args []string) {
 	// Parse --build-arg flags
 	for i := 0; i < len(args); i++ {
 		if args[i] == "--build-arg" && i+1 < len(args) {
