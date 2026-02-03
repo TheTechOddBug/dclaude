@@ -243,6 +243,7 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 				fmt.Println("Commands:")
 				fmt.Println("  list              List available extensions")
 				fmt.Println("  info <name>       Show extension details")
+				fmt.Println("  new <name>        Create a new local extension")
 				return
 			}
 			switch args[1] {
@@ -254,6 +255,12 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 					os.Exit(1)
 				}
 				ShowExtensionInfo(args[2])
+			case "new":
+				if len(args) < 3 {
+					fmt.Println("Usage: addt extensions new <name>")
+					os.Exit(1)
+				}
+				CreateExtension(args[2])
 			default:
 				fmt.Printf("Unknown extensions command: %s\n", args[1])
 				os.Exit(1)
@@ -311,6 +318,7 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 					fmt.Println("Commands:")
 					fmt.Println("  list              List available extensions")
 					fmt.Println("  info <name>       Show extension details")
+					fmt.Println("  new <name>        Create a new local extension")
 					return
 				}
 				switch subArgs[0] {
@@ -322,6 +330,12 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 						os.Exit(1)
 					}
 					ShowExtensionInfo(subArgs[1])
+				case "new":
+					if len(subArgs) < 2 {
+						fmt.Println("Usage: <agent> addt extensions new <name>")
+						os.Exit(1)
+					}
+					CreateExtension(subArgs[1])
 				default:
 					fmt.Printf("Unknown extensions command: %s\n", subArgs[0])
 					os.Exit(1)
