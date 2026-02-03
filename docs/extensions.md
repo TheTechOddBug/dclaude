@@ -170,7 +170,17 @@ ADDT_EXTENSIONS=claude,codex \
 | `version` | `ADDT_<EXT>_VERSION` | Version to install (e.g., `2.1.0`, `latest`, `stable`) |
 | `automount` | `ADDT_<EXT>_AUTOMOUNT` | Mount extension config dirs (`true`/`false`) |
 
-**Configuration precedence:** Environment variables > Config file > Defaults
+**Configuration precedence:** Environment variables > Project config > Global config > Defaults
+
+Extension settings can also be set in project config (`.addt.yaml`):
+
+```yaml
+# .addt.yaml in project root
+extensions:
+  claude:
+    version: "1.0.5"
+    automount: false
+```
 
 ### Automatic Environment Variable Forwarding
 

@@ -285,27 +285,37 @@ claude "Continue working"       # Reuses same container (instant!)
 Use `addt config` to manage settings that persist across sessions:
 
 ```bash
-# Global settings
+# Global settings (apply to all projects)
 addt config global list                      # Show all settings with source
 addt config global set docker_cpus 2         # Limit container to 2 CPUs
 addt config global set docker_memory 4g      # Limit container memory
 addt config global set dind true             # Enable Docker-in-Docker
 addt config global unset docker_cpus         # Remove setting (use default)
 
+# Project settings (apply to current directory only)
+addt config project set persistent true      # Enable persistent mode for this project
+addt config project set firewall true        # Enable firewall for this project
+addt config project list                     # Show project-specific settings
+
 # Per-extension settings
 addt config extension claude list            # Show claude settings
 addt config extension claude set version 1.0.5  # Pin claude version
 addt config extension claude set automount false # Disable config mounting
-addt config extension codex set version latest
 
-# View config file
-addt config path                             # Shows ~/.addt/config.yaml
+# View config file paths
+addt config path
 ```
 
 **Configuration precedence** (highest to lowest):
 1. Environment variables (e.g., `ADDT_DOCKER_CPUS`)
-2. Config file (`~/.addt/config.yaml`)
-3. Default values
+2. Project config (`.addt.yaml` in current directory)
+3. Global config (`~/.addt/config.yaml`)
+4. Default values
+
+Project config is useful for:
+- Team-shared settings (commit `.addt.yaml` to git)
+- Project-specific resource limits
+- Enabling features per-project (e.g., persistent mode, firewall)
 
 ### Quick Examples
 

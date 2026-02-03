@@ -62,6 +62,27 @@ func loadGlobalConfig() *GlobalConfig {
 	return &cfg
 }
 
+// loadProjectConfig loads the project config from .addt.yaml in current directory
+func loadProjectConfig() *GlobalConfig {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return &GlobalConfig{}
+	}
+
+	configPath := filepath.Join(cwd, ".addt.yaml")
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return &GlobalConfig{}
+	}
+
+	var cfg GlobalConfig
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return &GlobalConfig{}
+	}
+
+	return &cfg
+}
+
 // Config holds all configuration options
 type Config struct {
 	NodeVersion        string
@@ -93,48 +114,61 @@ type Config struct {
 	Memory             string            // Memory limit (e.g., "512m", "2g", "4gb")
 }
 
-// LoadConfig loads configuration with precedence: defaults < config file < env vars
+// LoadConfig loads configuration with precedence: defaults < global config < project config < env vars
 func LoadConfig(defaultNodeVersion string, defaultGoVersion string, defaultUvVersion string, defaultPortRangeStart int) *Config {
-	// Load global config file first
+	// Load config files (project config overrides global config)
 	globalCfg := loadGlobalConfig()
+	projectCfg := loadProjectConfig()
 
-	// Start with defaults, then apply global config, then env vars
+	// Start with defaults, then apply global config, then project config, then env vars
 	cfg := &Config{
 		ExtensionVersions:  make(map[string]string),
 		ExtensionAutomount: make(map[string]bool),
 	}
 
-	// Node version: default -> global config -> env
+	// Node version: default -> global -> project -> env
 	cfg.NodeVersion = defaultNodeVersion
 	if globalCfg.NodeVersion != "" {
 		cfg.NodeVersion = globalCfg.NodeVersion
+	}
+	if projectCfg.NodeVersion != "" {
+		cfg.NodeVersion = projectCfg.NodeVersion
 	}
 	if v := os.Getenv("ADDT_NODE_VERSION"); v != "" {
 		cfg.NodeVersion = v
 	}
 
-	// Go version: default -> global config -> env
+	// Go version: default -> global -> project -> env
 	cfg.GoVersion = defaultGoVersion
 	if globalCfg.GoVersion != "" {
 		cfg.GoVersion = globalCfg.GoVersion
+	}
+	if projectCfg.GoVersion != "" {
+		cfg.GoVersion = projectCfg.GoVersion
 	}
 	if v := os.Getenv("ADDT_GO_VERSION"); v != "" {
 		cfg.GoVersion = v
 	}
 
-	// UV version: default -> global config -> env
+	// UV version: default -> global -> project -> env
 	cfg.UvVersion = defaultUvVersion
 	if globalCfg.UvVersion != "" {
 		cfg.UvVersion = globalCfg.UvVersion
+	}
+	if projectCfg.UvVersion != "" {
+		cfg.UvVersion = projectCfg.UvVersion
 	}
 	if v := os.Getenv("ADDT_UV_VERSION"); v != "" {
 		cfg.UvVersion = v
 	}
 
-	// Port range start: default -> global config -> env
+	// Port range start: default -> global -> project -> env
 	cfg.PortRangeStart = defaultPortRangeStart
 	if globalCfg.PortRangeStart != nil {
 		cfg.PortRangeStart = *globalCfg.PortRangeStart
+	}
+	if projectCfg.PortRangeStart != nil {
+		cfg.PortRangeStart = *projectCfg.PortRangeStart
 	}
 	if v := os.Getenv("ADDT_PORT_RANGE_START"); v != "" {
 		if i, err := strconv.Atoi(v); err == nil {
@@ -142,104 +176,143 @@ func LoadConfig(defaultNodeVersion string, defaultGoVersion string, defaultUvVer
 		}
 	}
 
-	// SSH forward: default (empty) -> global config -> env
+	// SSH forward: default -> global -> project -> env
 	cfg.SSHForward = globalCfg.SSHForward
+	if projectCfg.SSHForward != "" {
+		cfg.SSHForward = projectCfg.SSHForward
+	}
 	if v := os.Getenv("ADDT_SSH_FORWARD"); v != "" {
 		cfg.SSHForward = v
 	}
 
-	// GPG forward: default (false) -> global config -> env
+	// GPG forward: default (false) -> global -> project -> env
 	cfg.GPGForward = false
 	if globalCfg.GPGForward != nil {
 		cfg.GPGForward = *globalCfg.GPGForward
+	}
+	if projectCfg.GPGForward != nil {
+		cfg.GPGForward = *projectCfg.GPGForward
 	}
 	if v := os.Getenv("ADDT_GPG_FORWARD"); v != "" {
 		cfg.GPGForward = v == "true"
 	}
 
-	// DinD mode: default (empty) -> global config -> env
+	// DinD mode: default -> global -> project -> env
 	cfg.DindMode = globalCfg.DindMode
+	if projectCfg.DindMode != "" {
+		cfg.DindMode = projectCfg.DindMode
+	}
 	if v := os.Getenv("ADDT_DIND_MODE"); v != "" {
 		cfg.DindMode = v
 	}
 
-	// Log enabled: default (false) -> global config -> env
+	// Log enabled: default (false) -> global -> project -> env
 	cfg.LogEnabled = false
 	if globalCfg.Log != nil {
 		cfg.LogEnabled = *globalCfg.Log
+	}
+	if projectCfg.Log != nil {
+		cfg.LogEnabled = *projectCfg.Log
 	}
 	if v := os.Getenv("ADDT_LOG"); v != "" {
 		cfg.LogEnabled = v == "true"
 	}
 
-	// Log file: default -> global config -> env
+	// Log file: default -> global -> project -> env
 	cfg.LogFile = "addt.log"
 	if globalCfg.LogFile != "" {
 		cfg.LogFile = globalCfg.LogFile
+	}
+	if projectCfg.LogFile != "" {
+		cfg.LogFile = projectCfg.LogFile
 	}
 	if v := os.Getenv("ADDT_LOG_FILE"); v != "" {
 		cfg.LogFile = v
 	}
 
-	// Persistent: default (false) -> global config -> env
+	// Persistent: default (false) -> global -> project -> env
 	cfg.Persistent = false
 	if globalCfg.Persistent != nil {
 		cfg.Persistent = *globalCfg.Persistent
+	}
+	if projectCfg.Persistent != nil {
+		cfg.Persistent = *projectCfg.Persistent
 	}
 	if v := os.Getenv("ADDT_PERSISTENT"); v != "" {
 		cfg.Persistent = v == "true"
 	}
 
-	// Workdir automount: default (true) -> global config -> env
+	// Workdir automount: default (true) -> global -> project -> env
 	cfg.WorkdirAutomount = true
 	if globalCfg.WorkdirAutomount != nil {
 		cfg.WorkdirAutomount = *globalCfg.WorkdirAutomount
+	}
+	if projectCfg.WorkdirAutomount != nil {
+		cfg.WorkdirAutomount = *projectCfg.WorkdirAutomount
 	}
 	if v := os.Getenv("ADDT_WORKDIR_AUTOMOUNT"); v != "" {
 		cfg.WorkdirAutomount = v != "false"
 	}
 
-	// Firewall: default (false) -> global config -> env
+	// Firewall: default (false) -> global -> project -> env
 	cfg.FirewallEnabled = false
 	if globalCfg.Firewall != nil {
 		cfg.FirewallEnabled = *globalCfg.Firewall
+	}
+	if projectCfg.Firewall != nil {
+		cfg.FirewallEnabled = *projectCfg.Firewall
 	}
 	if v := os.Getenv("ADDT_FIREWALL"); v != "" {
 		cfg.FirewallEnabled = v == "true"
 	}
 
-	// Firewall mode: default (strict) -> global config -> env
+	// Firewall mode: default (strict) -> global -> project -> env
 	cfg.FirewallMode = "strict"
 	if globalCfg.FirewallMode != "" {
 		cfg.FirewallMode = globalCfg.FirewallMode
+	}
+	if projectCfg.FirewallMode != "" {
+		cfg.FirewallMode = projectCfg.FirewallMode
 	}
 	if v := os.Getenv("ADDT_FIREWALL_MODE"); v != "" {
 		cfg.FirewallMode = v
 	}
 
-	// GitHub detect: default (false) -> global config -> env
+	// GitHub detect: default (false) -> global -> project -> env
 	cfg.GitHubDetect = false
 	if globalCfg.GitHubDetect != nil {
 		cfg.GitHubDetect = *globalCfg.GitHubDetect
+	}
+	if projectCfg.GitHubDetect != nil {
+		cfg.GitHubDetect = *projectCfg.GitHubDetect
 	}
 	if v := os.Getenv("ADDT_GITHUB_DETECT"); v != "" {
 		cfg.GitHubDetect = v == "true"
 	}
 
-	// CPUs: default (empty) -> global config -> env
+	// CPUs: default (empty) -> global -> project -> env
 	cfg.CPUs = globalCfg.DockerCPUs
+	if projectCfg.DockerCPUs != "" {
+		cfg.CPUs = projectCfg.DockerCPUs
+	}
 	if v := os.Getenv("ADDT_DOCKER_CPUS"); v != "" {
 		cfg.CPUs = v
 	}
 
-	// Memory: default (empty) -> global config -> env
+	// Memory: default (empty) -> global -> project -> env
 	cfg.Memory = globalCfg.DockerMemory
+	if projectCfg.DockerMemory != "" {
+		cfg.Memory = projectCfg.DockerMemory
+	}
 	if v := os.Getenv("ADDT_DOCKER_MEMORY"); v != "" {
 		cfg.Memory = v
 	}
 
-	// Workdir: default (empty = current dir) -> global config -> env
+	// Workdir: default (empty = current dir) -> global -> project -> env
 	cfg.Workdir = globalCfg.Workdir
+	if projectCfg.Workdir != "" {
+		cfg.Workdir = projectCfg.Workdir
+	}
 	if v := os.Getenv("ADDT_WORKDIR"); v != "" {
 		cfg.Workdir = v
 	}
@@ -252,8 +325,8 @@ func LoadConfig(defaultNodeVersion string, defaultGoVersion string, defaultUvVer
 	cfg.Extensions = os.Getenv("ADDT_EXTENSIONS")
 	cfg.Command = os.Getenv("ADDT_COMMAND")
 
-	// Load per-extension config from config file first
-	// Precedence: config file < environment variables
+	// Load per-extension config from config files
+	// Precedence: global config < project config < environment variables
 	if globalCfg.Extensions != nil {
 		for extName, extCfg := range globalCfg.Extensions {
 			if extCfg.Version != "" {
@@ -264,8 +337,18 @@ func LoadConfig(defaultNodeVersion string, defaultGoVersion string, defaultUvVer
 			}
 		}
 	}
+	if projectCfg.Extensions != nil {
+		for extName, extCfg := range projectCfg.Extensions {
+			if extCfg.Version != "" {
+				cfg.ExtensionVersions[extName] = extCfg.Version
+			}
+			if extCfg.Automount != nil {
+				cfg.ExtensionAutomount[extName] = *extCfg.Automount
+			}
+		}
+	}
 
-	// Load per-extension versions and mount configs from environment (overrides config file)
+	// Load per-extension versions and mount configs from environment (overrides config files)
 	// Pattern: ADDT_<EXT>_VERSION and ADDT_<EXT>_AUTOMOUNT
 	for _, env := range os.Environ() {
 		parts := strings.SplitN(env, "=", 2)

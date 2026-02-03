@@ -81,13 +81,64 @@ func getConfigKeys() []configKeyInfo {
 	return keys
 }
 
-// GetConfigFilePath returns the path to the config file
+// GetConfigFilePath returns the path to the global config file
 func GetConfigFilePath() string {
 	currentUser, err := user.Current()
 	if err != nil {
 		return ""
 	}
 	return filepath.Join(currentUser.HomeDir, ".addt", "config.yaml")
+}
+
+// GetProjectConfigFilePath returns the path to the project config file
+func GetProjectConfigFilePath() string {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(cwd, ".addt.yaml")
+}
+
+// LoadProjectConfig loads the project config from .addt.yaml in current directory
+func LoadProjectConfig() (*GlobalConfig, error) {
+	configPath := GetProjectConfigFilePath()
+	if configPath == "" {
+		return &GlobalConfig{}, nil
+	}
+
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &GlobalConfig{}, nil
+		}
+		return nil, err
+	}
+
+	var cfg GlobalConfig
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return nil, fmt.Errorf("failed to parse project config file: %w", err)
+	}
+
+	return &cfg, nil
+}
+
+// SaveProjectConfig saves the project config to .addt.yaml in current directory
+func SaveProjectConfig(cfg *GlobalConfig) error {
+	configPath := GetProjectConfigFilePath()
+	if configPath == "" {
+		return fmt.Errorf("could not determine project config file path")
+	}
+
+	data, err := yaml.Marshal(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to marshal config: %w", err)
+	}
+
+	if err := os.WriteFile(configPath, data, 0644); err != nil {
+		return fmt.Errorf("failed to write project config file: %w", err)
+	}
+
+	return nil
 }
 
 // LoadGlobalConfig loads the global config from ~/.addt/config.yaml
@@ -148,10 +199,13 @@ func HandleConfigCommand(args []string) {
 	switch args[0] {
 	case "global":
 		handleGlobalConfig(args[1:])
+	case "project":
+		handleProjectConfig(args[1:])
 	case "extension":
 		handleExtensionConfig(args[1:])
 	case "path":
-		fmt.Println(GetConfigFilePath())
+		fmt.Printf("Global config:  %s\n", GetConfigFilePath())
+		fmt.Printf("Project config: %s\n", GetProjectConfigFilePath())
 	default:
 		fmt.Printf("Unknown config command: %s\n", args[0])
 		printConfigHelp()
@@ -190,6 +244,41 @@ func handleGlobalConfig(args []string) {
 	default:
 		fmt.Printf("Unknown global config command: %s\n", args[0])
 		printGlobalConfigHelp()
+		os.Exit(1)
+	}
+}
+
+// handleProjectConfig handles project-level config subcommands
+func handleProjectConfig(args []string) {
+	if len(args) == 0 {
+		printProjectConfigHelp()
+		return
+	}
+
+	switch args[0] {
+	case "list":
+		listProjectConfig()
+	case "get":
+		if len(args) < 2 {
+			fmt.Println("Usage: addt config project get <key>")
+			os.Exit(1)
+		}
+		getProjectConfig(args[1])
+	case "set":
+		if len(args) < 3 {
+			fmt.Println("Usage: addt config project set <key> <value>")
+			os.Exit(1)
+		}
+		setProjectConfig(args[1], args[2])
+	case "unset":
+		if len(args) < 2 {
+			fmt.Println("Usage: addt config project unset <key>")
+			os.Exit(1)
+		}
+		unsetProjectConfig(args[1])
+	default:
+		fmt.Printf("Unknown project config command: %s\n", args[0])
+		printProjectConfigHelp()
 		os.Exit(1)
 	}
 }
@@ -240,20 +329,22 @@ func printConfigHelp() {
 	fmt.Println("Usage: addt config <command>")
 	fmt.Println()
 	fmt.Println("Commands:")
-	fmt.Println("  global <subcommand>              Manage global configuration")
+	fmt.Println("  global <subcommand>              Manage global configuration (~/.addt/config.yaml)")
+	fmt.Println("  project <subcommand>             Manage project configuration (.addt.yaml)")
 	fmt.Println("  extension <name> <subcommand>    Manage extension-specific configuration")
-	fmt.Println("  path                             Show config file path")
+	fmt.Println("  path                             Show config file paths")
 	fmt.Println()
 	fmt.Println("Examples:")
 	fmt.Println("  addt config global list")
 	fmt.Println("  addt config global set docker_cpus 2")
-	fmt.Println("  addt config extension claude list")
+	fmt.Println("  addt config project set persistent true")
 	fmt.Println("  addt config extension claude set version 1.0.5")
 	fmt.Println()
 	fmt.Println("Precedence (highest to lowest):")
-	fmt.Println("  1. Environment variables (e.g., ADDT_DOCKER_CPUS, ADDT_CLAUDE_VERSION)")
-	fmt.Println("  2. Config file (~/.addt/config.yaml)")
-	fmt.Println("  3. Default values")
+	fmt.Println("  1. Environment variables (e.g., ADDT_DOCKER_CPUS)")
+	fmt.Println("  2. Project config (.addt.yaml in current directory)")
+	fmt.Println("  3. Global config (~/.addt/config.yaml)")
+	fmt.Println("  4. Default values")
 }
 
 func printGlobalConfigHelp() {
@@ -264,6 +355,32 @@ func printGlobalConfigHelp() {
 	fmt.Println("  get <key>         Get a configuration value")
 	fmt.Println("  set <key> <value> Set a configuration value")
 	fmt.Println("  unset <key>       Remove a configuration value (use default)")
+	fmt.Println()
+	fmt.Println("Available keys:")
+	keys := getConfigKeys()
+	maxKeyLen := 0
+	for _, k := range keys {
+		if len(k.Key) > maxKeyLen {
+			maxKeyLen = len(k.Key)
+		}
+	}
+	for _, k := range keys {
+		fmt.Printf("  %-*s  %s\n", maxKeyLen, k.Key, k.Description)
+	}
+}
+
+func printProjectConfigHelp() {
+	fmt.Println("Usage: addt config project <command>")
+	fmt.Println()
+	fmt.Println("Manage project-level configuration stored in .addt.yaml")
+	fmt.Println()
+	fmt.Println("Commands:")
+	fmt.Println("  list              List all project configuration values")
+	fmt.Println("  get <key>         Get a configuration value")
+	fmt.Println("  set <key> <value> Set a configuration value")
+	fmt.Println("  unset <key>       Remove a configuration value")
+	fmt.Println()
+	fmt.Println("Project config overrides global config but is overridden by env vars.")
 	fmt.Println()
 	fmt.Println("Available keys:")
 	keys := getConfigKeys()
@@ -341,14 +458,20 @@ func getDefaultValue(key string) string {
 }
 
 func listConfig() {
-	cfg, err := LoadGlobalConfig()
+	globalCfg, err := LoadGlobalConfig()
 	if err != nil {
-		fmt.Printf("Error loading config: %v\n", err)
+		fmt.Printf("Error loading global config: %v\n", err)
 		os.Exit(1)
 	}
 
-	configPath := GetConfigFilePath()
-	fmt.Printf("Config file: %s\n\n", configPath)
+	projectCfg, err := LoadProjectConfig()
+	if err != nil {
+		fmt.Printf("Error loading project config: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Global config:  %s\n", GetConfigFilePath())
+	fmt.Printf("Project config: %s\n\n", GetProjectConfigFilePath())
 
 	keys := getConfigKeys()
 
@@ -360,11 +483,15 @@ func listConfig() {
 			maxKeyLen = len(k.Key)
 		}
 		envValue := os.Getenv(k.EnvVar)
-		configValue := getConfigValue(cfg, k.Key)
+		projectValue := getConfigValue(projectCfg, k.Key)
+		globalValue := getConfigValue(globalCfg, k.Key)
 		defaultValue := getDefaultValue(k.Key)
 		val := envValue
 		if val == "" {
-			val = configValue
+			val = projectValue
+		}
+		if val == "" {
+			val = globalValue
 		}
 		if val == "" {
 			val = defaultValue
@@ -383,16 +510,20 @@ func listConfig() {
 
 	for _, k := range keys {
 		envValue := os.Getenv(k.EnvVar)
-		configValue := getConfigValue(cfg, k.Key)
+		projectValue := getConfigValue(projectCfg, k.Key)
+		globalValue := getConfigValue(globalCfg, k.Key)
 		defaultValue := getDefaultValue(k.Key)
 
 		var displayValue, source string
 		if envValue != "" {
 			displayValue = envValue
 			source = "env"
-		} else if configValue != "" {
-			displayValue = configValue
-			source = "config"
+		} else if projectValue != "" {
+			displayValue = projectValue
+			source = "project"
+		} else if globalValue != "" {
+			displayValue = globalValue
+			source = "global"
 		} else if defaultValue != "" {
 			displayValue = defaultValue
 			source = "default"
@@ -402,7 +533,7 @@ func listConfig() {
 		}
 
 		// Highlight non-default values
-		if source == "env" || source == "config" {
+		if source == "env" || source == "project" || source == "global" {
 			fmt.Printf("* %-*s   %-*s   %s\n", maxKeyLen, k.Key, maxValLen, displayValue, source)
 		} else {
 			fmt.Printf("  %-*s   %-*s   %s\n", maxKeyLen, k.Key, maxValLen, displayValue, source)
@@ -488,6 +619,130 @@ func unsetConfig(key string) {
 	}
 
 	fmt.Printf("Unset %s\n", key)
+}
+
+// Project config functions
+
+func listProjectConfig() {
+	cfg, err := LoadProjectConfig()
+	if err != nil {
+		fmt.Printf("Error loading project config: %v\n", err)
+		os.Exit(1)
+	}
+
+	configPath := GetProjectConfigFilePath()
+	fmt.Printf("Project config: %s\n\n", configPath)
+
+	keys := getConfigKeys()
+
+	// Calculate column widths
+	maxKeyLen := 3
+	maxValLen := 5
+	for _, k := range keys {
+		if len(k.Key) > maxKeyLen {
+			maxKeyLen = len(k.Key)
+		}
+		val := getConfigValue(cfg, k.Key)
+		if val == "" {
+			val = "-"
+		}
+		if len(val) > maxValLen {
+			maxValLen = len(val)
+		}
+	}
+
+	// Print header
+	fmt.Printf("  %-*s   %-*s\n", maxKeyLen, "Key", maxValLen, "Value")
+	fmt.Printf("  %s   %s\n", strings.Repeat("-", maxKeyLen), strings.Repeat("-", maxValLen))
+
+	hasValues := false
+	for _, k := range keys {
+		val := getConfigValue(cfg, k.Key)
+		if val != "" {
+			hasValues = true
+			fmt.Printf("* %-*s   %-*s\n", maxKeyLen, k.Key, maxValLen, val)
+		}
+	}
+
+	if !hasValues {
+		fmt.Println("  (no project config set)")
+	}
+}
+
+func getProjectConfig(key string) {
+	if !isValidConfigKey(key) {
+		fmt.Printf("Unknown config key: %s\n", key)
+		fmt.Println("Use 'addt config project list' to see available keys.")
+		os.Exit(1)
+	}
+
+	cfg, err := LoadProjectConfig()
+	if err != nil {
+		fmt.Printf("Error loading project config: %v\n", err)
+		os.Exit(1)
+	}
+
+	val := getConfigValue(cfg, key)
+	if val == "" {
+		fmt.Printf("%s is not set in project config\n", key)
+	} else {
+		fmt.Println(val)
+	}
+}
+
+func setProjectConfig(key, value string) {
+	keyInfo := getConfigKeyInfo(key)
+	if keyInfo == nil {
+		fmt.Printf("Unknown config key: %s\n", key)
+		fmt.Println("Use 'addt config project --help' to see available keys.")
+		os.Exit(1)
+	}
+
+	if keyInfo.Type == "bool" {
+		value = strings.ToLower(value)
+		if value != "true" && value != "false" {
+			fmt.Printf("Invalid value for %s: must be 'true' or 'false'\n", key)
+			os.Exit(1)
+		}
+	}
+
+	cfg, err := LoadProjectConfig()
+	if err != nil {
+		fmt.Printf("Error loading project config: %v\n", err)
+		os.Exit(1)
+	}
+
+	setConfigValue(cfg, key, value)
+
+	if err := SaveProjectConfig(cfg); err != nil {
+		fmt.Printf("Error saving project config: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Set %s = %s (project)\n", key, value)
+}
+
+func unsetProjectConfig(key string) {
+	if !isValidConfigKey(key) {
+		fmt.Printf("Unknown config key: %s\n", key)
+		fmt.Println("Use 'addt config project list' to see available keys.")
+		os.Exit(1)
+	}
+
+	cfg, err := LoadProjectConfig()
+	if err != nil {
+		fmt.Printf("Error loading project config: %v\n", err)
+		os.Exit(1)
+	}
+
+	unsetConfigValue(cfg, key)
+
+	if err := SaveProjectConfig(cfg); err != nil {
+		fmt.Printf("Error saving project config: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Unset %s (project)\n", key)
 }
 
 func isValidConfigKey(key string) bool {
