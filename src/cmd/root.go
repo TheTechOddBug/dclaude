@@ -8,7 +8,6 @@ import (
 
 	"github.com/jedi4ever/addt/config"
 	"github.com/jedi4ever/addt/core"
-	"github.com/jedi4ever/addt/internal/update"
 	"github.com/jedi4ever/addt/provider"
 )
 
@@ -167,7 +166,7 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 			}
 			switch args[1] {
 			case "update":
-				update.UpdateAddt(version)
+				UpdateAddt(version)
 			default:
 				fmt.Printf("Unknown cli command: %s\n", args[1])
 				os.Exit(1)
@@ -326,7 +325,7 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 				}
 				switch subArgs[0] {
 				case "update":
-					update.UpdateAddt(version)
+					UpdateAddt(version)
 				default:
 					fmt.Printf("Unknown cli command: %s\n", subArgs[0])
 					os.Exit(1)
