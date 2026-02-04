@@ -1,9 +1,9 @@
 name: claude-flow
 description: Claude Flow - Multi-agent orchestration platform for Claude
-entrypoint: claude-flow
+entrypoint:
+  - bash
+  - -i
 default_version: alpha
-dependencies:
-  - claude
 mounts:
   - source: ~/.claude-flow
     target: /home/addt/.claude-flow

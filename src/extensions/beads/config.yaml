@@ -1,6 +1,8 @@
 name: beads
 description: Git-backed issue tracker for AI agents
-entrypoint: bd
+entrypoint:
+  - bash
+  - -i
 default_version: latest
 dependencies: []
 mounts:

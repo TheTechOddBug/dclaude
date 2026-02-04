@@ -1,9 +1,10 @@
 name: gastown
 description: Multi-agent orchestration for Claude Code
-entrypoint: gt
+entrypoint:
+  - bash
+  - -i
 default_version: latest
 dependencies:
-  - claude
   - beads
 env_vars:
   - ANTHROPIC_API_KEY

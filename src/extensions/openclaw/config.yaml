@@ -1,9 +1,9 @@
 name: openclaw
 description: OpenClaw - Open source personal AI assistant (formerly Clawdbot)
-entrypoint: openclaw
+entrypoint:
+  - bash
+  - -i
 default_version: latest
-dependencies:
-  - claude
 mounts:
   - source: ~/.openclaw
     target: /home/addt/.openclaw
