@@ -1,0 +1,5 @@
+- Golang code files should typically be no longer then 300 lines, max 400
+- When you suggest code, also update or add the tests
+- When you change code also update the documentation
+- This tool is meant for developers - making it easy to use
+- In the README I want to have the quick path first and the more advanced further

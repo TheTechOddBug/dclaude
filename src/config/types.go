@@ -37,37 +37,37 @@ type GlobalConfig struct {
 
 // Config holds all configuration options
 type Config struct {
-	NodeVersion        string
-	GoVersion          string
-	UvVersion          string
-	EnvVars            []string
-	GitHubDetect       bool
-	Ports              []string
-	PortRangeStart     int
-	SSHForward         string
-	GPGForward         bool
-	DindMode           string
-	EnvFile            string
-	LogEnabled         bool
-	LogFile            string
-	ImageName          string
-	Persistent         bool              // Enable persistent container mode
-	WorkdirAutomount   bool              // Auto-mount working directory
-	Workdir            string            // Override working directory (default: current directory)
-	FirewallEnabled          bool     // Enable network firewall
-	FirewallMode             string   // Firewall mode: strict, permissive, off
-	GlobalFirewallAllowed    []string // Global allowed domains
-	GlobalFirewallDenied     []string // Global denied domains
-	ProjectFirewallAllowed   []string // Project allowed domains
-	ProjectFirewallDenied    []string // Project denied domains
-	ExtensionFirewallAllowed []string // Extension allowed domains
-	ExtensionFirewallDenied  []string // Extension denied domains
-	Mode               string            // container or shell
-	Provider           string            // Provider type: docker or daytona
-	Extensions         string            // Comma-separated list of extensions to install (e.g., "claude,codex")
-	Command            string            // Command to run instead of claude (e.g., "gt" for gastown)
-	ExtensionVersions  map[string]string // Per-extension versions (e.g., {"claude": "1.0.5", "codex": "latest"})
-	ExtensionAutomount map[string]bool   // Per-extension automount control (e.g., {"claude": true, "codex": false})
-	CPUs               string            // CPU limit (e.g., "2", "0.5", "1.5")
-	Memory             string            // Memory limit (e.g., "512m", "2g", "4gb")
+	NodeVersion              string
+	GoVersion                string
+	UvVersion                string
+	EnvVars                  []string
+	GitHubDetect             bool
+	Ports                    []string
+	PortRangeStart           int
+	SSHForward               string
+	GPGForward               bool
+	DindMode                 string
+	EnvFile                  string
+	LogEnabled               bool
+	LogFile                  string
+	ImageName                string
+	Persistent               bool              // Enable persistent container mode
+	WorkdirAutomount         bool              // Auto-mount working directory
+	Workdir                  string            // Override working directory (default: current directory)
+	FirewallEnabled          bool              // Enable network firewall
+	FirewallMode             string            // Firewall mode: strict, permissive, off
+	GlobalFirewallAllowed    []string          // Global allowed domains
+	GlobalFirewallDenied     []string          // Global denied domains
+	ProjectFirewallAllowed   []string          // Project allowed domains
+	ProjectFirewallDenied    []string          // Project denied domains
+	ExtensionFirewallAllowed []string          // Extension allowed domains
+	ExtensionFirewallDenied  []string          // Extension denied domains
+	Mode                     string            // container or shell
+	Provider                 string            // Provider type: docker or daytona
+	Extensions               string            // Comma-separated list of extensions to install (e.g., "claude,codex")
+	Command                  string            // Command to run instead of claude (e.g., "gt" for gastown)
+	ExtensionVersions        map[string]string // Per-extension versions (e.g., {"claude": "1.0.5", "codex": "latest"})
+	ExtensionAutomount       map[string]bool   // Per-extension automount control (e.g., {"claude": true, "codex": false})
+	CPUs                     string            // CPU limit (e.g., "2", "0.5", "1.5")
+	Memory                   string            // Memory limit (e.g., "512m", "2g", "4gb")
 }
