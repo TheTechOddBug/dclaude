@@ -148,6 +148,11 @@ export GH_TOKEN="ghp_..."
 addt run claude "Clone the private repo and create a PR"
 ```
 
+Or auto-detect from `gh auth login`:
+```bash
+export ADDT_GITHUB_DETECT=true
+```
+
 ### SSH Keys (git over SSH)
 
 ```bash
