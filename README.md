@@ -64,16 +64,14 @@ addt run claude "Explain this codebase"
 addt run codex "Add unit tests"
 addt run gemini "Review this PR"
 
-# See all available agents
-addt extensions list
-
 # All agent flags work normally
 addt run claude --model opus "Refactor this"
 addt run claude --continue
-addt run claude --help
 ```
 
-Your project is mounted at `/workspace` in the container. The agent sees your files and can edit them.
+**Available agents:** `claude` `codex` `gemini` `copilot` `amp` `cursor` `kiro` `claude-flow` `gastown` `beads` `tessl` `openclaw` and more. Run `addt extensions list` for details.
+
+Your project is mounted at `/workspace` in the container. The agent can read and edit your files.
 
 ---
 
