@@ -32,6 +32,11 @@ All your normal agent commands work identically - it's a drop-in replacement.
 brew install jedi4ever/tap/addt
 ```
 
+**mise:**
+```bash
+mise use -g github:jedi4ever/addt
+```
+
 **macOS (manual):**
 ```bash
 # Apple Silicon
