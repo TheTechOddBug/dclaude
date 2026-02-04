@@ -162,3 +162,23 @@ func SaveProjectConfigFile(cfg *GlobalConfig) error {
 
 	return nil
 }
+
+// LoadGlobalConfig loads the global config (exported wrapper)
+func LoadGlobalConfig() *GlobalConfig {
+	return loadGlobalConfig()
+}
+
+// LoadProjectConfig loads the project config (exported wrapper)
+func LoadProjectConfig() *GlobalConfig {
+	return loadProjectConfig()
+}
+
+// SaveGlobalConfig saves the global config (exported wrapper)
+func SaveGlobalConfig(cfg *GlobalConfig) error {
+	return SaveGlobalConfigFile(cfg)
+}
+
+// SaveProjectConfig saves the project config (exported wrapper)
+func SaveProjectConfig(cfg *GlobalConfig) error {
+	return SaveProjectConfigFile(cfg)
+}

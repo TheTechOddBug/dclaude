@@ -170,6 +170,13 @@ func LoadConfig(defaultNodeVersion string, defaultGoVersion string, defaultUvVer
 		cfg.FirewallMode = v
 	}
 
+	// Firewall allowed: merge global + project (project extends global)
+	// Defaults are handled by firewall.go when no domains are configured
+	cfg.FirewallAllowed = mergeStringSlices(globalCfg.FirewallAllowed, projectCfg.FirewallAllowed)
+
+	// Firewall denied: merge global + project (project extends global)
+	cfg.FirewallDenied = mergeStringSlices(globalCfg.FirewallDenied, projectCfg.FirewallDenied)
+
 	// GitHub detect: default (false) -> global -> project -> env
 	cfg.GitHubDetect = false
 	if globalCfg.GitHubDetect != nil {
@@ -297,4 +304,26 @@ func getEnvOrDefault(key, defaultVal string) string {
 		return val
 	}
 	return defaultVal
+}
+
+// mergeStringSlices merges two string slices, removing duplicates
+func mergeStringSlices(a, b []string) []string {
+	seen := make(map[string]bool)
+	var result []string
+
+	for _, s := range a {
+		s = strings.TrimSpace(s)
+		if s != "" && !seen[s] {
+			seen[s] = true
+			result = append(result, s)
+		}
+	}
+	for _, s := range b {
+		s = strings.TrimSpace(s)
+		if s != "" && !seen[s] {
+			seen[s] = true
+			result = append(result, s)
+		}
+	}
+	return result
 }

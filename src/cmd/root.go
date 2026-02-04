@@ -8,6 +8,7 @@ import (
 
 	configcmd "github.com/jedi4ever/addt/cmd/config"
 	extcmd "github.com/jedi4ever/addt/cmd/extensions"
+	firewallcmd "github.com/jedi4ever/addt/cmd/firewall"
 	"github.com/jedi4ever/addt/config"
 	"github.com/jedi4ever/addt/core"
 	"github.com/jedi4ever/addt/provider"
@@ -280,7 +281,7 @@ func handleSubcommand(subCmd string, subArgs []string, defaultNodeVersion, defau
 		HandleContainersCommand(prov, providerCfg, subArgs)
 
 	case "firewall":
-		HandleFirewallCommand(subArgs)
+		firewallcmd.HandleCommand(subArgs)
 
 	default:
 		fmt.Printf("Unknown command: %s\n", subCmd)
