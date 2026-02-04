@@ -63,21 +63,22 @@ func (p *DockerProvider) AddExtensionMounts(dockerArgs []string, imageName, home
 	extMounts := p.GetExtensionMountsWithNames(imageName)
 	for _, extMount := range extMounts {
 		// Determine if mount should be enabled based on auto_mount and explicit config
-		autoMount := extMount.AutoMount == nil || *extMount.AutoMount // default to true
+		// Default is false - extensions must explicitly set auto_mount: true
+		autoMount := extMount.AutoMount != nil && *extMount.AutoMount
 
 		if p.config.ExtensionAutomount != nil {
 			if mountEnabled, exists := p.config.ExtensionAutomount[extMount.ExtensionName]; exists {
 				if !mountEnabled {
-					// Mount explicitly disabled
+					// Mount explicitly disabled by user config
 					continue
 				}
-				// Mount explicitly enabled - proceed even if auto_mount is false
+				// Mount explicitly enabled by user config - proceed even if auto_mount is false
 			} else if !autoMount {
-				// No explicit config and auto_mount is false - skip
+				// No user config and auto_mount not enabled in extension - skip
 				continue
 			}
 		} else if !autoMount {
-			// No config map and auto_mount is false - skip
+			// No user config and auto_mount not enabled in extension - skip
 			continue
 		}
 

@@ -101,7 +101,7 @@ type ExtensionMetadata struct {
 	Name        string           `json:"name"`
 	Description string           `json:"description"`
 	Entrypoint  Entrypoint       `json:"entrypoint"`
-	AutoMount   *bool            `json:"auto_mount,omitempty"` // nil or true = auto mount, false = only if explicitly enabled
+	AutoMount   *bool            `json:"auto_mount,omitempty"` // true = auto mount, nil or false = disabled (default)
 	Mounts      []ExtensionMount `json:"mounts,omitempty"`
 	Flags       []ExtensionFlag  `json:"flags,omitempty"`
 	EnvVars     []string         `json:"env_vars,omitempty"`

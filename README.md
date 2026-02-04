@@ -95,9 +95,9 @@ export OPENAI_API_KEY="sk-..."
 export GEMINI_API_KEY="..."
 ```
 
-**Claude with Max subscription:** If you use Claude Max (not API), run `claude login` on your host machine. Your `~/.claude` and `~/.claude.json` are auto-mounted into the container - no API key needed.
+**Claude with Max subscription:** If you use Claude Max (not API), run `claude login` on your host machine. The claude extension mounts `~/.claude` and `~/.claude.json` into the container - no API key needed.
 
-**Session resumption:** Even though containers are ephemeral, Claude can resume previous sessions. Your session history is stored in `~/.claude` on your host, which is mounted into each container. Use `claude --continue` or `claude --resume` as normal.
+**Session resumption:** Claude can resume previous sessions using `--continue` or `--resume`. Your session history in `~/.claude` is mounted into the container.
 
 **Your code:** Your current directory is automatically mounted at `/workspace` in the container. The agent can read and edit your files directly.
 
