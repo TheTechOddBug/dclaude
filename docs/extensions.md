@@ -96,6 +96,31 @@ export GH_TOKEN="ghp_..."               # Copilot
 
 Create custom extensions in `~/.addt/extensions/`. Local extensions override built-in ones.
 
+### Override Built-in Extensions
+
+Clone a built-in extension to customize it:
+
+```bash
+# Clone to local (overrides built-in)
+addt extensions clone claude
+
+# Or clone as a new extension name
+addt extensions clone claude my-claude
+
+# Edit the local copy
+vim ~/.addt/extensions/claude/install.sh
+
+# Rebuild to apply changes
+addt build claude --force
+```
+
+To remove a local extension:
+
+```bash
+addt extensions remove claude
+addt extensions remove my-claude
+```
+
 ### Scaffold a New Extension
 
 ```bash

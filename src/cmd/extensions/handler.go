@@ -28,6 +28,23 @@ func HandleCommand(args []string) {
 			os.Exit(1)
 		}
 		Create(args[1])
+	case "clone":
+		if len(args) < 2 {
+			fmt.Println("Usage: addt extensions clone <source> [target]")
+			os.Exit(1)
+		}
+		targetName := ""
+		if len(args) > 2 {
+			targetName = args[2]
+		}
+		Clone(args[1], targetName)
+	case "remove":
+		if len(args) < 2 {
+			fmt.Println("Usage: addt extensions remove <name> [--force]")
+			os.Exit(1)
+		}
+		force := len(args) > 2 && args[2] == "--force"
+		Remove(args[1], force)
 	case "config":
 		handleConfigCommand(args[1:], "addt")
 	default:
@@ -57,6 +74,23 @@ func HandleCommandAgent(args []string) {
 			os.Exit(1)
 		}
 		Create(args[1])
+	case "clone":
+		if len(args) < 2 {
+			fmt.Println("Usage: <agent> addt extensions clone <source> [target]")
+			os.Exit(1)
+		}
+		targetName := ""
+		if len(args) > 2 {
+			targetName = args[2]
+		}
+		Clone(args[1], targetName)
+	case "remove":
+		if len(args) < 2 {
+			fmt.Println("Usage: <agent> addt extensions remove <name> [--force]")
+			os.Exit(1)
+		}
+		force := len(args) > 2 && args[2] == "--force"
+		Remove(args[1], force)
 	case "config":
 		handleConfigCommand(args[1:], "<agent>")
 	default:
@@ -105,5 +139,7 @@ func printUsage(prefix string) {
 	fmt.Println("  list                       List available extensions")
 	fmt.Println("  info <name>                Show extension details")
 	fmt.Println("  new <name>                 Create a new local extension")
+	fmt.Println("  clone <source> [target]    Copy built-in extension for customization")
+	fmt.Println("  remove <name> [--force]    Remove a local extension")
 	fmt.Println("  config <name> <subcommand> Configure extension settings")
 }
