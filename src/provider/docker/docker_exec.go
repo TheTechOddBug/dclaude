@@ -143,6 +143,9 @@ func (p *DockerProvider) addContainerVolumesAndEnv(dockerArgs []string, spec *pr
 		dockerArgs = append(dockerArgs, "--memory", spec.Memory)
 	}
 
+	// Add security settings
+	dockerArgs = p.addSecuritySettings(dockerArgs)
+
 	return dockerArgs
 }
 
@@ -243,4 +246,58 @@ exec /bin/bash "$@"
 	}
 
 	return p.executeDockerCommand(dockerArgs)
+}
+
+// addSecuritySettings adds container security hardening options
+func (p *DockerProvider) addSecuritySettings(dockerArgs []string) []string {
+	sec := p.config.Security
+
+	// Process limits
+	if sec.PidsLimit > 0 {
+		dockerArgs = append(dockerArgs, "--pids-limit", fmt.Sprintf("%d", sec.PidsLimit))
+	}
+
+	// Ulimits
+	if sec.UlimitNofile != "" {
+		dockerArgs = append(dockerArgs, "--ulimit", "nofile="+sec.UlimitNofile)
+	}
+	if sec.UlimitNproc != "" {
+		dockerArgs = append(dockerArgs, "--ulimit", "nproc="+sec.UlimitNproc)
+	}
+
+	// Privilege escalation prevention
+	if sec.NoNewPrivileges {
+		dockerArgs = append(dockerArgs, "--security-opt", "no-new-privileges")
+	}
+
+	// Drop capabilities
+	for _, cap := range sec.CapDrop {
+		dockerArgs = append(dockerArgs, "--cap-drop", cap)
+	}
+
+	// Add capabilities back
+	for _, cap := range sec.CapAdd {
+		dockerArgs = append(dockerArgs, "--cap-add", cap)
+	}
+
+	// Read-only root filesystem
+	if sec.ReadOnlyRootfs {
+		dockerArgs = append(dockerArgs, "--read-only")
+		// Add tmpfs mounts for writable directories when using read-only rootfs
+		dockerArgs = append(dockerArgs, "--tmpfs", "/tmp:rw,noexec,nosuid,size=256m")
+		dockerArgs = append(dockerArgs, "--tmpfs", "/var/tmp:rw,noexec,nosuid,size=128m")
+	}
+
+	// Seccomp profile
+	if sec.SeccompProfile != "" {
+		if sec.SeccompProfile == "unconfined" {
+			dockerArgs = append(dockerArgs, "--security-opt", "seccomp=unconfined")
+		} else if sec.SeccompProfile != "default" {
+			// Custom profile path
+			dockerArgs = append(dockerArgs, "--security-opt", "seccomp="+sec.SeccompProfile)
+		}
+		// "default" means use Docker's default profile, no flag needed
+	}
+
+	return dockerArgs
 }

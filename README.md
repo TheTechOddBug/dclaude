@@ -330,6 +330,39 @@ export ADDT_DOCKER_MEMORY=4g
 addt run claude
 ```
 
+### Security Hardening
+
+Containers run with security defaults enabled:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `pids_limit` | 200 | Max processes (prevents fork bombs) |
+| `ulimit_nofile` | 4096:8192 | File descriptor limits |
+| `ulimit_nproc` | 256:512 | Process limits |
+| `no_new_privileges` | true | Prevents privilege escalation |
+| `cap_drop` | [ALL] | Linux capabilities to drop |
+| `cap_add` | [CHOWN, SETUID, SETGID] | Linux capabilities to add back |
+
+Configure in `~/.addt/config.yaml`:
+```yaml
+security:
+  pids_limit: 200
+  ulimit_nofile: "4096:8192"
+  ulimit_nproc: "256:512"
+  no_new_privileges: true
+  cap_drop: [ALL]
+  cap_add: [CHOWN, SETUID, SETGID]
+  read_only_rootfs: false
+```
+
+Or via environment variables:
+```bash
+export ADDT_SECURITY_PIDS_LIMIT=500
+export ADDT_SECURITY_NO_NEW_PRIVILEGES=false
+export ADDT_SECURITY_CAP_DROP=ALL
+export ADDT_SECURITY_CAP_ADD=CHOWN,SETUID,SETGID
+```
+
 ### Version Pinning
 
 ```bash
@@ -431,6 +464,13 @@ addt cli update                   # Update addt
 |----------|---------|-------------|
 | `ADDT_FIREWALL` | false | Enable network firewall |
 | `ADDT_FIREWALL_MODE` | strict | Mode: `strict`, `permissive`, `off` |
+| `ADDT_SECURITY_PIDS_LIMIT` | 200 | Max processes in container |
+| `ADDT_SECURITY_ULIMIT_NOFILE` | 4096:8192 | File descriptor limits |
+| `ADDT_SECURITY_ULIMIT_NPROC` | 256:512 | Process limits |
+| `ADDT_SECURITY_NO_NEW_PRIVILEGES` | true | Prevent privilege escalation |
+| `ADDT_SECURITY_CAP_DROP` | ALL | Capabilities to drop (comma-separated) |
+| `ADDT_SECURITY_CAP_ADD` | CHOWN,SETUID,SETGID | Capabilities to add back |
+| `ADDT_SECURITY_READ_ONLY_ROOTFS` | false | Read-only root filesystem |
 
 ### Paths & Logging
 | Variable | Default | Description |
