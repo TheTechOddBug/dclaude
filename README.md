@@ -69,7 +69,7 @@ addt run claude --model opus "Refactor this"
 addt run claude --continue
 ```
 
-**Available agents:** `claude` `codex` `gemini` `copilot` `amp` `cursor` `kiro` `claude-flow` `gastown` `beads` `tessl` `openclaw` and more. Run `addt extensions list` for details.
+**Available agents:** Every agent is loaded as an extension. Built-in: `claude` `codex` `gemini` `copilot` `amp` `cursor` `kiro` `claude-flow` `gastown` `beads` `tessl` `openclaw` and more. Run `addt extensions list` for details.
 
 When the agent starts, your current directory is auto-mounted (read-write) at `/workspace` in the container.
 
