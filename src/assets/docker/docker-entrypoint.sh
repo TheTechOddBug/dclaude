@@ -1,6 +1,17 @@
 #!/bin/bash
 set -e
 
+# Load secrets from files if secrets_to_files is enabled
+# These are loaded here so they're available for auth but not inherited by subprocesses
+if [ -n "$ADDT_SECRETS_DIR" ] && [ -d "$ADDT_SECRETS_DIR" ]; then
+    for secret_file in "$ADDT_SECRETS_DIR"/*; do
+        if [ -f "$secret_file" ]; then
+            var_name=$(basename "$secret_file")
+            export "$var_name"="$(cat "$secret_file")"
+        fi
+    done
+fi
+
 # Start Docker daemon if in DinD mode
 if [ "$ADDT_DIND" = "true" ]; then
     echo "Starting Docker daemon in isolated mode..."

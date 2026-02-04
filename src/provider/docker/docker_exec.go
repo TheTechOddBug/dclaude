@@ -77,7 +77,9 @@ func (p *DockerProvider) buildBaseDockerArgs(spec *provider.RunSpec, ctx *contai
 }
 
 // addContainerVolumesAndEnv adds volumes, mounts, and environment variables for new containers
-func (p *DockerProvider) addContainerVolumesAndEnv(dockerArgs []string, spec *provider.RunSpec, ctx *containerContext) []string {
+func (p *DockerProvider) addContainerVolumesAndEnv(dockerArgs []string, spec *provider.RunSpec, ctx *containerContext) ([]string, func()) {
+	// Cleanup function for secrets directory (caller should defer this)
+	cleanup := func() {}
 	// Add volumes
 	for _, vol := range spec.Volumes {
 		mount := fmt.Sprintf("%s:%s", vol.Source, vol.Target)
@@ -131,6 +133,18 @@ func (p *DockerProvider) addContainerVolumesAndEnv(dockerArgs []string, spec *pr
 		dockerArgs = append(dockerArgs, "-p", fmt.Sprintf("%d:%d", port.Host, port.Container))
 	}
 
+	// Handle secrets_to_files: write extension env vars to files instead of passing as -e
+	if p.config.Security.SecretsToFiles {
+		secretsDir, secretVarNames, err := p.writeSecretsToFiles(spec.ImageName, spec.Env)
+		if err == nil && secretsDir != "" {
+			dockerArgs = p.addSecretsMount(dockerArgs, secretsDir)
+			p.filterSecretEnvVars(spec.Env, secretVarNames)
+			dockerArgs = append(dockerArgs, "-e", "ADDT_SECRETS_DIR=/run/secrets")
+			// Set cleanup to remove secrets directory after container exits
+			cleanup = func() { os.RemoveAll(secretsDir) }
+		}
+	}
+
 	// Add environment variables
 	for k, v := range spec.Env {
 		dockerArgs = append(dockerArgs, "-e", fmt.Sprintf("%s=%s", k, v))
@@ -147,7 +161,7 @@ func (p *DockerProvider) addContainerVolumesAndEnv(dockerArgs []string, spec *pr
 	// Add security settings
 	dockerArgs = p.addSecuritySettings(dockerArgs)
 
-	return dockerArgs
+	return dockerArgs, cleanup
 }
 
 // executeDockerCommand runs the docker command with standard I/O
@@ -169,9 +183,11 @@ func (p *DockerProvider) Run(spec *provider.RunSpec) error {
 	dockerArgs := p.buildBaseDockerArgs(spec, ctx)
 
 	// Only add volumes and environment when creating a new container
+	cleanup := func() {}
 	if !ctx.useExistingContainer {
-		dockerArgs = p.addContainerVolumesAndEnv(dockerArgs, spec, ctx)
+		dockerArgs, cleanup = p.addContainerVolumesAndEnv(dockerArgs, spec, ctx)
 	}
+	defer cleanup()
 
 	// Handle shell mode or normal mode
 	if ctx.useExistingContainer {
@@ -197,9 +213,11 @@ func (p *DockerProvider) Shell(spec *provider.RunSpec) error {
 	dockerArgs := p.buildBaseDockerArgs(spec, ctx)
 
 	// Only add volumes and environment when creating a new container
+	cleanup := func() {}
 	if !ctx.useExistingContainer {
-		dockerArgs = p.addContainerVolumesAndEnv(dockerArgs, spec, ctx)
+		dockerArgs, cleanup = p.addContainerVolumesAndEnv(dockerArgs, spec, ctx)
 	}
+	defer cleanup()
 
 	// Open shell
 	fmt.Println("Opening bash shell in container...")

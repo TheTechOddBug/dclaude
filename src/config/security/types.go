@@ -16,8 +16,9 @@ type Settings struct {
 	DisableIPC     *bool  `yaml:"disable_ipc,omitempty"`      // Disable IPC namespace sharing (default: false)
 	TimeLimit      int    `yaml:"time_limit,omitempty"`       // Auto-kill container after N minutes (default: 0 = disabled)
 	UserNamespace  string `yaml:"user_namespace,omitempty"`   // User namespace: "host", "private", or "" (default: "")
-	DisableDevices *bool  `yaml:"disable_devices,omitempty"`  // Drop MKNOD capability (default: false)
-	MemorySwap     string `yaml:"memory_swap,omitempty"`      // Memory swap limit: "-1" to disable, or size (default: "")
+	DisableDevices   *bool `yaml:"disable_devices,omitempty"`    // Drop MKNOD capability (default: false)
+	MemorySwap       string `yaml:"memory_swap,omitempty"`       // Memory swap limit: "-1" to disable, or size (default: "")
+	SecretsToFiles   *bool  `yaml:"secrets_to_files,omitempty"`  // Write secrets to files instead of env vars (default: false)
 }
 
 // Config holds runtime security configuration with defaults applied
@@ -36,8 +37,9 @@ type Config struct {
 	DisableIPC     bool   // Disable IPC namespace sharing (default: false)
 	TimeLimit      int    // Auto-kill container after N minutes (default: 0 = disabled)
 	UserNamespace  string // User namespace: "host", "private", or "" (default: "")
-	DisableDevices bool   // Drop MKNOD capability (default: false)
-	MemorySwap     string // Memory swap limit: "-1" to disable, or size (default: "")
+	DisableDevices   bool   // Drop MKNOD capability (default: false)
+	MemorySwap       string // Memory swap limit: "-1" to disable, or size (default: "")
+	SecretsToFiles   bool   // Write secrets to files instead of env vars (default: false)
 }
 
 // DefaultConfig returns a Config with secure defaults applied
@@ -57,7 +59,8 @@ func DefaultConfig() Config {
 		DisableIPC:     false,
 		TimeLimit:      0,  // 0 = disabled
 		UserNamespace:  "", // Empty = Docker default
-		DisableDevices: false,
-		MemorySwap:     "", // Empty = Docker default
+		DisableDevices:   false,
+		MemorySwap:       "", // Empty = Docker default
+		SecretsToFiles:   false,
 	}
 }

@@ -59,6 +59,9 @@ func ApplySettings(cfg *Config, settings *Settings) {
 	if settings.MemorySwap != "" {
 		cfg.MemorySwap = settings.MemorySwap
 	}
+	if settings.SecretsToFiles != nil {
+		cfg.SecretsToFiles = *settings.SecretsToFiles
+	}
 }
 
 // ApplyEnvOverrides applies environment variable overrides to a Config
@@ -114,6 +117,9 @@ func ApplyEnvOverrides(cfg *Config) {
 	}
 	if v := os.Getenv("ADDT_SECURITY_MEMORY_SWAP"); v != "" {
 		cfg.MemorySwap = v
+	}
+	if v := os.Getenv("ADDT_SECURITY_SECRETS_TO_FILES"); v != "" {
+		cfg.SecretsToFiles = v == "true"
 	}
 }
 

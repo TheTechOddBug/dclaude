@@ -160,3 +160,38 @@ func TestLoadConfig(t *testing.T) {
 		t.Errorf("CapAdd = %v, want [CHOWN, SETUID, SETGID] (default)", cfg.CapAdd)
 	}
 }
+
+func TestSecretsToFilesDefault(t *testing.T) {
+	cfg := DefaultConfig()
+	if cfg.SecretsToFiles {
+		t.Error("SecretsToFiles = true, want false (default)")
+	}
+}
+
+func TestSecretsToFilesSettings(t *testing.T) {
+	cfg := DefaultConfig()
+
+	enabled := true
+	settings := &Settings{
+		SecretsToFiles: &enabled,
+	}
+
+	ApplySettings(&cfg, settings)
+
+	if !cfg.SecretsToFiles {
+		t.Error("SecretsToFiles = false, want true (from settings)")
+	}
+}
+
+func TestSecretsToFilesEnvOverride(t *testing.T) {
+	cfg := DefaultConfig()
+
+	os.Setenv("ADDT_SECURITY_SECRETS_TO_FILES", "true")
+	defer os.Unsetenv("ADDT_SECURITY_SECRETS_TO_FILES")
+
+	ApplyEnvOverrides(&cfg)
+
+	if !cfg.SecretsToFiles {
+		t.Error("SecretsToFiles = false, want true (from env)")
+	}
+}

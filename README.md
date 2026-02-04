@@ -352,6 +352,7 @@ Containers run with security defaults enabled:
 | `user_namespace` | "" | User namespace: "host" or "private" |
 | `disable_devices` | false | Drop MKNOD capability (prevent device creation) |
 | `memory_swap` | "" | Memory swap limit: "-1" to disable swap |
+| `secrets_to_files` | false | Write secrets to /run/secrets instead of env vars |
 
 Configure in `~/.addt/config.yaml`:
 ```yaml
@@ -371,6 +372,7 @@ security:
   time_limit: 60                # Auto-terminate after 60 minutes
   disable_devices: true         # Prevent device file creation
   memory_swap: "-1"             # Disable swap entirely
+  secrets_to_files: true        # Write secrets to files, not env vars
 
 # Mount workspace as read-only (agent can't modify your files)
 workdir_readonly: true
@@ -383,6 +385,7 @@ export ADDT_SECURITY_READ_ONLY_ROOTFS=true
 export ADDT_SECURITY_TMPFS_TMP_SIZE=100m
 export ADDT_SECURITY_TMPFS_HOME_SIZE=500m
 export ADDT_SECURITY_NETWORK_MODE=none
+export ADDT_SECURITY_SECRETS_TO_FILES=true
 export ADDT_WORKDIR_READONLY=true
 ```
 
