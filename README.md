@@ -136,6 +136,20 @@ addt run claude "Create an Express server on port 8080"
 # Agent tells you: "Visit http://localhost:30000"
 ```
 
+### GitHub Access (private repos, PRs)
+
+```bash
+export GH_TOKEN="ghp_..."
+addt run claude "Clone the private repo and create a PR"
+```
+
+### SSH Keys (git over SSH)
+
+```bash
+export ADDT_SSH_FORWARD=agent
+addt run claude "Clone git@github.com:org/private-repo.git"
+```
+
 ### Rebuild Container
 
 ```bash
