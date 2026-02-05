@@ -89,6 +89,48 @@ When the agent starts, your current directory is auto-mounted (read-write) at `/
 
 ---
 
+## Project Setup
+
+Use `addt init` to create a `.addt.yaml` config file for your project:
+
+```bash
+addt init           # Interactive setup
+addt init -y        # Quick setup with smart defaults
+addt init -y -f     # Overwrite existing config
+```
+
+The interactive setup asks:
+1. Which AI agent to use (claude, codex, gemini, etc.)
+2. Git operations needed (enables SSH forwarding)
+3. Network access level (restricted, open, strict, air-gapped)
+4. Workspace permissions (read-write or read-only)
+5. Container persistence (ephemeral or persistent)
+
+**Smart defaults** based on your project:
+- Detects project type (Node.js, Python, Go, Rust, etc.)
+- Enables SSH proxy if Git is detected
+- Adds appropriate package registries to firewall allowlist
+- Sets GitHub integration if `.github` or GitHub remote found
+
+Example generated config:
+```yaml
+# .addt.yaml
+extensions: claude
+persistent: false
+firewall: true
+firewall_mode: strict
+firewall_allowed:
+  - api.anthropic.com
+  - registry.npmjs.org
+ssh_forward: proxy
+github_detect: true
+node_version: "22"
+```
+
+Commit `.addt.yaml` to version control for team-wide consistency.
+
+---
+
 ## Authentication
 
 Each agent uses its own API key via environment variable:

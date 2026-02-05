@@ -15,6 +15,7 @@ Version: %s
 
 Commands:
   addt run <extension> [args...]     Run a specific extension
+  addt init [-y] [-f]                Initialize project config
   addt build <extension>             Build the container image
   addt shell <extension>             Open bash shell in container
   addt containers [list|stop|rm]     Manage containers
@@ -27,6 +28,8 @@ Commands:
   addt version                       Show version info
 
 Examples:
+  addt init                          # Interactive setup
+  addt init -y                       # Quick setup with defaults
   addt run claude "Fix the bug"
   addt extensions list
   addt config global list
