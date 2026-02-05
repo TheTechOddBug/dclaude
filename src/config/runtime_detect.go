@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 )
 
@@ -79,19 +80,54 @@ func isDockerRunning() bool {
 	return cmd.Run() == nil
 }
 
-// isPodmanAvailable checks if Podman is available (no daemon needed)
+// isPodmanAvailable checks if Podman is available and functional
 // Checks both system Podman and bundled Podman
+// On macOS, also verifies that a machine is running
 func isPodmanAvailable() bool {
 	podmanPath := GetPodmanPath()
 	if podmanPath == "" {
 		return false
 	}
 
-	// Podman doesn't need a daemon, just check version works
+	// Check version works
 	cmd := exec.Command(podmanPath, "version")
 	cmd.Stdout = nil
 	cmd.Stderr = nil
-	return cmd.Run() == nil
+	if cmd.Run() != nil {
+		return false
+	}
+
+	// On macOS, we need a machine running
+	if runtime.GOOS == "darwin" {
+		return isPodmanMachineRunning(podmanPath)
+	}
+
+	return true
+}
+
+// isPodmanMachineRunning checks if a Podman machine is running (macOS)
+func isPodmanMachineRunning(podmanPath string) bool {
+	cmd := exec.Command(podmanPath, "machine", "list", "--format", "{{.Running}}")
+	output, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+	return strings.Contains(string(output), "true")
+}
+
+// EnsurePodmanMachineRunning ensures the Podman machine is running (macOS only)
+// This should be called before any Podman commands that require the machine
+func EnsurePodmanMachineRunning() error {
+	if runtime.GOOS != "darwin" {
+		return nil // Only needed on macOS
+	}
+
+	podmanPath := GetPodmanPath()
+	if podmanPath == "" {
+		return fmt.Errorf("podman not found")
+	}
+
+	return ensurePodmanMachine(podmanPath)
 }
 
 // GetPodmanPath returns the path to Podman binary (system or bundled)

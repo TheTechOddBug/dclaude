@@ -156,6 +156,59 @@ func DownloadPodman() error {
 	version := strings.TrimSpace(string(output))
 	spinner.StopWithSuccess(fmt.Sprintf("Podman installed: %s", version))
 
+	// On macOS, initialize and start the machine if needed
+	if runtime.GOOS == "darwin" {
+		if err := ensurePodmanMachine(podmanPath); err != nil {
+			return fmt.Errorf("podman machine setup failed: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// ensurePodmanMachine ensures a Podman machine exists and is running (macOS only)
+func ensurePodmanMachine(podmanPath string) error {
+	// Check if any machine exists
+	cmd := exec.Command(podmanPath, "machine", "list", "--format", "{{.Name}}")
+	output, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("failed to list machines: %w", err)
+	}
+
+	machines := strings.TrimSpace(string(output))
+	if machines == "" {
+		// No machine exists, initialize one
+		spinner := util.NewSpinner("Initializing Podman machine...")
+		spinner.Start()
+
+		initCmd := exec.Command(podmanPath, "machine", "init")
+		if err := initCmd.Run(); err != nil {
+			spinner.StopWithError("Machine init failed")
+			return fmt.Errorf("failed to initialize machine: %w", err)
+		}
+		spinner.StopWithSuccess("Podman machine initialized")
+	}
+
+	// Check if machine is running
+	cmd = exec.Command(podmanPath, "machine", "list", "--format", "{{.Running}}")
+	output, err = cmd.Output()
+	if err != nil {
+		return fmt.Errorf("failed to check machine status: %w", err)
+	}
+
+	running := strings.TrimSpace(string(output))
+	if running != "true" {
+		spinner := util.NewSpinner("Starting Podman machine...")
+		spinner.Start()
+
+		startCmd := exec.Command(podmanPath, "machine", "start")
+		if err := startCmd.Run(); err != nil {
+			spinner.StopWithError("Machine start failed")
+			return fmt.Errorf("failed to start machine: %w", err)
+		}
+		spinner.StopWithSuccess("Podman machine started")
+	}
+
 	return nil
 }
 
