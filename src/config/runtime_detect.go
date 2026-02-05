@@ -41,8 +41,15 @@ func EnsureContainerRuntime() (string, error) {
 		return "docker", nil
 	}
 
-	// Check if Podman is already available
-	if isPodmanAvailable() {
+	// Check if Podman binary exists (even if machine not running)
+	podmanPath := GetPodmanPath()
+	if podmanPath != "" {
+		// Podman binary exists - ensure machine is running on macOS
+		if runtime.GOOS == "darwin" {
+			if err := ensurePodmanMachine(podmanPath); err != nil {
+				return "", fmt.Errorf("failed to start Podman machine: %w", err)
+			}
+		}
 		return "podman", nil
 	}
 
