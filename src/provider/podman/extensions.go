@@ -146,7 +146,8 @@ func (p *PodmanProvider) GetExtensionFlags(imageName, command string) []extensio
 }
 
 // GetExtensionEnvVars returns all unique environment variables needed by installed extensions
-// This includes both regular env_vars and otel_vars from extension configs
+// This includes both regular env_vars and otel_vars from extension configs.
+// Entries can be either "VAR_NAME" (pass-through from host) or "VAR_NAME=default" (with default value).
 func (p *PodmanProvider) GetExtensionEnvVars(imageName string) []string {
 	metadata := p.GetExtensionMetadata(imageName)
 	if metadata == nil {

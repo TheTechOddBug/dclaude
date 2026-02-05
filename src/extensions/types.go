@@ -90,7 +90,7 @@ type ExtensionConfig struct {
 	AutoMount        bool             `yaml:"auto_mount" json:"auto_mount"`
 	Dependencies     []string         `yaml:"dependencies" json:"dependencies,omitempty"`
 	EnvVars          []string         `yaml:"env_vars" json:"env_vars,omitempty"`
-	OtelVars         []string         `yaml:"otel_vars" json:"otel_vars,omitempty"` // OpenTelemetry env vars to pass through
+	OtelVars         []string         `yaml:"otel_vars" json:"otel_vars,omitempty"` // OpenTelemetry env vars; supports "VAR" or "VAR=default"
 	Mounts           []ExtensionMount `yaml:"mounts" json:"mounts,omitempty"`
 	Flags            []ExtensionFlag  `yaml:"flags" json:"flags,omitempty"`
 	CredentialScript string           `yaml:"credential_script,omitempty" json:"credential_script,omitempty"` // Script to run on host for credentials
@@ -107,7 +107,7 @@ type ExtensionMetadata struct {
 	Mounts      []ExtensionMount `json:"mounts,omitempty"`
 	Flags       []ExtensionFlag  `json:"flags,omitempty"`
 	EnvVars     []string         `json:"env_vars,omitempty"`
-	OtelVars    []string         `json:"otel_vars,omitempty"` // OpenTelemetry env vars to pass through
+	OtelVars    []string         `json:"otel_vars,omitempty"` // OpenTelemetry env vars; supports "VAR" or "VAR=default"
 }
 
 // ExtensionsJSONConfig represents the extensions.json file structure inside Docker images

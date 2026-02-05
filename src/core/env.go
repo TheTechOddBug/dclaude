@@ -40,16 +40,32 @@ func BuildEnvironment(p provider.Provider, cfg *provider.Config) map[string]stri
 }
 
 // addExtensionEnvVars adds environment variables required by extensions
+// Supports both "VAR_NAME" (pass-through from host) and "VAR_NAME=default" (with default value)
 func addExtensionEnvVars(env map[string]string, p provider.Provider, cfg *provider.Config) {
 	extensionEnvVars := p.GetExtensionEnvVars(cfg.ImageName)
-	for _, varName := range extensionEnvVars {
+	for _, varSpec := range extensionEnvVars {
+		varName, defaultValue := parseEnvVarSpec(varSpec)
 		if value := os.Getenv(varName); value != "" {
+			// Host has the var set, use it
 			env[varName] = value
+		} else if defaultValue != "" {
+			// Use the default value from config
+			env[varName] = defaultValue
 		}
 	}
 
 	// Run credential scripts for active extensions
 	addCredentialScriptEnvVars(env, cfg)
+}
+
+// parseEnvVarSpec parses an env var specification that can be either:
+// - "VAR_NAME" - just the variable name (pass-through from host)
+// - "VAR_NAME=value" - variable name with default value
+func parseEnvVarSpec(spec string) (name, defaultValue string) {
+	if idx := strings.Index(spec, "="); idx > 0 {
+		return spec[:idx], spec[idx+1:]
+	}
+	return spec, ""
 }
 
 // addCredentialScriptEnvVars runs credential scripts for active extensions

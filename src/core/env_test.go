@@ -120,3 +120,30 @@ func TestBuildEnvironment_NoPortMap(t *testing.T) {
 		t.Error("ADDT_PORT_MAP should not be set when no ports configured")
 	}
 }
+
+func TestParseEnvVarSpec(t *testing.T) {
+	tests := []struct {
+		spec         string
+		wantName     string
+		wantDefault  string
+	}{
+		{"VAR_NAME", "VAR_NAME", ""},
+		{"VAR_NAME=value", "VAR_NAME", "value"},
+		{"VAR_NAME=", "VAR_NAME", ""},
+		{"VAR_NAME=value=with=equals", "VAR_NAME", "value=with=equals"},
+		{"CLAUDE_CODE_ENABLE_TELEMETRY=1", "CLAUDE_CODE_ENABLE_TELEMETRY", "1"},
+		{"OTEL_LOG_USER_PROMPTS=true", "OTEL_LOG_USER_PROMPTS", "true"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.spec, func(t *testing.T) {
+			name, defaultValue := parseEnvVarSpec(tt.spec)
+			if name != tt.wantName {
+				t.Errorf("parseEnvVarSpec(%q) name = %q, want %q", tt.spec, name, tt.wantName)
+			}
+			if defaultValue != tt.wantDefault {
+				t.Errorf("parseEnvVarSpec(%q) default = %q, want %q", tt.spec, defaultValue, tt.wantDefault)
+			}
+		})
+	}
+}
