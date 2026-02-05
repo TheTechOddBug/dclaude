@@ -28,8 +28,8 @@ func createDockerProvider(cfg *provider.Config) (provider.Provider, error) {
 	)
 }
 
-// checkDocker verifies Docker is available and running
-func checkDocker(t *testing.T) {
+// skipIfNoDocker verifies Docker is available and running
+func skipIfNoDocker(t *testing.T) {
 	t.Helper()
 	if _, err := exec.LookPath("docker"); err != nil {
 		t.Skip("Docker not found in PATH, skipping integration test")
@@ -52,7 +52,7 @@ func removeImage(imageName string) {
 }
 
 func TestBuildCommand_Integration_Claude(t *testing.T) {
-	checkDocker(t)
+	skipIfNoDocker(t)
 
 	// Use a test-specific image name to avoid conflicts
 	testImageName := "addt-test-claude-integration"
@@ -98,7 +98,7 @@ func TestBuildCommand_Integration_Claude(t *testing.T) {
 }
 
 func TestBuildCommand_Integration_WithNoCache(t *testing.T) {
-	checkDocker(t)
+	skipIfNoDocker(t)
 
 	testImageName := "addt-test-nocache-integration"
 
@@ -137,7 +137,7 @@ func TestBuildCommand_Integration_WithNoCache(t *testing.T) {
 }
 
 func TestBuildCommand_Integration_Binary(t *testing.T) {
-	checkDocker(t)
+	skipIfNoDocker(t)
 
 	// Get absolute path to the binary
 	wd, err := os.Getwd()
@@ -185,7 +185,7 @@ func TestBuildCommand_Integration_Binary(t *testing.T) {
 }
 
 func TestBuildCommand_Integration_ExtensionVersion(t *testing.T) {
-	checkDocker(t)
+	skipIfNoDocker(t)
 
 	testImageName := "addt-test-version-integration"
 
@@ -234,7 +234,7 @@ func TestBuildCommand_Integration_ExtensionVersion(t *testing.T) {
 }
 
 func TestBuildCommand_Integration_MultipleExtensions(t *testing.T) {
-	checkDocker(t)
+	skipIfNoDocker(t)
 
 	testImageName := "addt-test-multi-integration"
 
@@ -272,7 +272,7 @@ func TestBuildCommand_Integration_MultipleExtensions(t *testing.T) {
 }
 
 func TestBuildCommand_Integration_InvalidExtension(t *testing.T) {
-	checkDocker(t)
+	skipIfNoDocker(t)
 
 	cfg := config.LoadConfig("0.0.0-test", "22", "1.23.5", "0.4.17", 49152)
 	cfg.Extensions = "nonexistent-extension-xyz"
@@ -311,7 +311,7 @@ func TestBuildCommand_Integration_InvalidExtension(t *testing.T) {
 }
 
 func TestBuildCommand_Integration_ImageNameFormat(t *testing.T) {
-	checkDocker(t)
+	skipIfNoDocker(t)
 
 	cfg := config.LoadConfig("0.0.0-test", "22", "1.23.5", "0.4.17", 49152)
 	cfg.Extensions = "claude"
