@@ -5,26 +5,20 @@ set -e
 # Secrets are written to tmpfs at /run/secrets/.secrets by the host
 # This approach keeps secrets out of environment variables entirely
 if [ -f /run/secrets/.secrets ]; then
-    # Parse JSON and write individual secret files using Node.js
-    node -e '
+    # Parse JSON and export directly to environment
+    eval "$(node -e '
         const fs = require("fs");
         const data = fs.readFileSync("/run/secrets/.secrets", "utf8");
         const secrets = JSON.parse(data);
         for (const [key, value] of Object.entries(secrets)) {
-            fs.writeFileSync("/run/secrets/" + key, value, { mode: 0o600 });
+            // Escape single quotes in value for shell safety
+            const escaped = value.replace(/'"'"'/g, "'"'"'\\'"'"''"'"'");
+            console.log(`export ${key}='"'"'${escaped}'"'"'`);
         }
-    '
+    ')"
 
     # Delete the secrets file immediately after parsing
     rm -f /run/secrets/.secrets
-
-    # Load secrets into environment from individual files
-    for secret_file in /run/secrets/*; do
-        if [ -f "$secret_file" ]; then
-            var_name=$(basename "$secret_file")
-            export "$var_name"="$(cat "$secret_file")"
-        fi
-    done
 fi
 
 # Start nested Podman if in nested mode (Podman-in-Podman)
