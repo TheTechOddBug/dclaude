@@ -145,6 +145,11 @@ func (p *DockerProvider) addContainerVolumesAndEnv(dockerArgs []string, spec *pr
 		dockerArgs = p.addTmpfsSecretsMount(dockerArgs)
 	}
 
+	// Handle OTEL: add host alias so container can reach host's OTEL collector
+	if p.config.Otel.Enabled {
+		dockerArgs = append(dockerArgs, "--add-host=host.docker.internal:host-gateway")
+	}
+
 	// Add environment variables
 	for k, v := range spec.Env {
 		dockerArgs = append(dockerArgs, "-e", fmt.Sprintf("%s=%s", k, v))

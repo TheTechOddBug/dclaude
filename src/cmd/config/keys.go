@@ -170,7 +170,7 @@ func GetDefaultValue(key string) string {
 	case "otel.enabled":
 		return "false"
 	case "otel.endpoint":
-		return "http://localhost:4318"
+		return "http://host.docker.internal:4318"
 	case "otel.protocol":
 		return "http/protobuf"
 	case "otel.service_name":

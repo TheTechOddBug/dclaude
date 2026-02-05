@@ -148,6 +148,11 @@ func (p *PodmanProvider) addContainerVolumesAndEnv(podmanArgs []string, spec *pr
 		podmanArgs = p.addTmpfsSecretsMount(podmanArgs)
 	}
 
+	// Handle OTEL: add host alias so container can reach host's OTEL collector
+	if p.config.Otel.Enabled {
+		podmanArgs = append(podmanArgs, "--add-host=host.docker.internal:host-gateway")
+	}
+
 	// Add environment variables
 	for k, v := range spec.Env {
 		podmanArgs = append(podmanArgs, "-e", fmt.Sprintf("%s=%s", k, v))

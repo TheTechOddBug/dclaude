@@ -21,10 +21,11 @@ type Config struct {
 }
 
 // DefaultConfig returns the default OTEL configuration.
+// The default endpoint uses host.docker.internal to reach the host from inside the container.
 func DefaultConfig() Config {
 	return Config{
 		Enabled:     false,
-		Endpoint:    "http://localhost:4318",
+		Endpoint:    "http://host.docker.internal:4318",
 		Protocol:    "http/protobuf",
 		ServiceName: "addt",
 		Headers:     "",

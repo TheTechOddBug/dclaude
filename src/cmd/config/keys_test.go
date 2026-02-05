@@ -352,7 +352,7 @@ func TestOtelGetDefaultValue(t *testing.T) {
 		expected string
 	}{
 		{"otel.enabled", "false"},
-		{"otel.endpoint", "http://localhost:4318"},
+		{"otel.endpoint", "http://host.docker.internal:4318"},
 		{"otel.protocol", "http/protobuf"},
 		{"otel.service_name", "addt"},
 		{"otel.headers", ""},

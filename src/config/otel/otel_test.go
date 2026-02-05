@@ -11,8 +11,8 @@ func TestDefaultConfig(t *testing.T) {
 	if cfg.Enabled != false {
 		t.Errorf("Expected Enabled=false, got %v", cfg.Enabled)
 	}
-	if cfg.Endpoint != "http://localhost:4318" {
-		t.Errorf("Expected Endpoint=http://localhost:4318, got %v", cfg.Endpoint)
+	if cfg.Endpoint != "http://host.docker.internal:4318" {
+		t.Errorf("Expected Endpoint=http://host.docker.internal:4318, got %v", cfg.Endpoint)
 	}
 	if cfg.Protocol != "http/protobuf" {
 		t.Errorf("Expected Protocol=http/protobuf, got %v", cfg.Protocol)

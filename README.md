@@ -514,7 +514,7 @@ Send telemetry data to an OTEL collector for observability:
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `enabled` | false | Enable OpenTelemetry |
-| `endpoint` | http://localhost:4318 | OTLP endpoint URL |
+| `endpoint` | http://host.docker.internal:4318 | OTLP endpoint URL |
 | `protocol` | http/protobuf | Protocol: http/protobuf or grpc |
 | `service_name` | addt | Service name for traces |
 | `headers` | "" | OTLP headers (key=value,key2=value2) |
@@ -523,17 +523,14 @@ Configure in `~/.addt/config.yaml`:
 ```yaml
 otel:
   enabled: true
-  endpoint: http://localhost:4318
+  endpoint: http://host.docker.internal:4318
   protocol: http/protobuf
   service_name: my-project
-  headers: "Authorization=Bearer token"
 ```
 
 Or via environment variables:
 ```bash
 export ADDT_OTEL_ENABLED=true
-export ADDT_OTEL_ENDPOINT=http://otel-collector:4318
-export ADDT_OTEL_PROTOCOL=http/protobuf
 export ADDT_OTEL_SERVICE_NAME=my-project
 ```
 
@@ -542,6 +539,38 @@ When enabled, the following OTEL environment variables are passed to the contain
 - `OTEL_EXPORTER_OTLP_PROTOCOL`
 - `OTEL_SERVICE_NAME`
 - `OTEL_EXPORTER_OTLP_HEADERS` (if configured)
+
+The container can reach the host via `host.docker.internal` (automatically configured when OTEL is enabled).
+
+#### addt-otel: Simple OTEL Collector
+
+A lightweight OTEL collector is included for debugging and development:
+
+```bash
+# Start the collector (listens on port 4318)
+addt-otel
+
+# With verbose output (show full payloads)
+addt-otel --verbose
+
+# Output as JSON lines
+addt-otel --json
+
+# Log to file
+addt-otel --log /tmp/otel.log
+
+# Custom port
+addt-otel --port 4319
+```
+
+Example workflow:
+```bash
+# Terminal 1: Start the collector
+addt-otel --verbose
+
+# Terminal 2: Run addt with OTEL enabled
+ADDT_OTEL_ENABLED=true addt run claude
+```
 
 ### Version Pinning
 
