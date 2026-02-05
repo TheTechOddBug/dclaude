@@ -123,9 +123,9 @@ func TestBuildEnvironment_NoPortMap(t *testing.T) {
 
 func TestParseEnvVarSpec(t *testing.T) {
 	tests := []struct {
-		spec         string
-		wantName     string
-		wantDefault  string
+		spec        string
+		wantName    string
+		wantDefault string
 	}{
 		{"VAR_NAME", "VAR_NAME", ""},
 		{"VAR_NAME=value", "VAR_NAME", "value"},

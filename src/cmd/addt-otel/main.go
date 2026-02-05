@@ -16,10 +16,10 @@ import (
 )
 
 var (
-	port     = flag.Int("port", 4318, "Port to listen on")
-	logFile  = flag.String("log", "", "Log file path (default: stdout)")
-	verbose  = flag.Bool("verbose", false, "Verbose output (show full payloads)")
-	jsonOut  = flag.Bool("json", false, "Output as JSON lines")
+	port    = flag.Int("port", 4318, "Port to listen on")
+	logFile = flag.String("log", "", "Log file path (default: stdout)")
+	verbose = flag.Bool("verbose", false, "Verbose output (show full payloads)")
+	jsonOut = flag.Bool("json", false, "Output as JSON lines")
 )
 
 // Logger handles output formatting

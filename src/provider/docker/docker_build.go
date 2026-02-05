@@ -110,7 +110,6 @@ func (p *DockerProvider) DetermineImageName() string {
 	return imageName
 }
 
-
 // resolveExtensionVersion resolves the version for an extension, handling dist-tags
 func (p *DockerProvider) resolveExtensionVersion(extName string) string {
 	version := p.getExtensionVersion(extName)
