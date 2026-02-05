@@ -3,7 +3,9 @@ package core
 import (
 	"fmt"
 	"os"
+	"strings"
 
+	"github.com/jedi4ever/addt/extensions"
 	"github.com/jedi4ever/addt/provider"
 	"github.com/jedi4ever/addt/util/terminal"
 )
@@ -41,6 +43,64 @@ func addExtensionEnvVars(env map[string]string, p provider.Provider, cfg *provid
 			env[varName] = value
 		}
 	}
+
+	// Run credential scripts for active extensions
+	addCredentialScriptEnvVars(env, cfg)
+}
+
+// addCredentialScriptEnvVars runs credential scripts for active extensions
+func addCredentialScriptEnvVars(env map[string]string, cfg *provider.Config) {
+	// Get the list of extensions being used
+	extNames := getActiveExtensionNames(cfg)
+
+	// Load extension configs and run credential scripts
+	allExts, err := extensions.GetExtensions()
+	if err != nil {
+		return
+	}
+
+	for _, ext := range allExts {
+		if !contains(extNames, ext.Name) {
+			continue
+		}
+
+		if ext.CredentialScript == "" {
+			continue
+		}
+
+		// Run the credential script
+		credEnvVars, err := extensions.RunCredentialScript(&ext)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: credential script for %s failed: %v\n", ext.Name, err)
+			continue
+		}
+
+		// Add credential env vars (don't override existing values)
+		for k, v := range credEnvVars {
+			if _, exists := env[k]; !exists {
+				env[k] = v
+			}
+		}
+	}
+}
+
+// getActiveExtensionNames returns the list of active extension names
+func getActiveExtensionNames(cfg *provider.Config) []string {
+	if cfg.Extensions == "" {
+		// Default to claude if no extensions specified
+		return []string{"claude"}
+	}
+	return strings.Split(cfg.Extensions, ",")
+}
+
+// contains checks if a slice contains a value
+func contains(slice []string, val string) bool {
+	for _, s := range slice {
+		if strings.TrimSpace(s) == val {
+			return true
+		}
+	}
+	return false
 }
 
 // addUserEnvVars adds user-configured environment variables

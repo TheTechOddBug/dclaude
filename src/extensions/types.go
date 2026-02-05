@@ -83,16 +83,17 @@ func (e Entrypoint) Args() []string {
 // ExtensionConfig represents the config.yaml structure for extension source files
 // Used when reading extension configs from embedded filesystem or local ~/.addt/extensions/
 type ExtensionConfig struct {
-	Name           string           `yaml:"name" json:"name"`
-	Description    string           `yaml:"description" json:"description"`
-	Entrypoint     Entrypoint       `yaml:"entrypoint" json:"entrypoint"`
-	DefaultVersion string           `yaml:"default_version" json:"default_version,omitempty"`
-	AutoMount      bool             `yaml:"auto_mount" json:"auto_mount"`
-	Dependencies   []string         `yaml:"dependencies" json:"dependencies,omitempty"`
-	EnvVars        []string         `yaml:"env_vars" json:"env_vars,omitempty"`
-	Mounts         []ExtensionMount `yaml:"mounts" json:"mounts,omitempty"`
-	Flags          []ExtensionFlag  `yaml:"flags" json:"flags,omitempty"`
-	IsLocal        bool             `yaml:"-" json:"-"` // Runtime flag, not serialized
+	Name             string           `yaml:"name" json:"name"`
+	Description      string           `yaml:"description" json:"description"`
+	Entrypoint       Entrypoint       `yaml:"entrypoint" json:"entrypoint"`
+	DefaultVersion   string           `yaml:"default_version" json:"default_version,omitempty"`
+	AutoMount        bool             `yaml:"auto_mount" json:"auto_mount"`
+	Dependencies     []string         `yaml:"dependencies" json:"dependencies,omitempty"`
+	EnvVars          []string         `yaml:"env_vars" json:"env_vars,omitempty"`
+	Mounts           []ExtensionMount `yaml:"mounts" json:"mounts,omitempty"`
+	Flags            []ExtensionFlag  `yaml:"flags" json:"flags,omitempty"`
+	CredentialScript string           `yaml:"credential_script,omitempty" json:"credential_script,omitempty"` // Script to run on host for credentials
+	IsLocal          bool             `yaml:"-" json:"-"`                                                     // Runtime flag, not serialized
 }
 
 // ExtensionMetadata represents metadata for an installed extension inside a Docker image
