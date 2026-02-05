@@ -17,8 +17,8 @@ import (
 
 // PodmanDownloadURLs contains download URLs for Podman static builds
 var PodmanDownloadURLs = map[string]string{
-	"linux/amd64": "https://github.com/containers/podman/releases/download/v5.3.1/podman-remote-static-linux_amd64.tar.gz",
-	"linux/arm64": "https://github.com/containers/podman/releases/download/v5.3.1/podman-remote-static-linux_arm64.tar.gz",
+	"linux/amd64":  "https://github.com/containers/podman/releases/download/v5.3.1/podman-remote-static-linux_amd64.tar.gz",
+	"linux/arm64":  "https://github.com/containers/podman/releases/download/v5.3.1/podman-remote-static-linux_arm64.tar.gz",
 	"darwin/amd64": "https://github.com/containers/podman/releases/download/v5.3.1/podman-remote-release-darwin_amd64.zip",
 	"darwin/arm64": "https://github.com/containers/podman/releases/download/v5.3.1/podman-remote-release-darwin_arm64.zip",
 }
