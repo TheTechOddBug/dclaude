@@ -41,6 +41,10 @@ func NewDockerProvider(cfg *provider.Config, dockerfile, dockerfileBase, entrypo
 // Initialize initializes the Docker provider
 func (p *DockerProvider) Initialize(cfg *provider.Config) error {
 	p.config = cfg
+
+	// Clean up stale temp directories from previous runs
+	security.CleanupAll()
+
 	return p.CheckPrerequisites()
 }
 

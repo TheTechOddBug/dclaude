@@ -38,10 +38,16 @@ func NewSSHProxyAgent(upstreamSocket string, allowedKeys []string) (*SSHProxyAge
 		return nil, fmt.Errorf("upstream SSH_AUTH_SOCK not set")
 	}
 
-	// Create temp directory for proxy socket
+	// Create temp directory for proxy socket with restrictive permissions
 	tmpDir, err := os.MkdirTemp("", "ssh-proxy-*")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp dir: %w", err)
+	}
+
+	// Set restrictive permissions on directory (owner only)
+	if err := os.Chmod(tmpDir, 0700); err != nil {
+		os.RemoveAll(tmpDir)
+		return nil, fmt.Errorf("failed to set temp dir permissions: %w", err)
 	}
 
 	proxySocket := filepath.Join(tmpDir, "agent.sock")
@@ -66,6 +72,12 @@ func (p *SSHProxyAgent) Start() error {
 	listener, err := net.Listen("unix", p.proxySocket)
 	if err != nil {
 		return fmt.Errorf("failed to listen on proxy socket: %w", err)
+	}
+
+	// Set restrictive permissions on socket (owner only)
+	if err := os.Chmod(p.proxySocket, 0600); err != nil {
+		listener.Close()
+		return fmt.Errorf("failed to set socket permissions: %w", err)
 	}
 
 	p.listener = listener
@@ -97,8 +109,7 @@ func (p *SSHProxyAgent) Stop() error {
 	}
 
 	// Clean up socket file and directory
-	os.Remove(p.proxySocket)
-	os.Remove(filepath.Dir(p.proxySocket))
+	os.RemoveAll(filepath.Dir(p.proxySocket))
 
 	return nil
 }

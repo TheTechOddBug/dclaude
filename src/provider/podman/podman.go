@@ -41,6 +41,10 @@ func NewPodmanProvider(cfg *provider.Config, dockerfile, dockerfileBase, entrypo
 // Initialize initializes the Podman provider
 func (p *PodmanProvider) Initialize(cfg *provider.Config) error {
 	p.config = cfg
+
+	// Clean up stale temp directories from previous runs
+	security.CleanupAll()
+
 	return p.CheckPrerequisites()
 }
 

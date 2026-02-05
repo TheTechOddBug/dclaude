@@ -314,9 +314,9 @@ func (p *DockerProvider) addSecuritySettings(dockerArgs []string) []string {
 		case "unconfined":
 			dockerArgs = append(dockerArgs, "--security-opt", "seccomp=unconfined")
 		case "restrictive":
-			// Write embedded restrictive profile to temp file
+			// Write embedded restrictive profile to temp file with restrictive permissions
 			profilePath := filepath.Join(os.TempDir(), "addt-seccomp-restrictive.json")
-			if err := os.WriteFile(profilePath, assets.SeccompRestrictive, 0644); err == nil {
+			if err := os.WriteFile(profilePath, assets.SeccompRestrictive, 0600); err == nil {
 				dockerArgs = append(dockerArgs, "--security-opt", "seccomp="+profilePath)
 			}
 		case "default":
