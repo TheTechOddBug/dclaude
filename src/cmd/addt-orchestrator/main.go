@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/jedi4ever/addt/config"
 )
 
 //go:embed static/*
@@ -33,12 +34,16 @@ type Session struct {
 type SessionManager struct {
 	mu       sync.RWMutex
 	sessions map[string]*Session
+	runtime  string // "docker" or "podman"
 }
 
 // NewSessionManager creates a new session manager
 func NewSessionManager() *SessionManager {
+	runtime := config.DetectContainerRuntime()
+	log.Printf("Using container runtime: %s", runtime)
 	return &SessionManager{
 		sessions: make(map[string]*Session),
+		runtime:  runtime,
 	}
 }
 
@@ -56,16 +61,12 @@ func (sm *SessionManager) List() []*Session {
 func (sm *SessionManager) getContainerSessions() []*Session {
 	var sessions []*Session
 
-	// Try docker first, then podman
-	cmd := exec.Command("docker", "ps", "-a", "--filter", "name=addt-", "--format", "{{.Names}}\t{{.Status}}\t{{.Labels}}")
+	// Use the detected runtime
+	cmd := exec.Command(sm.runtime, "ps", "-a", "--filter", "name=addt-", "--format", "{{.Names}}\t{{.Status}}\t{{.Labels}}")
 	output, err := cmd.Output()
 	if err != nil {
-		// Try podman
-		cmd = exec.Command("podman", "ps", "-a", "--filter", "name=addt-", "--format", "{{.Names}}\t{{.Status}}\t{{.Labels}}")
-		output, err = cmd.Output()
-		if err != nil {
-			return sessions
-		}
+		log.Printf("Failed to list containers with %s: %v", sm.runtime, err)
+		return sessions
 	}
 
 	// Parse output
@@ -99,14 +100,10 @@ func (sm *SessionManager) getContainerSessions() []*Session {
 
 // Start starts a new or existing session
 func (sm *SessionManager) Start(name, workDir string) (*Session, error) {
-	// Check if session exists and is stopped
-	cmd := exec.Command("docker", "start", name)
+	// Start container using the detected runtime
+	cmd := exec.Command(sm.runtime, "start", name)
 	if err := cmd.Run(); err != nil {
-		// Try podman
-		cmd = exec.Command("podman", "start", name)
-		if err := cmd.Run(); err != nil {
-			return nil, fmt.Errorf("failed to start session: %w", err)
-		}
+		return nil, fmt.Errorf("failed to start session with %s: %w", sm.runtime, err)
 	}
 
 	return &Session{
@@ -120,26 +117,18 @@ func (sm *SessionManager) Start(name, workDir string) (*Session, error) {
 
 // Stop stops a session
 func (sm *SessionManager) Stop(name string) error {
-	cmd := exec.Command("docker", "stop", name)
+	cmd := exec.Command(sm.runtime, "stop", name)
 	if err := cmd.Run(); err != nil {
-		// Try podman
-		cmd = exec.Command("podman", "stop", name)
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("failed to stop session: %w", err)
-		}
+		return fmt.Errorf("failed to stop session with %s: %w", sm.runtime, err)
 	}
 	return nil
 }
 
 // Remove removes a session
 func (sm *SessionManager) Remove(name string) error {
-	cmd := exec.Command("docker", "rm", "-f", name)
+	cmd := exec.Command(sm.runtime, "rm", "-f", name)
 	if err := cmd.Run(); err != nil {
-		// Try podman
-		cmd = exec.Command("podman", "rm", "-f", name)
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("failed to remove session: %w", err)
-		}
+		return fmt.Errorf("failed to remove session with %s: %w", sm.runtime, err)
 	}
 	return nil
 }
@@ -236,18 +225,13 @@ func (s *Server) handleTerminal(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	// Start docker/podman exec with PTY
-	cmd := exec.Command("docker", "exec", "-it", name, "/bin/bash")
+	// Start container exec with PTY using the detected runtime
+	cmd := exec.Command(s.sm.runtime, "exec", "-it", name, "/bin/bash")
 	ptmx, err := startPty(cmd)
 	if err != nil {
-		// Try podman
-		cmd = exec.Command("podman", "exec", "-it", name, "/bin/bash")
-		ptmx, err = startPty(cmd)
-		if err != nil {
-			log.Printf("Failed to start PTY: %v", err)
-			conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Error: %v", err)))
-			return
-		}
+		log.Printf("Failed to start PTY with %s: %v", s.sm.runtime, err)
+		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Error: %v", err)))
+		return
 	}
 	defer ptmx.Close()
 
@@ -298,7 +282,7 @@ func (s *Server) Run() error {
 	mux.Handle("/", http.FileServer(http.FS(staticFS)))
 
 	addr := fmt.Sprintf(":%d", s.port)
-	fmt.Printf("🚀 addt-orchestrator running at http://localhost%s\n", addr)
+	fmt.Printf("addt-orchestrator running at http://localhost%s (runtime: %s)\n", addr, s.sm.runtime)
 	return http.ListenAndServe(addr, mux)
 }
 

@@ -19,3 +19,6 @@ coverage.html
 # Local config (keep templates)
 .env
 .env.local
+
+.addt.yaml
+docs/TODO.md
