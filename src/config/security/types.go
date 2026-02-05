@@ -18,7 +18,9 @@ type Settings struct {
 	UserNamespace   string   `yaml:"user_namespace,omitempty"`    // User namespace: "host", "private", or "" (default: "")
 	DisableDevices  *bool    `yaml:"disable_devices,omitempty"`   // Drop MKNOD capability (default: false)
 	MemorySwap      string   `yaml:"memory_swap,omitempty"`       // Memory swap limit: "-1" to disable, or size (default: "")
-	SecretsToFiles  *bool    `yaml:"secrets_to_files,omitempty"`  // Write secrets to files instead of env vars (default: false)
+	SecretsToFiles  *bool    `yaml:"secrets_to_files,omitempty"`  // Write secrets to files instead of env vars (default: true)
+	AuditLog        *bool    `yaml:"audit_log,omitempty"`         // Enable security audit logging (default: false)
+	AuditLogFile    string   `yaml:"audit_log_file,omitempty"`    // Path to audit log file (default: ~/.addt/audit.log)
 }
 
 // Config holds runtime security configuration with defaults applied
@@ -39,7 +41,9 @@ type Config struct {
 	UserNamespace   string   // User namespace: "host", "private", or "" (default: "")
 	DisableDevices  bool     // Drop MKNOD capability (default: false)
 	MemorySwap      string   // Memory swap limit: "-1" to disable, or size (default: "")
-	SecretsToFiles  bool     // Write secrets to files instead of env vars (default: false)
+	SecretsToFiles  bool     // Write secrets to files instead of env vars (default: true)
+	AuditLog        bool     // Enable security audit logging (default: false)
+	AuditLogFile    string   // Path to audit log file (default: ~/.addt/audit.log)
 }
 
 // DefaultConfig returns a Config with secure defaults applied
@@ -60,7 +64,9 @@ func DefaultConfig() Config {
 		TimeLimit:       0,  // 0 = disabled
 		UserNamespace:   "", // Empty = Docker default
 		DisableDevices:  false,
-		MemorySwap:      "", // Empty = Docker default
-		SecretsToFiles:  false,
+		MemorySwap:      "",    // Empty = Docker default
+		SecretsToFiles:  true,  // Secure by default: write secrets to files instead of env vars
+		AuditLog:        false, // Disabled by default
+		AuditLogFile:    "",    // Empty = use default ~/.addt/audit.log
 	}
 }

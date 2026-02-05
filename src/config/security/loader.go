@@ -2,6 +2,7 @@ package security
 
 import (
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -62,6 +63,12 @@ func ApplySettings(cfg *Config, settings *Settings) {
 	if settings.SecretsToFiles != nil {
 		cfg.SecretsToFiles = *settings.SecretsToFiles
 	}
+	if settings.AuditLog != nil {
+		cfg.AuditLog = *settings.AuditLog
+	}
+	if settings.AuditLogFile != "" {
+		cfg.AuditLogFile = settings.AuditLogFile
+	}
 }
 
 // ApplyEnvOverrides applies environment variable overrides to a Config
@@ -121,6 +128,12 @@ func ApplyEnvOverrides(cfg *Config) {
 	if v := os.Getenv("ADDT_SECURITY_SECRETS_TO_FILES"); v != "" {
 		cfg.SecretsToFiles = v == "true"
 	}
+	if v := os.Getenv("ADDT_SECURITY_AUDIT_LOG"); v != "" {
+		cfg.AuditLog = v == "true"
+	}
+	if v := os.Getenv("ADDT_SECURITY_AUDIT_LOG_FILE"); v != "" {
+		cfg.AuditLogFile = v
+	}
 }
 
 // LoadConfig loads security configuration with full precedence chain
@@ -130,4 +143,29 @@ func LoadConfig(globalSettings, projectSettings *Settings) Config {
 	ApplySettings(&cfg, projectSettings)
 	ApplyEnvOverrides(&cfg)
 	return cfg
+}
+
+// InitAuditLog initializes audit logging if enabled in config
+func InitAuditLog(cfg *Config) error {
+	if !cfg.AuditLog {
+		return nil
+	}
+
+	logPath := cfg.AuditLogFile
+	if logPath == "" {
+		// Default to ~/.addt/audit.log
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return err
+		}
+		logPath = filepath.Join(homeDir, ".addt", "audit.log")
+	}
+
+	// Ensure directory exists
+	dir := filepath.Dir(logPath)
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return err
+	}
+
+	return EnableAuditLog(logPath)
 }

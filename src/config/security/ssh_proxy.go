@@ -29,7 +29,8 @@ type SSHProxyAgent struct {
 	listener       net.Listener
 	mu             sync.Mutex
 	running        bool
-	allowedBlobs   map[string]bool // cached key blobs that are allowed
+	allowedBlobs   map[string]bool   // cached key blobs that are allowed
+	blobComments   map[string]string // maps blob to comment for audit logging
 }
 
 // NewSSHProxyAgent creates a new SSH proxy agent
@@ -63,6 +64,7 @@ func NewSSHProxyAgent(upstreamSocket string, allowedKeys []string) (*SSHProxyAge
 		proxySocket:    proxySocket,
 		allowedKeys:    allowedKeys,
 		allowedBlobs:   make(map[string]bool),
+		blobComments:   make(map[string]string),
 	}, nil
 }
 
@@ -185,11 +187,14 @@ func (p *SSHProxyAgent) proxyClientToUpstream(client, upstream net.Conn) {
 
 		// Filter sign requests - only allow for permitted keys
 		if msgType == SSH_AGENTC_SIGN_REQUEST {
-			if !p.isSignRequestAllowed(msg) {
+			allowed, keyComment := p.checkSignRequest(msg)
+			if !allowed {
 				// Send failure response
+				LogSSHSign(keyComment, false, "key not in allowed list")
 				writeAgentMessage(client, []byte{SSH_AGENT_FAILURE})
 				continue
 			}
+			LogSSHSign(keyComment, true, "")
 		}
 
 		// Forward to upstream
@@ -245,11 +250,16 @@ func (p *SSHProxyAgent) populateAllowedBlobs() error {
 		return fmt.Errorf("unexpected response")
 	}
 
-	// Parse identities and cache allowed blobs
+	// Parse identities and cache allowed blobs with comments
 	keys := parseIdentities(msg)
 	for _, key := range keys {
+		blobStr := string(key.blob)
+		p.blobComments[blobStr] = key.comment
 		if p.isKeyAllowed(key.comment, key.blob) {
-			p.allowedBlobs[string(key.blob)] = true
+			p.allowedBlobs[blobStr] = true
+			LogSSHKeyAccess(key.comment, true)
+		} else {
+			LogSSHKeyAccess(key.comment, false)
 		}
 	}
 
@@ -261,9 +271,11 @@ func (p *SSHProxyAgent) filterIdentities(msg []byte) []byte {
 
 	var allowed []sshKey
 	for _, key := range keys {
+		blobStr := string(key.blob)
+		p.blobComments[blobStr] = key.comment
 		if p.isKeyAllowed(key.comment, key.blob) {
 			allowed = append(allowed, key)
-			p.allowedBlobs[string(key.blob)] = true
+			p.allowedBlobs[blobStr] = true
 		}
 	}
 
@@ -291,20 +303,33 @@ func (p *SSHProxyAgent) isKeyAllowed(comment string, blob []byte) bool {
 	return false
 }
 
-func (p *SSHProxyAgent) isSignRequestAllowed(msg []byte) bool {
+// checkSignRequest checks if a sign request is allowed and returns the key comment for logging
+func (p *SSHProxyAgent) checkSignRequest(msg []byte) (allowed bool, keyComment string) {
 	if len(msg) < 5 {
-		return false
+		return false, "unknown"
 	}
 
 	// Parse key blob from sign request
 	// Format: byte type, uint32 blob_len, blob, uint32 data_len, data, uint32 flags
 	blobLen := binary.BigEndian.Uint32(msg[1:5])
 	if len(msg) < int(5+blobLen) {
-		return false
+		return false, "unknown"
 	}
 
 	blob := msg[5 : 5+blobLen]
-	return p.allowedBlobs[string(blob)]
+	blobStr := string(blob)
+
+	// Find the comment for this blob
+	p.mu.Lock()
+	comment := p.blobComments[blobStr]
+	isAllowed := p.allowedBlobs[blobStr]
+	p.mu.Unlock()
+
+	if comment == "" {
+		comment = "unknown"
+	}
+
+	return isAllowed, comment
 }
 
 type sshKey struct {

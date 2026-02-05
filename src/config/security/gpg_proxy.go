@@ -206,14 +206,26 @@ func (p *GPGProxyAgent) proxyWithFiltering(client, upstream net.Conn) {
 			}
 		}
 
-		// Check PKSIGN and PKDECRYPT operations
-		if strings.HasPrefix(upperCmd, "PKSIGN") || strings.HasPrefix(upperCmd, "PKDECRYPT") {
+		// Check PKSIGN operation
+		if strings.HasPrefix(upperCmd, "PKSIGN") {
 			if !p.isKeyAllowed(currentKeyID) {
-				// Deny the operation
+				LogGPGSign(currentKeyID, false, "key not in allowed list")
 				clientWriter.WriteString("ERR 67108903 Key not allowed by proxy\n")
 				clientWriter.Flush()
 				continue
 			}
+			LogGPGSign(currentKeyID, true, "")
+		}
+
+		// Check PKDECRYPT operation
+		if strings.HasPrefix(upperCmd, "PKDECRYPT") {
+			if !p.isKeyAllowed(currentKeyID) {
+				LogGPGDecrypt(currentKeyID, false, "key not in allowed list")
+				clientWriter.WriteString("ERR 67108903 Key not allowed by proxy\n")
+				clientWriter.Flush()
+				continue
+			}
+			LogGPGDecrypt(currentKeyID, true, "")
 		}
 
 		// Forward command to upstream

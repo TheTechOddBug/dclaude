@@ -163,8 +163,8 @@ func TestLoadConfig(t *testing.T) {
 
 func TestSecretsToFilesDefault(t *testing.T) {
 	cfg := DefaultConfig()
-	if cfg.SecretsToFiles {
-		t.Error("SecretsToFiles = true, want false (default)")
+	if !cfg.SecretsToFiles {
+		t.Error("SecretsToFiles = false, want true (secure default)")
 	}
 }
 

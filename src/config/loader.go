@@ -233,8 +233,11 @@ func LoadConfig(addtVersion, defaultNodeVersion, defaultGoVersion, defaultUvVers
 		cfg.GitHubDetect = v == "true"
 	}
 
-	// CPUs: default (empty) -> global -> project -> env
-	cfg.CPUs = globalCfg.DockerCPUs
+	// CPUs: default (2) -> global -> project -> env
+	cfg.CPUs = "2" // Secure default: limit CPU usage
+	if globalCfg.DockerCPUs != "" {
+		cfg.CPUs = globalCfg.DockerCPUs
+	}
 	if projectCfg.DockerCPUs != "" {
 		cfg.CPUs = projectCfg.DockerCPUs
 	}
@@ -242,8 +245,11 @@ func LoadConfig(addtVersion, defaultNodeVersion, defaultGoVersion, defaultUvVers
 		cfg.CPUs = v
 	}
 
-	// Memory: default (empty) -> global -> project -> env
-	cfg.Memory = globalCfg.DockerMemory
+	// Memory: default (4g) -> global -> project -> env
+	cfg.Memory = "4g" // Secure default: limit memory usage
+	if globalCfg.DockerMemory != "" {
+		cfg.Memory = globalCfg.DockerMemory
+	}
 	if projectCfg.DockerMemory != "" {
 		cfg.Memory = projectCfg.DockerMemory
 	}
