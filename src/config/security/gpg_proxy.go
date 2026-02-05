@@ -32,6 +32,18 @@ func NewGPGProxyAgent(upstreamSocket string, allowedKeyIDs []string) (*GPGProxyA
 		return nil, fmt.Errorf("failed to create temp dir: %w", err)
 	}
 
+	// Set restrictive permissions on directory (owner only)
+	if err := os.Chmod(tmpDir, 0700); err != nil {
+		os.RemoveAll(tmpDir)
+		return nil, fmt.Errorf("failed to set temp dir permissions: %w", err)
+	}
+
+	// Write PID file for cleanup to identify orphaned directories
+	if err := WritePIDFile(tmpDir); err != nil {
+		os.RemoveAll(tmpDir)
+		return nil, fmt.Errorf("failed to write PID file: %w", err)
+	}
+
 	proxySocket := filepath.Join(tmpDir, "S.gpg-agent")
 
 	return &GPGProxyAgent{

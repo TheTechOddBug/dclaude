@@ -50,6 +50,12 @@ func NewSSHProxyAgent(upstreamSocket string, allowedKeys []string) (*SSHProxyAge
 		return nil, fmt.Errorf("failed to set temp dir permissions: %w", err)
 	}
 
+	// Write PID file for cleanup to identify orphaned directories
+	if err := WritePIDFile(tmpDir); err != nil {
+		os.RemoveAll(tmpDir)
+		return nil, fmt.Errorf("failed to write PID file: %w", err)
+	}
+
 	proxySocket := filepath.Join(tmpDir, "agent.sock")
 
 	return &SSHProxyAgent{

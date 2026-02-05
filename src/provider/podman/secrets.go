@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/jedi4ever/addt/config/security"
 )
 
 // writeSecretsToFiles writes secret environment variables to files and returns the secrets directory
@@ -25,6 +27,12 @@ func (p *PodmanProvider) writeSecretsToFiles(imageName string, env map[string]st
 	if err := os.Chmod(secretsDir, 0700); err != nil {
 		os.RemoveAll(secretsDir)
 		return "", nil, fmt.Errorf("failed to set secrets directory permissions: %w", err)
+	}
+
+	// Write PID file for cleanup to identify orphaned directories
+	if err := security.WritePIDFile(secretsDir); err != nil {
+		os.RemoveAll(secretsDir)
+		return "", nil, fmt.Errorf("failed to write PID file: %w", err)
 	}
 
 	// Write each secret to a file

@@ -150,6 +150,16 @@ func (p *DockerProvider) mountSafeGPGFiles(homeDir, username string) []string {
 		return args
 	}
 
+	// Set restrictive permissions and write PID file
+	if err := os.Chmod(tmpDir, 0700); err != nil {
+		os.RemoveAll(tmpDir)
+		return args
+	}
+	if err := security.WritePIDFile(tmpDir); err != nil {
+		os.RemoveAll(tmpDir)
+		return args
+	}
+
 	p.tempDirs = append(p.tempDirs, tmpDir)
 
 	// Copy safe files only (no private keys)
