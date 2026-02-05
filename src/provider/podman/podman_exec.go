@@ -142,9 +142,9 @@ func (p *PodmanProvider) addContainerVolumesAndEnv(podmanArgs []string, spec *pr
 		podmanArgs = append(podmanArgs, "-p", fmt.Sprintf("%d:%d", port.Host, port.Container))
 	}
 
-	// Handle secrets_to_files: add tmpfs mount for secrets
+	// Handle isolate_secrets: add tmpfs mount for secrets
 	// Secrets are copied via podman cp after container starts (see runWithSecrets)
-	if p.config.Security.SecretsToFiles {
+	if p.config.Security.IsolateSecrets {
 		podmanArgs = p.addTmpfsSecretsMount(podmanArgs)
 	}
 
@@ -185,7 +185,7 @@ func (p *PodmanProvider) Run(spec *provider.RunSpec) error {
 
 	// Prepare secrets if enabled (before building args so we can filter env)
 	var secretsJSON string
-	if p.config.Security.SecretsToFiles && !ctx.useExistingContainer {
+	if p.config.Security.IsolateSecrets && !ctx.useExistingContainer {
 		json, secretVarNames, err := p.prepareSecretsJSON(spec.ImageName, spec.Env)
 		if err == nil && json != "" {
 			secretsJSON = json

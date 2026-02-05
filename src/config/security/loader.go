@@ -60,8 +60,8 @@ func ApplySettings(cfg *Config, settings *Settings) {
 	if settings.MemorySwap != "" {
 		cfg.MemorySwap = settings.MemorySwap
 	}
-	if settings.SecretsToFiles != nil {
-		cfg.SecretsToFiles = *settings.SecretsToFiles
+	if settings.IsolateSecrets != nil {
+		cfg.IsolateSecrets = *settings.IsolateSecrets
 	}
 	if settings.AuditLog != nil {
 		cfg.AuditLog = *settings.AuditLog
@@ -125,8 +125,8 @@ func ApplyEnvOverrides(cfg *Config) {
 	if v := os.Getenv("ADDT_SECURITY_MEMORY_SWAP"); v != "" {
 		cfg.MemorySwap = v
 	}
-	if v := os.Getenv("ADDT_SECURITY_SECRETS_TO_FILES"); v != "" {
-		cfg.SecretsToFiles = v == "true"
+	if v := os.Getenv("ADDT_SECURITY_ISOLATE_SECRETS"); v != "" {
+		cfg.IsolateSecrets = v == "true"
 	}
 	if v := os.Getenv("ADDT_SECURITY_AUDIT_LOG"); v != "" {
 		cfg.AuditLog = v == "true"

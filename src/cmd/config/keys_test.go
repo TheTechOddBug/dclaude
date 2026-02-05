@@ -135,7 +135,7 @@ func TestGetDefaultValue(t *testing.T) {
 func TestSecurityKeyValidation(t *testing.T) {
 	validKeys := []string{
 		"security.pids_limit",
-		"security.secrets_to_files",
+		"security.isolate_secrets",
 		"security.network_mode",
 		"security.cap_drop",
 		"security.cap_add",
@@ -150,11 +150,11 @@ func TestSecurityKeyValidation(t *testing.T) {
 
 func TestSecurityGetValue(t *testing.T) {
 	pidsLimit := 100
-	secretsToFiles := true
+	isolateSecrets := true
 	cfg := &cfgtypes.GlobalConfig{
 		Security: &security.Settings{
 			PidsLimit:      &pidsLimit,
-			SecretsToFiles: &secretsToFiles,
+			IsolateSecrets: &isolateSecrets,
 			NetworkMode:    "none",
 			CapDrop:        []string{"ALL"},
 			CapAdd:         []string{"CHOWN", "SETUID"},
@@ -166,7 +166,7 @@ func TestSecurityGetValue(t *testing.T) {
 		expected string
 	}{
 		{"security.pids_limit", "100"},
-		{"security.secrets_to_files", "true"},
+		{"security.isolate_secrets", "true"},
 		{"security.network_mode", "none"},
 		{"security.cap_drop", "ALL"},
 		{"security.cap_add", "CHOWN,SETUID"},
@@ -188,9 +188,9 @@ func TestSecuritySetValue(t *testing.T) {
 		t.Errorf("PidsLimit not set correctly")
 	}
 
-	SetValue(cfg, "security.secrets_to_files", "true")
-	if cfg.Security.SecretsToFiles == nil || *cfg.Security.SecretsToFiles != true {
-		t.Errorf("SecretsToFiles not set correctly")
+	SetValue(cfg, "security.isolate_secrets", "true")
+	if cfg.Security.IsolateSecrets == nil || *cfg.Security.IsolateSecrets != true {
+		t.Errorf("IsolateSecrets not set correctly")
 	}
 
 	SetValue(cfg, "security.network_mode", "none")
@@ -206,11 +206,11 @@ func TestSecuritySetValue(t *testing.T) {
 
 func TestSecurityUnsetValue(t *testing.T) {
 	pidsLimit := 100
-	secretsToFiles := true
+	isolateSecrets := true
 	cfg := &cfgtypes.GlobalConfig{
 		Security: &security.Settings{
 			PidsLimit:      &pidsLimit,
-			SecretsToFiles: &secretsToFiles,
+			IsolateSecrets: &isolateSecrets,
 			NetworkMode:    "none",
 		},
 	}
@@ -220,9 +220,9 @@ func TestSecurityUnsetValue(t *testing.T) {
 		t.Errorf("PidsLimit should be nil after unset")
 	}
 
-	UnsetValue(cfg, "security.secrets_to_files")
-	if cfg.Security.SecretsToFiles != nil {
-		t.Errorf("SecretsToFiles should be nil after unset")
+	UnsetValue(cfg, "security.isolate_secrets")
+	if cfg.Security.IsolateSecrets != nil {
+		t.Errorf("IsolateSecrets should be nil after unset")
 	}
 
 	UnsetValue(cfg, "security.network_mode")
@@ -238,7 +238,7 @@ func TestSecurityGetDefaultValue(t *testing.T) {
 	}{
 		{"security.pids_limit", "200"},
 		{"security.no_new_privileges", "true"},
-		{"security.secrets_to_files", "false"},
+		{"security.isolate_secrets", "false"},
 		{"security.cap_drop", "ALL"},
 		{"security.cap_add", "CHOWN,SETUID,SETGID"},
 		{"security.ulimit_nofile", "4096:8192"},

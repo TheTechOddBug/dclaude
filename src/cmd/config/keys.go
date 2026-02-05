@@ -58,7 +58,7 @@ func GetSecurityKeys() []KeyInfo {
 		{Key: "security.pids_limit", Description: "Max number of processes", Type: "int", EnvVar: "ADDT_SECURITY_PIDS_LIMIT"},
 		{Key: "security.read_only_rootfs", Description: "Read-only root filesystem", Type: "bool", EnvVar: "ADDT_SECURITY_READ_ONLY_ROOTFS"},
 		{Key: "security.seccomp_profile", Description: "Seccomp profile: default, restrictive, unconfined", Type: "string", EnvVar: "ADDT_SECURITY_SECCOMP_PROFILE"},
-		{Key: "security.secrets_to_files", Description: "Write secrets to files instead of env vars", Type: "bool", EnvVar: "ADDT_SECURITY_SECRETS_TO_FILES"},
+		{Key: "security.isolate_secrets", Description: "Isolate secrets from child processes", Type: "bool", EnvVar: "ADDT_SECURITY_ISOLATE_SECRETS"},
 		{Key: "security.time_limit", Description: "Auto-kill after N minutes (0=disabled)", Type: "int", EnvVar: "ADDT_SECURITY_TIME_LIMIT"},
 		{Key: "security.tmpfs_home_size", Description: "Size of /home tmpfs (e.g., \"512m\")", Type: "string", EnvVar: "ADDT_SECURITY_TMPFS_HOME_SIZE"},
 		{Key: "security.tmpfs_tmp_size", Description: "Size of /tmp tmpfs (e.g., \"256m\")", Type: "string", EnvVar: "ADDT_SECURITY_TMPFS_TMP_SIZE"},
@@ -138,7 +138,7 @@ func GetDefaultValue(key string) string {
 		return "false"
 	case "security.seccomp_profile":
 		return ""
-	case "security.secrets_to_files":
+	case "security.isolate_secrets":
 		return "false"
 	case "security.time_limit":
 		return "0"
@@ -289,9 +289,9 @@ func GetSecurityValue(sec *security.Settings, key string) string {
 		}
 	case "security.seccomp_profile":
 		return sec.SeccompProfile
-	case "security.secrets_to_files":
-		if sec.SecretsToFiles != nil {
-			return fmt.Sprintf("%v", *sec.SecretsToFiles)
+	case "security.isolate_secrets":
+		if sec.IsolateSecrets != nil {
+			return fmt.Sprintf("%v", *sec.IsolateSecrets)
 		}
 	case "security.time_limit":
 		if sec.TimeLimit > 0 {
@@ -416,9 +416,9 @@ func SetSecurityValue(sec *security.Settings, key, value string) {
 		sec.ReadOnlyRootfs = &b
 	case "security.seccomp_profile":
 		sec.SeccompProfile = value
-	case "security.secrets_to_files":
+	case "security.isolate_secrets":
 		b := value == "true"
-		sec.SecretsToFiles = &b
+		sec.IsolateSecrets = &b
 	case "security.time_limit":
 		var i int
 		fmt.Sscanf(value, "%d", &i)
@@ -510,8 +510,8 @@ func UnsetSecurityValue(sec *security.Settings, key string) {
 		sec.ReadOnlyRootfs = nil
 	case "security.seccomp_profile":
 		sec.SeccompProfile = ""
-	case "security.secrets_to_files":
-		sec.SecretsToFiles = nil
+	case "security.isolate_secrets":
+		sec.IsolateSecrets = nil
 	case "security.time_limit":
 		sec.TimeLimit = 0
 	case "security.tmpfs_home_size":

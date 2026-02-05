@@ -28,12 +28,12 @@ func checkDockerForSecrets(t *testing.T) {
 	}
 }
 
-func TestSecretsToFiles_Integration_EnvVarsNotPassed(t *testing.T) {
+func TestIsolateSecrets_Integration_EnvVarsNotPassed(t *testing.T) {
 	checkDockerForSecrets(t)
 
-	// Create a provider with secrets_to_files enabled
+	// Create a provider with isolate_secrets enabled
 	secCfg := security.DefaultConfig()
-	secCfg.SecretsToFiles = true
+	secCfg.IsolateSecrets = true
 
 	cfg := &provider.Config{
 		Security: secCfg,
@@ -59,7 +59,7 @@ func TestSecretsToFiles_Integration_EnvVarsNotPassed(t *testing.T) {
 
 	// Verify ANTHROPIC_API_KEY was removed from env
 	if _, exists := env["ANTHROPIC_API_KEY"]; exists {
-		t.Error("ANTHROPIC_API_KEY should be filtered out when secrets_to_files is enabled")
+		t.Error("ANTHROPIC_API_KEY should be filtered out when isolate_secrets is enabled")
 	}
 
 	// Verify non-secret env vars remain
@@ -68,7 +68,7 @@ func TestSecretsToFiles_Integration_EnvVarsNotPassed(t *testing.T) {
 	}
 }
 
-func TestSecretsToFiles_Integration_TmpfsSecretsReadable(t *testing.T) {
+func TestIsolateSecrets_Integration_TmpfsSecretsReadable(t *testing.T) {
 	checkDockerForSecrets(t)
 
 	// Create secrets JSON (as host would prepare)
@@ -131,10 +131,10 @@ func TestSecretsToFiles_Integration_TmpfsSecretsReadable(t *testing.T) {
 	}
 }
 
-func TestSecretsToFiles_Integration_SecretsNotInEnvWhenDisabled(t *testing.T) {
+func TestIsolateSecrets_Integration_SecretsNotInEnvWhenDisabled(t *testing.T) {
 	checkDockerForSecrets(t)
 
-	// When secrets_to_files is disabled, secrets should be passed as env vars
+	// When isolate_secrets is disabled, secrets should be passed as env vars
 	// This test verifies the default behavior
 	secretValue := "sk-ant-test-direct-env-12345"
 
@@ -153,7 +153,7 @@ func TestSecretsToFiles_Integration_SecretsNotInEnvWhenDisabled(t *testing.T) {
 	}
 }
 
-func TestSecretsToFiles_Integration_TmpfsPermissions(t *testing.T) {
+func TestIsolateSecrets_Integration_TmpfsPermissions(t *testing.T) {
 	checkDockerForSecrets(t)
 
 	containerName := fmt.Sprintf("addt-tmpfs-perms-test-%d", os.Getpid())
@@ -177,12 +177,12 @@ func TestSecretsToFiles_Integration_TmpfsPermissions(t *testing.T) {
 	}
 }
 
-func TestSecretsToFiles_Integration_ProviderBuildsCorrectArgs(t *testing.T) {
+func TestIsolateSecrets_Integration_ProviderBuildsCorrectArgs(t *testing.T) {
 	checkDockerForSecrets(t)
 
-	// Create a provider with secrets_to_files enabled
+	// Create a provider with isolate_secrets enabled
 	secCfg := security.DefaultConfig()
-	secCfg.SecretsToFiles = true
+	secCfg.IsolateSecrets = true
 
 	cfg := &provider.Config{
 		Security: secCfg,
@@ -215,7 +215,7 @@ func TestSecretsToFiles_Integration_ProviderBuildsCorrectArgs(t *testing.T) {
 	dockerArgs, cleanup := prov.addContainerVolumesAndEnv(dockerArgs, spec, ctx)
 	defer cleanup()
 
-	// Check for --tmpfs mount (should be present when secrets_to_files is enabled)
+	// Check for --tmpfs mount (should be present when isolate_secrets is enabled)
 	foundTmpfsMount := false
 	foundSecretsEnvVar := false
 
@@ -299,9 +299,9 @@ func ensureSecretsTestImage(t *testing.T) {
 	}
 }
 
-// TestSecretsToFiles_Integration_DockerCpApproach tests the docker cp approach
+// TestIsolateSecrets_Integration_DockerCpApproach tests the docker cp approach
 // where secrets are copied to a running container's tmpfs
-func TestSecretsToFiles_Integration_DockerCpApproach(t *testing.T) {
+func TestIsolateSecrets_Integration_DockerCpApproach(t *testing.T) {
 	checkDockerForSecrets(t)
 
 	secretValue := "sk-ant-docker-cp-test-12345"
@@ -370,9 +370,9 @@ echo "LOADED_SECRET=$ANTHROPIC_API_KEY"
 	}
 }
 
-// TestSecretsToFiles_Integration_SecretsNotInProcEnviron verifies that
+// TestIsolateSecrets_Integration_SecretsNotInProcEnviron verifies that
 // secrets are NOT visible in /proc/1/environ when using docker cp approach
-func TestSecretsToFiles_Integration_SecretsNotInProcEnviron(t *testing.T) {
+func TestIsolateSecrets_Integration_SecretsNotInProcEnviron(t *testing.T) {
 	checkDockerForSecrets(t)
 
 	secretValue := "sk-ant-proc-environ-test"
@@ -445,9 +445,9 @@ echo "MY_SECRET value: $MY_SECRET"
 	}
 }
 
-// TestSecretsToFiles_Integration_RealEntrypoint tests the actual docker-entrypoint.sh
+// TestIsolateSecrets_Integration_RealEntrypoint tests the actual docker-entrypoint.sh
 // with secrets copied via docker cp
-func TestSecretsToFiles_Integration_RealEntrypoint(t *testing.T) {
+func TestIsolateSecrets_Integration_RealEntrypoint(t *testing.T) {
 	checkDockerForSecrets(t)
 	ensureSecretsTestImage(t)
 
@@ -504,7 +504,7 @@ func TestSecretsToFiles_Integration_RealEntrypoint(t *testing.T) {
 // TestPrepareSecretsJSON tests the prepareSecretsJSON function
 func TestPrepareSecretsJSON(t *testing.T) {
 	secCfg := security.DefaultConfig()
-	secCfg.SecretsToFiles = true
+	secCfg.IsolateSecrets = true
 
 	cfg := &provider.Config{
 		Security:   secCfg,

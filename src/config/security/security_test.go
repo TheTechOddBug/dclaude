@@ -161,37 +161,37 @@ func TestLoadConfig(t *testing.T) {
 	}
 }
 
-func TestSecretsToFilesDefault(t *testing.T) {
+func TestIsolateSecretsDefault(t *testing.T) {
 	cfg := DefaultConfig()
-	if !cfg.SecretsToFiles {
-		t.Error("SecretsToFiles = false, want true (secure default)")
+	if !cfg.IsolateSecrets {
+		t.Error("IsolateSecrets = false, want true (secure default)")
 	}
 }
 
-func TestSecretsToFilesSettings(t *testing.T) {
+func TestIsolateSecretsSettings(t *testing.T) {
 	cfg := DefaultConfig()
 
 	enabled := true
 	settings := &Settings{
-		SecretsToFiles: &enabled,
+		IsolateSecrets: &enabled,
 	}
 
 	ApplySettings(&cfg, settings)
 
-	if !cfg.SecretsToFiles {
-		t.Error("SecretsToFiles = false, want true (from settings)")
+	if !cfg.IsolateSecrets {
+		t.Error("IsolateSecrets = false, want true (from settings)")
 	}
 }
 
-func TestSecretsToFilesEnvOverride(t *testing.T) {
+func TestIsolateSecretsEnvOverride(t *testing.T) {
 	cfg := DefaultConfig()
 
-	os.Setenv("ADDT_SECURITY_SECRETS_TO_FILES", "true")
-	defer os.Unsetenv("ADDT_SECURITY_SECRETS_TO_FILES")
+	os.Setenv("ADDT_SECURITY_ISOLATE_SECRETS", "true")
+	defer os.Unsetenv("ADDT_SECURITY_ISOLATE_SECRETS")
 
 	ApplyEnvOverrides(&cfg)
 
-	if !cfg.SecretsToFiles {
-		t.Error("SecretsToFiles = false, want true (from env)")
+	if !cfg.IsolateSecrets {
+		t.Error("IsolateSecrets = false, want true (from env)")
 	}
 }
