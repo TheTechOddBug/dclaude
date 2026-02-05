@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -26,6 +27,41 @@ func DetectContainerRuntime() string {
 
 	// Default to podman (will offer to install if not available)
 	return "podman"
+}
+
+// EnsureContainerRuntime ensures a container runtime is available
+// Downloads Podman automatically if needed (unless Docker is explicitly selected)
+func EnsureContainerRuntime() (string, error) {
+	// If Docker is explicitly selected, use it without auto-download
+	if provider := os.Getenv("ADDT_PROVIDER"); provider == "docker" {
+		if !isDockerRunning() {
+			return "", fmt.Errorf("Docker is explicitly selected but not running")
+		}
+		return "docker", nil
+	}
+
+	// Check if Podman is already available
+	if isPodmanAvailable() {
+		return "podman", nil
+	}
+
+	// Check if Docker is available as fallback
+	if isDockerRunning() {
+		return "docker", nil
+	}
+
+	// Neither available - auto-download Podman
+	fmt.Println("No container runtime found. Downloading Podman...")
+	if err := DownloadPodman(); err != nil {
+		return "", fmt.Errorf("failed to download Podman: %w", err)
+	}
+
+	// Verify it works now
+	if isPodmanAvailable() {
+		return "podman", nil
+	}
+
+	return "", fmt.Errorf("Podman downloaded but not working")
 }
 
 // isDockerRunning checks if Docker daemon is running

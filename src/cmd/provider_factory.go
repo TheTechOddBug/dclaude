@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jedi4ever/addt/assets"
+	"github.com/jedi4ever/addt/config"
 	"github.com/jedi4ever/addt/extensions"
 	"github.com/jedi4ever/addt/provider"
 	"github.com/jedi4ever/addt/provider/daytona"
@@ -12,11 +13,24 @@ import (
 )
 
 // NewProvider creates a new provider based on the specified type
+// For podman/default, auto-downloads Podman if not available
 func NewProvider(providerType string, cfg *provider.Config) (provider.Provider, error) {
+	// For container providers (not daytona), ensure runtime is available
+	if providerType != "daytona" {
+		runtime, err := config.EnsureContainerRuntime()
+		if err != nil {
+			return nil, err
+		}
+		// Update provider type if it was auto-detected/downloaded
+		if providerType == "" {
+			providerType = runtime
+		}
+	}
+
 	switch providerType {
-	case "docker", "":
+	case "docker":
 		return docker.NewDockerProvider(cfg, assets.DockerDockerfile, assets.DockerDockerfileBase, assets.DockerEntrypoint, assets.DockerInitFirewall, assets.DockerInstallSh, extensions.FS)
-	case "podman":
+	case "podman", "":
 		return podman.NewPodmanProvider(cfg, assets.PodmanDockerfile, assets.PodmanDockerfileBase, assets.PodmanEntrypoint, assets.PodmanInitFirewall, assets.PodmanInstallSh, extensions.FS)
 	case "daytona":
 		return daytona.NewDaytonaProvider(cfg, assets.DaytonaDockerfile, assets.DaytonaEntrypoint)
