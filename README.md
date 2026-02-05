@@ -2,7 +2,7 @@
 
 **Run AI coding agents safely in containers.** Your code stays isolated - no surprises on your host machine.
 
-Supports **Docker** and **Podman** as container runtimes.
+Supports **Podman** (default) and **Docker** as container runtimes.
 
 ```bash
 # Install (macOS)
@@ -12,7 +12,7 @@ brew install jedi4ever/tap/addt
 addt run claude "Fix the bug in app.js"
 ```
 
-That's it. First run auto-builds the container (~2 min), then you're coding.
+That's it. First run auto-downloads Podman (if needed) and builds the container (~2 min), then you're coding.
 
 ---
 
@@ -22,6 +22,7 @@ AI agents can read, write, and execute code. Running them in containers means:
 - **Isolation** - Agents can't accidentally modify your system
 - **Reproducibility** - Same environment every time
 - **Security** - Network firewall, resource limits, no host access
+- **No daemon required** - Podman runs rootless without a background service
 
 All your normal agent commands work identically - it's a drop-in replacement.
 
@@ -59,11 +60,11 @@ chmod +x addt && sudo mv addt /usr/local/bin/
 
 **Verify:** `addt version`
 
-**Requires:** [Docker](https://docs.docker.com/get-docker/) or [Podman](https://podman.io/getting-started/installation) installed.
+**Container runtime:** Podman is auto-downloaded if not available. You can also use Docker if preferred.
 
-**Using Podman instead of Docker:**
+**Using Docker instead of Podman:**
 ```bash
-export ADDT_PROVIDER=podman
+export ADDT_PROVIDER=docker
 addt run claude "Fix the bug"
 ```
 
@@ -178,9 +179,20 @@ addt run claude "Clone git@github.com:org/private-repo.git"
 
 ### SSH Keys (git over SSH)
 
+SSH forwarding is enabled by default using a secure proxy that keeps your private keys on your host machine:
+
 ```bash
-export ADDT_SSH_FORWARD=keys
+# Default: SSH proxy mode (keys never enter container)
 addt run claude "Clone git@github.com:org/private-repo.git"
+
+# Filter which keys are accessible
+export ADDT_SSH_ALLOWED_KEYS="github,work"
+addt run claude "Clone the repo"
+
+# Alternative modes
+export ADDT_SSH_FORWARD=keys    # Mount ~/.ssh read-only (less secure)
+export ADDT_SSH_FORWARD=agent   # Direct agent forwarding (Linux only)
+export ADDT_SSH_FORWARD=off     # Disable SSH forwarding
 ```
 
 ### Rebuild Container
@@ -265,7 +277,8 @@ addt config extension claude set version 1.0.5
 |----------|-------------|
 | `ADDT_PERSISTENT=true` | Keep container running between sessions |
 | `ADDT_PORTS=3000,8080` | Expose container ports |
-| `ADDT_SSH_FORWARD=agent` | Forward SSH agent for git |
+| `ADDT_SSH_FORWARD=proxy` | SSH forwarding mode (proxy is default) |
+| `ADDT_SSH_ALLOWED_KEYS=github` | Filter SSH keys by comment |
 | `ADDT_DIND=true` | Enable Docker-in-Docker |
 | `ADDT_FIREWALL=true` | Enable network firewall |
 
@@ -286,10 +299,27 @@ claude "Continue working"    # Reuses container (instant!)
 
 ### SSH Forwarding
 
+SSH forwarding defaults to **proxy mode** - the most secure option that works on all platforms:
+
 ```bash
-export ADDT_SSH_FORWARD=agent   # Forward SSH agent (secure)
+# Default: proxy mode (private keys stay on host)
 addt run claude "Clone the private repo"
+
+# Filter to specific keys by comment/name
+export ADDT_SSH_ALLOWED_KEYS="github-personal"
+addt run claude "Only github-personal key is accessible"
+
+# Other modes
+export ADDT_SSH_FORWARD=agent   # Direct agent socket (Linux only)
+export ADDT_SSH_FORWARD=keys    # Mount ~/.ssh read-only
+export ADDT_SSH_FORWARD=off     # Disable SSH
 ```
+
+**Proxy mode benefits:**
+- Private keys never enter the container
+- Works on macOS (where agent forwarding doesn't work)
+- Filter which keys are exposed with `ADDT_SSH_ALLOWED_KEYS`
+- Keys matched by comment field (filename, email, etc.)
 
 ### Docker-in-Docker / Podman-in-Podman
 
@@ -487,7 +517,7 @@ addt cli update                   # Update addt
 ### Container Behavior
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ADDT_PROVIDER` | auto | Container runtime: `docker`, `podman`, or `daytona` (auto-detected) |
+| `ADDT_PROVIDER` | podman | Container runtime: `podman` (default), `docker`, or `daytona` |
 | `ADDT_PERSISTENT` | false | Keep container running |
 | `ADDT_PORTS` | - | Ports to expose: `3000,8080` |
 | `ADDT_DOCKER_CPUS` | - | CPU limit: `2` |
@@ -498,7 +528,8 @@ addt cli update                   # Update addt
 ### Forwarding
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ADDT_SSH_FORWARD` | - | SSH mode: `agent` or `keys` |
+| `ADDT_SSH_FORWARD` | proxy | SSH mode: `proxy`, `agent`, `keys`, or `off` |
+| `ADDT_SSH_ALLOWED_KEYS` | - | Filter SSH keys by comment: `github,work` |
 | `ADDT_GPG_FORWARD` | false | Mount GPG keys |
 | `ADDT_DIND` | false | Enable Docker-in-Docker |
 | `ADDT_DIND_MODE` | isolated | DinD mode: `isolated` or `host` |
