@@ -8,6 +8,20 @@ import (
 	"github.com/jedi4ever/addt/extensions"
 )
 
+// parseGlobalFlag extracts -g/--global flag from args and returns filtered args
+func parseGlobalFlag(args []string) ([]string, bool) {
+	useGlobal := false
+	var filtered []string
+	for _, arg := range args {
+		if arg == "-g" || arg == "--global" {
+			useGlobal = true
+		} else {
+			filtered = append(filtered, arg)
+		}
+	}
+	return filtered, useGlobal
+}
+
 // HandleCommand handles the config subcommand
 func HandleCommand(args []string) {
 	if len(args) == 0 {
@@ -15,13 +29,52 @@ func HandleCommand(args []string) {
 		return
 	}
 
+	// Parse -g/--global flag
+	args, useGlobal := parseGlobalFlag(args)
+	if len(args) == 0 {
+		printHelp()
+		return
+	}
+
 	switch args[0] {
-	case "global":
-		handleGlobal(args[1:])
-	case "project":
-		handleProject(args[1:])
+	case "list":
+		if useGlobal {
+			listGlobal()
+		} else {
+			listProject()
+		}
+	case "get":
+		if len(args) < 2 {
+			fmt.Println("Usage: addt config get <key> [-g]")
+			os.Exit(1)
+		}
+		if useGlobal {
+			getGlobal(args[1])
+		} else {
+			getProject(args[1])
+		}
+	case "set":
+		if len(args) < 3 {
+			fmt.Println("Usage: addt config set <key> <value> [-g]")
+			os.Exit(1)
+		}
+		if useGlobal {
+			setGlobal(args[1], args[2])
+		} else {
+			setProject(args[1], args[2])
+		}
+	case "unset":
+		if len(args) < 2 {
+			fmt.Println("Usage: addt config unset <key> [-g]")
+			os.Exit(1)
+		}
+		if useGlobal {
+			unsetGlobal(args[1])
+		} else {
+			unsetProject(args[1])
+		}
 	case "extension":
-		handleExtension(args[1:])
+		handleExtension(args[1:], useGlobal)
 	case "path":
 		fmt.Printf("Global config:  %s\n", cfgtypes.GetGlobalConfigPath())
 		fmt.Printf("Project config: %s\n", cfgtypes.GetProjectConfigPath())
@@ -32,94 +85,18 @@ func HandleCommand(args []string) {
 	}
 }
 
-// handleGlobal handles global config subcommands
-func handleGlobal(args []string) {
-	if len(args) == 0 {
-		printGlobalHelp()
-		return
-	}
-
-	switch args[0] {
-	case "list":
-		listGlobal()
-	case "get":
-		if len(args) < 2 {
-			fmt.Println("Usage: addt config global get <key>")
-			os.Exit(1)
-		}
-		getGlobal(args[1])
-	case "set":
-		if len(args) < 3 {
-			fmt.Println("Usage: addt config global set <key> <value>")
-			os.Exit(1)
-		}
-		setGlobal(args[1], args[2])
-	case "unset":
-		if len(args) < 2 {
-			fmt.Println("Usage: addt config global unset <key>")
-			os.Exit(1)
-		}
-		unsetGlobal(args[1])
-	default:
-		fmt.Printf("Unknown global config command: %s\n", args[0])
-		printGlobalHelp()
-		os.Exit(1)
-	}
-}
-
-// handleProject handles project-level config subcommands
-func handleProject(args []string) {
-	if len(args) == 0 {
-		printProjectHelp()
-		return
-	}
-
-	switch args[0] {
-	case "list":
-		listProject()
-	case "get":
-		if len(args) < 2 {
-			fmt.Println("Usage: addt config project get <key>")
-			os.Exit(1)
-		}
-		getProject(args[1])
-	case "set":
-		if len(args) < 3 {
-			fmt.Println("Usage: addt config project set <key> <value>")
-			os.Exit(1)
-		}
-		setProject(args[1], args[2])
-	case "unset":
-		if len(args) < 2 {
-			fmt.Println("Usage: addt config project unset <key>")
-			os.Exit(1)
-		}
-		unsetProject(args[1])
-	default:
-		fmt.Printf("Unknown project config command: %s\n", args[0])
-		printProjectHelp()
-		os.Exit(1)
-	}
-}
-
 // handleExtension handles extension-specific config subcommands
-func handleExtension(args []string) {
+func handleExtension(args []string, useGlobal bool) {
 	if len(args) == 0 {
 		printExtensionHelp()
 		return
 	}
 
-	// Check for --project flag anywhere in args
-	useProject := false
-	var filteredArgs []string
-	for _, arg := range args {
-		if arg == "--project" {
-			useProject = true
-		} else {
-			filteredArgs = append(filteredArgs, arg)
-		}
+	// Parse -g/--global flag from remaining args (in case it comes after extension name)
+	args, globalFromExt := parseGlobalFlag(args)
+	if globalFromExt {
+		useGlobal = true
 	}
-	args = filteredArgs
 
 	if len(args) == 0 {
 		printExtensionHelp()
@@ -145,31 +122,31 @@ func handleExtension(args []string) {
 
 	if len(args) < 2 {
 		// Default to list for extension
-		listExtension(extName)
+		listExtension(extName, useGlobal)
 		return
 	}
 
 	switch args[1] {
 	case "list":
-		listExtension(extName)
+		listExtension(extName, useGlobal)
 	case "get":
 		if len(args) < 3 {
-			fmt.Println("Usage: addt config extension <name> get <key>")
+			fmt.Println("Usage: addt config extension <name> get <key> [-g]")
 			os.Exit(1)
 		}
-		getExtension(extName, args[2])
+		getExtension(extName, args[2], useGlobal)
 	case "set":
 		if len(args) < 4 {
-			fmt.Println("Usage: addt config extension <name> set <key> <value> [--project]")
+			fmt.Println("Usage: addt config extension <name> set <key> <value> [-g]")
 			os.Exit(1)
 		}
-		setExtension(extName, args[2], args[3], useProject)
+		setExtension(extName, args[2], args[3], useGlobal)
 	case "unset":
 		if len(args) < 3 {
-			fmt.Println("Usage: addt config extension <name> unset <key> [--project]")
+			fmt.Println("Usage: addt config extension <name> unset <key> [-g]")
 			os.Exit(1)
 		}
-		unsetExtension(extName, args[2], useProject)
+		unsetExtension(extName, args[2], useGlobal)
 	default:
 		fmt.Printf("Unknown extension config command: %s\n", args[1])
 		printExtensionHelp()
@@ -192,77 +169,42 @@ func extensionExists(name string) bool {
 }
 
 func printHelp() {
-	fmt.Println("Usage: addt config <command>")
+	fmt.Println("Usage: addt config <command> [-g]")
+	fmt.Println()
+	fmt.Println("Manage configuration. Project config (.addt.yaml) is the default.")
+	fmt.Println("Use -g or --global for global config (~/.addt/config.yaml).")
 	fmt.Println()
 	fmt.Println("Commands:")
-	fmt.Println("  global <subcommand>              Manage global configuration (~/.addt/config.yaml)")
-	fmt.Println("  project <subcommand>             Manage project configuration (.addt.yaml)")
-	fmt.Println("  extension <name> <subcommand>    Manage extension-specific configuration")
+	fmt.Println("  list                             List configuration values")
+	fmt.Println("  get <key>                        Get a configuration value")
+	fmt.Println("  set <key> <value>                Set a configuration value")
+	fmt.Println("  unset <key>                      Remove a configuration value")
+	fmt.Println("  extension <name> <subcommand>    Manage extension-specific config")
 	fmt.Println("  path                             Show config file paths")
 	fmt.Println()
+	fmt.Println("Flags:")
+	fmt.Println("  -g, --global    Use global config instead of project config")
+	fmt.Println()
 	fmt.Println("Examples:")
-	fmt.Println("  addt config global list")
-	fmt.Println("  addt config global set docker_cpus 2")
-	fmt.Println("  addt config project set persistent true")
+	fmt.Println("  addt config list                      # project config")
+	fmt.Println("  addt config list -g                   # global config")
+	fmt.Println("  addt config set firewall true")
+	fmt.Println("  addt config set docker_cpus 2 -g")
 	fmt.Println("  addt config extension claude set version 1.0.5")
+	fmt.Println("  addt config extension claude set version 1.0.5 -g")
 	fmt.Println()
 	fmt.Println("Precedence (highest to lowest):")
-	fmt.Println("  1. Environment variables (e.g., ADDT_DOCKER_CPUS)")
-	fmt.Println("  2. Project config (.addt.yaml in current directory)")
+	fmt.Println("  1. Environment variables (e.g., ADDT_FIREWALL)")
+	fmt.Println("  2. Project config (.addt.yaml)")
 	fmt.Println("  3. Global config (~/.addt/config.yaml)")
 	fmt.Println("  4. Default values")
 }
 
-func printGlobalHelp() {
-	fmt.Println("Usage: addt config global <command>")
-	fmt.Println()
-	fmt.Println("Commands:")
-	fmt.Println("  list              List all global configuration values")
-	fmt.Println("  get <key>         Get a configuration value")
-	fmt.Println("  set <key> <value> Set a configuration value")
-	fmt.Println("  unset <key>       Remove a configuration value (use default)")
-	fmt.Println()
-	fmt.Println("Available keys:")
-	keys := GetKeys()
-	maxKeyLen := 0
-	for _, k := range keys {
-		if len(k.Key) > maxKeyLen {
-			maxKeyLen = len(k.Key)
-		}
-	}
-	for _, k := range keys {
-		fmt.Printf("  %-*s  %s\n", maxKeyLen, k.Key, k.Description)
-	}
-}
-
-func printProjectHelp() {
-	fmt.Println("Usage: addt config project <command>")
-	fmt.Println()
-	fmt.Println("Manage project-level configuration stored in .addt.yaml")
-	fmt.Println()
-	fmt.Println("Commands:")
-	fmt.Println("  list              List all project configuration values")
-	fmt.Println("  get <key>         Get a configuration value")
-	fmt.Println("  set <key> <value> Set a configuration value")
-	fmt.Println("  unset <key>       Remove a configuration value")
-	fmt.Println()
-	fmt.Println("Project config overrides global config but is overridden by env vars.")
-	fmt.Println()
-	fmt.Println("Available keys:")
-	keys := GetKeys()
-	maxKeyLen := 0
-	for _, k := range keys {
-		if len(k.Key) > maxKeyLen {
-			maxKeyLen = len(k.Key)
-		}
-	}
-	for _, k := range keys {
-		fmt.Printf("  %-*s  %s\n", maxKeyLen, k.Key, k.Description)
-	}
-}
-
 func printExtensionHelp() {
-	fmt.Println("Usage: addt config extension <name> <command> [--project]")
+	fmt.Println("Usage: addt config extension <name> <command> [-g]")
+	fmt.Println()
+	fmt.Println("Manage extension-specific configuration.")
+	fmt.Println("Project config is the default. Use -g for global config.")
 	fmt.Println()
 	fmt.Println("Commands:")
 	fmt.Println("  list              List extension configuration")
@@ -271,7 +213,7 @@ func printExtensionHelp() {
 	fmt.Println("  unset <key>       Remove a configuration value")
 	fmt.Println()
 	fmt.Println("Flags:")
-	fmt.Println("  --project         Save to project config (.addt.yaml) instead of global")
+	fmt.Println("  -g, --global      Use global config instead of project config")
 	fmt.Println()
 	fmt.Println("Available keys:")
 	fmt.Println("  version     Extension version (e.g., \"1.0.5\", \"latest\", \"stable\")")
@@ -280,5 +222,5 @@ func printExtensionHelp() {
 	fmt.Println("Examples:")
 	fmt.Println("  addt config extension claude list")
 	fmt.Println("  addt config extension claude set version 1.0.5")
-	fmt.Println("  addt config extension claude set automount false --project")
+	fmt.Println("  addt config extension claude set version 1.0.5 -g")
 }

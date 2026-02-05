@@ -9,19 +9,7 @@ import (
 	"github.com/jedi4ever/addt/extensions"
 )
 
-func listExtension(extName string) {
-	globalCfg, err := cfgtypes.LoadGlobalConfigFile()
-	if err != nil {
-		fmt.Printf("Error loading global config: %v\n", err)
-		os.Exit(1)
-	}
-
-	projectCfg, err := cfgtypes.LoadProjectConfigFile()
-	if err != nil {
-		fmt.Printf("Error loading project config: %v\n", err)
-		os.Exit(1)
-	}
-
+func listExtension(extName string, useGlobal bool) {
 	// Get extension defaults from extension's config.yaml
 	var extDefaults *extensions.ExtensionConfig
 	exts, err := extensions.GetExtensions()
@@ -35,17 +23,29 @@ func listExtension(extName string) {
 	}
 
 	extNameUpper := strings.ToUpper(extName)
-	fmt.Printf("Extension: %s\n\n", extName)
+	scope := "project"
+	if useGlobal {
+		scope = "global"
+	}
+	fmt.Printf("Extension: %s (%s)\n\n", extName, scope)
 
 	keys := GetExtensionKeys()
 
-	// Get extension config from global and project config files
-	var globalExtCfg, projectExtCfg *cfgtypes.ExtensionSettings
-	if globalCfg.Extensions != nil {
-		globalExtCfg = globalCfg.Extensions[extName]
+	// Load the appropriate config
+	var cfg *cfgtypes.GlobalConfig
+	if useGlobal {
+		cfg, err = cfgtypes.LoadGlobalConfigFile()
+	} else {
+		cfg, err = cfgtypes.LoadProjectConfigFile()
 	}
-	if projectCfg.Extensions != nil {
-		projectExtCfg = projectCfg.Extensions[extName]
+	if err != nil {
+		fmt.Printf("Error loading config: %v\n", err)
+		os.Exit(1)
+	}
+
+	var extCfg *cfgtypes.ExtensionSettings
+	if cfg.Extensions != nil {
+		extCfg = cfg.Extensions[extName]
 	}
 
 	// Print header
@@ -56,28 +56,16 @@ func listExtension(extName string) {
 		envVar := fmt.Sprintf(k.EnvVar, extNameUpper)
 		envValue := os.Getenv(envVar)
 
-		var projectValue, globalValue, defaultValue string
+		var configValue, defaultValue string
 
-		// Get project config value
-		if projectExtCfg != nil {
+		// Get config value
+		if extCfg != nil {
 			switch k.Key {
 			case "version":
-				projectValue = projectExtCfg.Version
+				configValue = extCfg.Version
 			case "automount":
-				if projectExtCfg.Automount != nil {
-					projectValue = fmt.Sprintf("%v", *projectExtCfg.Automount)
-				}
-			}
-		}
-
-		// Get global config value
-		if globalExtCfg != nil {
-			switch k.Key {
-			case "version":
-				globalValue = globalExtCfg.Version
-			case "automount":
-				if globalExtCfg.Automount != nil {
-					globalValue = fmt.Sprintf("%v", *globalExtCfg.Automount)
+				if extCfg.Automount != nil {
+					configValue = fmt.Sprintf("%v", *extCfg.Automount)
 				}
 			}
 		}
@@ -92,17 +80,14 @@ func listExtension(extName string) {
 			}
 		}
 
-		// Determine effective value and source (env > project > global > default)
+		// Determine effective value and source (env > config > default)
 		var displayValue, source string
 		if envValue != "" {
 			displayValue = envValue
 			source = "env"
-		} else if projectValue != "" {
-			displayValue = projectValue
-			source = "project"
-		} else if globalValue != "" {
-			displayValue = globalValue
-			source = "global"
+		} else if configValue != "" {
+			displayValue = configValue
+			source = scope
 		} else if defaultValue != "" {
 			displayValue = defaultValue
 			source = "default"
@@ -111,7 +96,7 @@ func listExtension(extName string) {
 			source = ""
 		}
 
-		if source == "env" || source == "project" || source == "global" {
+		if source == "env" || source == scope {
 			fmt.Printf("* %-10s   %-15s   %s\n", k.Key, displayValue, source)
 		} else {
 			fmt.Printf("  %-10s   %-15s   %s\n", k.Key, displayValue, source)
@@ -119,14 +104,20 @@ func listExtension(extName string) {
 	}
 }
 
-func getExtension(extName, key string) {
+func getExtension(extName, key string, useGlobal bool) {
 	if !IsValidExtensionKey(key) {
 		fmt.Printf("Unknown extension config key: %s\n", key)
 		fmt.Println("Available keys: version, automount")
 		os.Exit(1)
 	}
 
-	cfg, err := cfgtypes.LoadGlobalConfigFile()
+	var cfg *cfgtypes.GlobalConfig
+	var err error
+	if useGlobal {
+		cfg, err = cfgtypes.LoadGlobalConfigFile()
+	} else {
+		cfg, err = cfgtypes.LoadProjectConfigFile()
+	}
 	if err != nil {
 		fmt.Printf("Error loading config: %v\n", err)
 		os.Exit(1)
@@ -159,7 +150,7 @@ func getExtension(extName, key string) {
 	}
 }
 
-func setExtension(extName, key, value string, useProject bool) {
+func setExtension(extName, key, value string, useGlobal bool) {
 	if !IsValidExtensionKey(key) {
 		fmt.Printf("Unknown extension config key: %s\n", key)
 		fmt.Println("Available keys: version, automount")
@@ -177,10 +168,10 @@ func setExtension(extName, key, value string, useProject bool) {
 
 	var cfg *cfgtypes.GlobalConfig
 	var err error
-	if useProject {
-		cfg, err = cfgtypes.LoadProjectConfigFile()
-	} else {
+	if useGlobal {
 		cfg, err = cfgtypes.LoadGlobalConfigFile()
+	} else {
+		cfg, err = cfgtypes.LoadProjectConfigFile()
 	}
 	if err != nil {
 		fmt.Printf("Error loading config: %v\n", err)
@@ -206,22 +197,23 @@ func setExtension(extName, key, value string, useProject bool) {
 		extCfg.Automount = &b
 	}
 
-	if useProject {
+	scope := "project"
+	if useGlobal {
+		if err := cfgtypes.SaveGlobalConfigFile(cfg); err != nil {
+			fmt.Printf("Error saving global config: %v\n", err)
+			os.Exit(1)
+		}
+		scope = "global"
+	} else {
 		if err := cfgtypes.SaveProjectConfigFile(cfg); err != nil {
 			fmt.Printf("Error saving project config: %v\n", err)
 			os.Exit(1)
 		}
-		fmt.Printf("Set %s.%s = %s (project)\n", extName, key, value)
-	} else {
-		if err := cfgtypes.SaveGlobalConfigFile(cfg); err != nil {
-			fmt.Printf("Error saving config: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Printf("Set %s.%s = %s\n", extName, key, value)
 	}
+	fmt.Printf("Set %s.%s = %s (%s)\n", extName, key, value, scope)
 }
 
-func unsetExtension(extName, key string, useProject bool) {
+func unsetExtension(extName, key string, useGlobal bool) {
 	if !IsValidExtensionKey(key) {
 		fmt.Printf("Unknown extension config key: %s\n", key)
 		fmt.Println("Available keys: version, automount")
@@ -230,23 +222,23 @@ func unsetExtension(extName, key string, useProject bool) {
 
 	var cfg *cfgtypes.GlobalConfig
 	var err error
-	if useProject {
-		cfg, err = cfgtypes.LoadProjectConfigFile()
-	} else {
+	if useGlobal {
 		cfg, err = cfgtypes.LoadGlobalConfigFile()
+	} else {
+		cfg, err = cfgtypes.LoadProjectConfigFile()
 	}
 	if err != nil {
 		fmt.Printf("Error loading config: %v\n", err)
 		os.Exit(1)
 	}
 
-	configType := "global"
-	if useProject {
-		configType = "project"
+	scope := "project"
+	if useGlobal {
+		scope = "global"
 	}
 
 	if cfg.Extensions == nil || cfg.Extensions[extName] == nil {
-		fmt.Printf("%s.%s is not set in %s config\n", extName, key, configType)
+		fmt.Printf("%s.%s is not set in %s config\n", extName, key, scope)
 		return
 	}
 
@@ -268,17 +260,16 @@ func unsetExtension(extName, key string, useProject bool) {
 		cfg.Extensions = nil
 	}
 
-	if useProject {
+	if useGlobal {
+		if err := cfgtypes.SaveGlobalConfigFile(cfg); err != nil {
+			fmt.Printf("Error saving global config: %v\n", err)
+			os.Exit(1)
+		}
+	} else {
 		if err := cfgtypes.SaveProjectConfigFile(cfg); err != nil {
 			fmt.Printf("Error saving project config: %v\n", err)
 			os.Exit(1)
 		}
-		fmt.Printf("Unset %s.%s (project)\n", extName, key)
-	} else {
-		if err := cfgtypes.SaveGlobalConfigFile(cfg); err != nil {
-			fmt.Printf("Error saving config: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Printf("Unset %s.%s\n", extName, key)
 	}
+	fmt.Printf("Unset %s.%s (%s)\n", extName, key, scope)
 }

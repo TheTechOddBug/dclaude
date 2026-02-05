@@ -21,7 +21,7 @@ Commands:
   addt containers [list|stop|rm]     Manage containers
   addt firewall [list|add|rm|reset]  Manage firewall
   addt extensions [list|info|new]    Manage extensions
-  addt config [global|project|extension]  Manage configuration
+  addt config [list|set|get|unset] [-g]   Manage configuration
   addt completion [bash|zsh|fish]    Generate shell completions
   addt doctor                        Check system health
   addt cli [update|install-podman]   Manage addt CLI
@@ -32,7 +32,7 @@ Examples:
   addt init -y                       # Quick setup with defaults
   addt run claude "Fix the bug"
   addt extensions list
-  addt config global list
+  addt config list -g
   addt config extension claude set version 1.0.5
 `, version)
 }
@@ -51,7 +51,7 @@ Container management (via agent):
   <agent> addt containers [list|stop|rm]     Manage persistent containers
   <agent> addt firewall [list|add|rm|reset]  Manage network firewall
   <agent> addt extensions [list|info|new]    Manage extensions
-  <agent> addt config [global|project|extension]  Manage configuration
+  <agent> addt config [list|set|get|unset] [-g]   Manage configuration
   <agent> addt cli [update]                  Manage addt CLI
   <agent> addt version                       Show version info
 
@@ -117,9 +117,10 @@ Build Command:
 
 Configuration:
   Use 'addt config' to manage persistent settings:
-    addt config global list                         # Show all global settings
-    addt config global set docker_cpus 2            # Set CPU limit
-    addt config project set persistent true         # Set project-level config
+    addt config list                                # Show project config (default)
+    addt config list -g                             # Show global config
+    addt config set docker_cpus 2                   # Set in project config
+    addt config set docker_cpus 2 -g                # Set in global config
     addt config extension claude set version 1.0.5  # Set extension version
 
   Precedence: env vars > project (.addt.yaml) > global (~/.addt/config.yaml) > defaults
@@ -130,7 +131,7 @@ Examples:
   claude --help                    # Shows agent's help
   claude addt build                # Build container image
   claude addt shell                # Open shell in container
-  claude addt config global list   # Show global configuration
+  claude addt config list -g       # Show global configuration
 `)
 }
 
