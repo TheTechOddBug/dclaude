@@ -20,17 +20,17 @@ type ProjectType struct {
 
 // InitConfig holds the configuration being built during init
 type InitConfig struct {
-	Extensions       string   `yaml:"extensions,omitempty"`
-	Persistent       *bool    `yaml:"persistent,omitempty"`
-	Firewall         *bool    `yaml:"firewall,omitempty"`
-	FirewallMode     string   `yaml:"firewall_mode,omitempty"`
-	FirewallAllowed  []string `yaml:"firewall_allowed,omitempty"`
-	SSHForward       string   `yaml:"ssh_forward,omitempty"`
-	GPGForward       string   `yaml:"gpg_forward,omitempty"`
-	WorkdirReadonly  *bool    `yaml:"workdir_readonly,omitempty"`
-	NodeVersion      string   `yaml:"node_version,omitempty"`
-	GoVersion        string   `yaml:"go_version,omitempty"`
-	GitHubDetect     *bool    `yaml:"github_detect,omitempty"`
+	Extensions      string   `yaml:"extensions,omitempty"`
+	Persistent      *bool    `yaml:"persistent,omitempty"`
+	Firewall        *bool    `yaml:"firewall,omitempty"`
+	FirewallMode    string   `yaml:"firewall_mode,omitempty"`
+	FirewallAllowed []string `yaml:"firewall_allowed,omitempty"`
+	SSHForward      string   `yaml:"ssh_forward,omitempty"`
+	GPGForward      string   `yaml:"gpg_forward,omitempty"`
+	WorkdirReadonly *bool    `yaml:"workdir_readonly,omitempty"`
+	NodeVersion     string   `yaml:"node_version,omitempty"`
+	GoVersion       string   `yaml:"go_version,omitempty"`
+	GitHubDetect    *bool    `yaml:"github_detect,omitempty"`
 }
 
 // HandleInitCommand handles the init command

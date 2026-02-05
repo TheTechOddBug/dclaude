@@ -164,15 +164,15 @@ func (p *DockerProvider) mountSafeGPGFiles(homeDir, username string) []string {
 
 	// Copy safe files only (no private keys)
 	safeFiles := []string{
-		"pubring.kbx",      // Public keyring (GPG 2.1+)
-		"pubring.gpg",      // Public keyring (legacy)
-		"trustdb.gpg",      // Trust database
-		"gpg.conf",         // GPG configuration
-		"gpg-agent.conf",   // Agent configuration
-		"dirmngr.conf",     // Directory manager config
-		"sshcontrol",       // SSH control file
-		"tofu.db",          // TOFU database
-		"crls.d",           // CRL cache (directory)
+		"pubring.kbx",    // Public keyring (GPG 2.1+)
+		"pubring.gpg",    // Public keyring (legacy)
+		"trustdb.gpg",    // Trust database
+		"gpg.conf",       // GPG configuration
+		"gpg-agent.conf", // Agent configuration
+		"dirmngr.conf",   // Directory manager config
+		"sshcontrol",     // SSH control file
+		"tofu.db",        // TOFU database
+		"crls.d",         // CRL cache (directory)
 	}
 
 	for _, file := range safeFiles {
