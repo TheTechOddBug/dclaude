@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/jedi4ever/addt/config/security"
 	"github.com/jedi4ever/addt/provider"
 )
 
@@ -13,6 +14,7 @@ import (
 type PodmanProvider struct {
 	config                 *provider.Config
 	tempDirs               []string
+	sshProxy               *security.SSHProxyAgent
 	embeddedDockerfile     []byte
 	embeddedDockerfileBase []byte
 	embeddedEntrypoint     []byte
@@ -72,8 +74,14 @@ func (p *PodmanProvider) CheckPastaAvailable() bool {
 // and name generation (GenerateContainerName, GenerateEphemeralName, GeneratePersistentName)
 // are defined in persistent.go
 
-// Cleanup removes temporary directories
+// Cleanup removes temporary directories and stops SSH proxy
 func (p *PodmanProvider) Cleanup() error {
+	// Stop SSH proxy if running
+	if p.sshProxy != nil {
+		p.sshProxy.Stop()
+		p.sshProxy = nil
+	}
+
 	for _, dir := range p.tempDirs {
 		os.RemoveAll(dir)
 	}

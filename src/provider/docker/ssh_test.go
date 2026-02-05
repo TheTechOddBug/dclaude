@@ -13,7 +13,7 @@ func TestHandleSSHForwarding_Disabled(t *testing.T) {
 
 	for _, mode := range testCases {
 		t.Run(mode, func(t *testing.T) {
-			args := p.HandleSSHForwarding(mode, "/home/test", "testuser")
+			args := p.HandleSSHForwarding(mode, "/home/test", "testuser", nil)
 			if len(args) != 0 {
 				t.Errorf("HandleSSHForwarding(%q) returned %v, want empty", mode, args)
 			}
@@ -36,7 +36,7 @@ func TestHandleSSHForwarding_Keys(t *testing.T) {
 	os.WriteFile(filepath.Join(sshDir, "id_rsa.pub"), []byte("public"), 0644)
 	os.WriteFile(filepath.Join(sshDir, "config"), []byte("Host *"), 0644)
 
-	args := p.HandleSSHForwarding("keys", homeDir, "testuser")
+	args := p.HandleSSHForwarding("keys", homeDir, "testuser", nil)
 
 	// Should mount .ssh directory
 	expectedMount := sshDir + ":/home/testuser/.ssh:ro"
@@ -56,7 +56,7 @@ func TestHandleSSHForwarding_Keys_NoSSHDir(t *testing.T) {
 	// Create a temporary home directory WITHOUT .ssh
 	homeDir := t.TempDir()
 
-	args := p.HandleSSHForwarding("keys", homeDir, "testuser")
+	args := p.HandleSSHForwarding("keys", homeDir, "testuser", nil)
 
 	// Should return empty when .ssh doesn't exist
 	if len(args) != 0 {
@@ -76,7 +76,7 @@ func TestHandleSSHForwarding_Agent_NoSocket(t *testing.T) {
 		}
 	}()
 
-	args := p.HandleSSHForwarding("agent", "/home/test", "testuser")
+	args := p.HandleSSHForwarding("agent", "/home/test", "testuser", nil)
 
 	// Should return empty when no SSH agent
 	if len(args) != 0 {
@@ -100,7 +100,7 @@ func TestHandleSSHForwarding_Agent_MacOSSocket(t *testing.T) {
 	// Set a macOS-style socket path (these don't work in Docker)
 	os.Setenv("SSH_AUTH_SOCK", "/var/folders/xx/fake/com.apple.launchd.xxx/Listeners")
 
-	args := p.HandleSSHForwarding("agent", "/home/test", "testuser")
+	args := p.HandleSSHForwarding("agent", "/home/test", "testuser", nil)
 
 	// Should return empty for macOS sockets (with warning printed)
 	if len(args) != 0 {
@@ -151,7 +151,7 @@ func TestHandleSSHForwarding_Agent_ValidSocket(t *testing.T) {
 		}
 	}()
 
-	args := p.HandleSSHForwarding("agent", homeDir, "testuser")
+	args := p.HandleSSHForwarding("agent", homeDir, "testuser", nil)
 
 	// Should mount the socket
 	expectedSocketMount := socketPath + ":/ssh-agent"
@@ -193,8 +193,8 @@ func TestHandleSSHForwarding_True_SameAsAgent(t *testing.T) {
 	}()
 
 	// Both "true" and "agent" should behave the same
-	argsTrue := p.HandleSSHForwarding("true", "/home/test", "testuser")
-	argsAgent := p.HandleSSHForwarding("agent", "/home/test", "testuser")
+	argsTrue := p.HandleSSHForwarding("true", "/home/test", "testuser", nil)
+	argsAgent := p.HandleSSHForwarding("agent", "/home/test", "testuser", nil)
 
 	if len(argsTrue) != len(argsAgent) {
 		t.Errorf("HandleSSHForwarding(\"true\") = %v, HandleSSHForwarding(\"agent\") = %v, want same", argsTrue, argsAgent)

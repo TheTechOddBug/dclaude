@@ -63,7 +63,7 @@ func TestSSHForwarding_Integration_KeysMode(t *testing.T) {
 	}
 
 	prov := createTestProvider(t)
-	args := prov.HandleSSHForwarding("keys", tmpHome, "testuser")
+	args := prov.HandleSSHForwarding("keys", tmpHome, "testuser", nil)
 
 	// Should have volume mount for .ssh
 	foundSSHMount := false
@@ -131,7 +131,7 @@ func TestSSHForwarding_Integration_AgentModeNoSocket(t *testing.T) {
 	}()
 
 	prov := createTestProvider(t)
-	args := prov.HandleSSHForwarding("agent", "/home/test", "testuser")
+	args := prov.HandleSSHForwarding("agent", "/home/test", "testuser", nil)
 
 	// Should return empty args when no socket
 	if len(args) > 0 {
@@ -143,7 +143,7 @@ func TestSSHForwarding_Integration_NoForwarding(t *testing.T) {
 	checkDockerForSSH(t)
 
 	prov := createTestProvider(t)
-	args := prov.HandleSSHForwarding("", "/home/test", "testuser")
+	args := prov.HandleSSHForwarding("", "/home/test", "testuser", nil)
 
 	if len(args) != 0 {
 		t.Errorf("Expected empty args for no forwarding, got: %v", args)
@@ -154,7 +154,7 @@ func TestSSHForwarding_Integration_InvalidMode(t *testing.T) {
 	checkDockerForSSH(t)
 
 	prov := createTestProvider(t)
-	args := prov.HandleSSHForwarding("invalid", "/home/test", "testuser")
+	args := prov.HandleSSHForwarding("invalid", "/home/test", "testuser", nil)
 
 	if len(args) != 0 {
 		t.Errorf("Expected empty args for invalid mode, got: %v", args)
@@ -252,7 +252,7 @@ func TestSSHForwarding_Integration_NonExistentSSHDir(t *testing.T) {
 	checkDockerForSSH(t)
 
 	prov := createTestProvider(t)
-	args := prov.HandleSSHForwarding("keys", "/nonexistent/path", "testuser")
+	args := prov.HandleSSHForwarding("keys", "/nonexistent/path", "testuser", nil)
 
 	if len(args) != 0 {
 		t.Errorf("Expected empty args for non-existent .ssh dir, got: %v", args)
@@ -292,7 +292,7 @@ func TestSSHForwarding_Integration_FullProviderWithSSH(t *testing.T) {
 		tempDirs: []string{},
 	}
 
-	args := prov.HandleSSHForwarding(cfg.SSHForward, tmpHome, "addt")
+	args := prov.HandleSSHForwarding(cfg.SSHForward, tmpHome, "addt", nil)
 
 	if len(args) == 0 {
 		t.Error("Expected SSH mount args")

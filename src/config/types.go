@@ -29,6 +29,7 @@ type GlobalConfig struct {
 	Persistent       *bool    `yaml:"persistent,omitempty"`
 	PortRangeStart   *int     `yaml:"port_range_start,omitempty"`
 	SSHForward       string   `yaml:"ssh_forward,omitempty"`
+	SSHAllowedKeys   []string `yaml:"ssh_allowed_keys,omitempty"`
 	UvVersion        string   `yaml:"uv_version,omitempty"`
 	Workdir          string   `yaml:"workdir,omitempty"`
 	WorkdirAutomount *bool    `yaml:"workdir_automount,omitempty"`
@@ -52,6 +53,7 @@ type Config struct {
 	Ports                    []string
 	PortRangeStart           int
 	SSHForward               string
+	SSHAllowedKeys           []string
 	GPGForward               bool
 	DindMode                 string
 	EnvFile                  string
