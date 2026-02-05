@@ -26,8 +26,19 @@ type GPGProxyAgent struct {
 // NewGPGProxyAgent creates a new GPG proxy agent
 // allowedKeyIDs can be full fingerprints or last 8/16 chars (short/long key ID)
 func NewGPGProxyAgent(upstreamSocket string, allowedKeyIDs []string) (*GPGProxyAgent, error) {
-	// Create temp directory for proxy socket
-	tmpDir, err := os.MkdirTemp("", "gpg-proxy-*")
+	// Create socket directory in ~/.addt/sockets/ so Podman machine can access it
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get home dir: %w", err)
+	}
+
+	socketsDir := filepath.Join(homeDir, ".addt", "sockets")
+	if err := os.MkdirAll(socketsDir, 0700); err != nil {
+		return nil, fmt.Errorf("failed to create sockets dir: %w", err)
+	}
+
+	// Create unique subdirectory for this proxy instance
+	tmpDir, err := os.MkdirTemp(socketsDir, "gpg-proxy-*")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp dir: %w", err)
 	}

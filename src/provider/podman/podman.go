@@ -16,6 +16,7 @@ type PodmanProvider struct {
 	tempDirs               []string
 	sshProxy               *security.SSHProxyAgent
 	gpgProxy               *security.GPGProxyAgent
+	tmuxProxy              *tmuxProxy
 	embeddedDockerfile     []byte
 	embeddedDockerfileBase []byte
 	embeddedEntrypoint     []byte
@@ -91,6 +92,12 @@ func (p *PodmanProvider) Cleanup() error {
 	if p.gpgProxy != nil {
 		p.gpgProxy.Stop()
 		p.gpgProxy = nil
+	}
+
+	// Stop tmux proxy if running
+	if p.tmuxProxy != nil {
+		p.tmuxProxy.Stop()
+		p.tmuxProxy = nil
 	}
 
 	for _, dir := range p.tempDirs {

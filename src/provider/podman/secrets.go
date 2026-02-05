@@ -17,8 +17,19 @@ func (p *PodmanProvider) writeSecretsToFiles(imageName string, env map[string]st
 		return "", nil, nil
 	}
 
-	// Create temp directory for secrets
-	secretsDir, err := os.MkdirTemp("", "addt-secrets-")
+	// Create secrets directory in ~/.addt/secrets/ so Podman machine can access it
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to get home dir: %w", err)
+	}
+
+	secretsBaseDir := filepath.Join(homeDir, ".addt", "secrets")
+	if err := os.MkdirAll(secretsBaseDir, 0700); err != nil {
+		return "", nil, fmt.Errorf("failed to create secrets base dir: %w", err)
+	}
+
+	// Create unique subdirectory for this session
+	secretsDir, err := os.MkdirTemp(secretsBaseDir, "session-")
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to create secrets directory: %w", err)
 	}
