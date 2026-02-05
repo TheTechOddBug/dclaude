@@ -507,6 +507,42 @@ export ADDT_SECURITY_ISOLATE_SECRETS=true
 export ADDT_WORKDIR_READONLY=true
 ```
 
+### OpenTelemetry Support
+
+Send telemetry data to an OTEL collector for observability:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `enabled` | false | Enable OpenTelemetry |
+| `endpoint` | http://localhost:4318 | OTLP endpoint URL |
+| `protocol` | http/protobuf | Protocol: http/protobuf or grpc |
+| `service_name` | addt | Service name for traces |
+| `headers` | "" | OTLP headers (key=value,key2=value2) |
+
+Configure in `~/.addt/config.yaml`:
+```yaml
+otel:
+  enabled: true
+  endpoint: http://localhost:4318
+  protocol: http/protobuf
+  service_name: my-project
+  headers: "Authorization=Bearer token"
+```
+
+Or via environment variables:
+```bash
+export ADDT_OTEL_ENABLED=true
+export ADDT_OTEL_ENDPOINT=http://otel-collector:4318
+export ADDT_OTEL_PROTOCOL=http/protobuf
+export ADDT_OTEL_SERVICE_NAME=my-project
+```
+
+When enabled, the following OTEL environment variables are passed to the container:
+- `OTEL_EXPORTER_OTLP_ENDPOINT`
+- `OTEL_EXPORTER_OTLP_PROTOCOL`
+- `OTEL_SERVICE_NAME`
+- `OTEL_EXPORTER_OTLP_HEADERS` (if configured)
+
 ### Version Pinning
 
 ```bash

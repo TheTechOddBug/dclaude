@@ -1,6 +1,9 @@
 package config
 
-import "github.com/jedi4ever/addt/config/security"
+import (
+	"github.com/jedi4ever/addt/config/otel"
+	"github.com/jedi4ever/addt/config/security"
+)
 
 // ExtensionSettings holds per-extension configuration settings
 type ExtensionSettings struct {
@@ -43,6 +46,9 @@ type GlobalConfig struct {
 
 	// Security configuration
 	Security *security.Settings `yaml:"security,omitempty"`
+
+	// OpenTelemetry configuration
+	Otel *otel.Settings `yaml:"otel,omitempty"`
 }
 
 // Config holds all configuration options
@@ -89,4 +95,7 @@ type Config struct {
 
 	// Security settings
 	Security security.Config
+
+	// OpenTelemetry settings
+	Otel otel.Config
 }

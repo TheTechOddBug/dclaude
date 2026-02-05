@@ -1,0 +1,85 @@
+package otel
+
+import (
+	"os"
+	"strings"
+)
+
+// LoadConfig loads OTEL configuration with precedence:
+// defaults < global settings < project settings < environment variables
+func LoadConfig(globalSettings, projectSettings *Settings) Config {
+	cfg := DefaultConfig()
+
+	// Apply global settings
+	if globalSettings != nil {
+		applySettings(&cfg, globalSettings)
+	}
+
+	// Apply project settings (overrides global)
+	if projectSettings != nil {
+		applySettings(&cfg, projectSettings)
+	}
+
+	// Apply environment variable overrides
+	applyEnvOverrides(&cfg)
+
+	return cfg
+}
+
+// applySettings applies non-nil settings values to the config.
+func applySettings(cfg *Config, settings *Settings) {
+	if settings.Enabled != nil {
+		cfg.Enabled = *settings.Enabled
+	}
+	if settings.Endpoint != nil {
+		cfg.Endpoint = *settings.Endpoint
+	}
+	if settings.Protocol != nil {
+		cfg.Protocol = *settings.Protocol
+	}
+	if settings.ServiceName != nil {
+		cfg.ServiceName = *settings.ServiceName
+	}
+	if settings.Headers != nil {
+		cfg.Headers = *settings.Headers
+	}
+}
+
+// applyEnvOverrides applies environment variable overrides to the config.
+func applyEnvOverrides(cfg *Config) {
+	if val := os.Getenv("ADDT_OTEL_ENABLED"); val != "" {
+		cfg.Enabled = strings.ToLower(val) == "true"
+	}
+	if val := os.Getenv("ADDT_OTEL_ENDPOINT"); val != "" {
+		cfg.Endpoint = val
+	}
+	if val := os.Getenv("ADDT_OTEL_PROTOCOL"); val != "" {
+		cfg.Protocol = val
+	}
+	if val := os.Getenv("ADDT_OTEL_SERVICE_NAME"); val != "" {
+		cfg.ServiceName = val
+	}
+	if val := os.Getenv("ADDT_OTEL_HEADERS"); val != "" {
+		cfg.Headers = val
+	}
+}
+
+// GetEnvVars returns a map of OTEL environment variables to pass to containers.
+// These follow the OpenTelemetry specification for SDK configuration.
+func GetEnvVars(cfg Config) map[string]string {
+	if !cfg.Enabled {
+		return nil
+	}
+
+	env := map[string]string{
+		"OTEL_EXPORTER_OTLP_ENDPOINT": cfg.Endpoint,
+		"OTEL_EXPORTER_OTLP_PROTOCOL": cfg.Protocol,
+		"OTEL_SERVICE_NAME":           cfg.ServiceName,
+	}
+
+	if cfg.Headers != "" {
+		env["OTEL_EXPORTER_OTLP_HEADERS"] = cfg.Headers
+	}
+
+	return env
+}

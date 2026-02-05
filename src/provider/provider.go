@@ -1,6 +1,9 @@
 package provider
 
-import "github.com/jedi4ever/addt/config/security"
+import (
+	"github.com/jedi4ever/addt/config/otel"
+	"github.com/jedi4ever/addt/config/security"
+)
 
 // Provider is the interface for container runtime providers (Docker, Daytona, etc.)
 type Provider interface {
@@ -73,6 +76,9 @@ type Config struct {
 
 	// Security settings
 	Security security.Config
+
+	// OpenTelemetry settings
+	Otel otel.Config
 }
 
 // RunSpec specifies how to run a container/workspace

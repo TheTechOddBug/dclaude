@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/jedi4ever/addt/config/otel"
 	"github.com/jedi4ever/addt/extensions"
 	"github.com/jedi4ever/addt/provider"
 	"github.com/jedi4ever/addt/util/terminal"
@@ -31,6 +32,9 @@ func BuildEnvironment(p provider.Provider, cfg *provider.Config) map[string]stri
 
 	// Add command override
 	addCommandEnvVar(env, cfg)
+
+	// Add OpenTelemetry configuration
+	addOtelEnvVars(env, cfg)
 
 	return env
 }
@@ -140,5 +144,13 @@ func addFirewallEnvVars(env map[string]string, cfg *provider.Config) {
 func addCommandEnvVar(env map[string]string, cfg *provider.Config) {
 	if cfg.Command != "" {
 		env["ADDT_COMMAND"] = cfg.Command
+	}
+}
+
+// addOtelEnvVars adds OpenTelemetry environment variables
+func addOtelEnvVars(env map[string]string, cfg *provider.Config) {
+	otelEnvVars := otel.GetEnvVars(cfg.Otel)
+	for k, v := range otelEnvVars {
+		env[k] = v
 	}
 }

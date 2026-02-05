@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jedi4ever/addt/config/otel"
 	"github.com/jedi4ever/addt/config/security"
 )
 
@@ -386,6 +387,9 @@ func LoadConfig(addtVersion, defaultNodeVersion, defaultGoVersion, defaultUvVers
 
 	// Load security configuration using the security package
 	cfg.Security = security.LoadConfig(globalCfg.Security, projectCfg.Security)
+
+	// Load OTEL configuration using the otel package
+	cfg.Otel = otel.LoadConfig(globalCfg.Otel, projectCfg.Otel)
 
 	return cfg
 }

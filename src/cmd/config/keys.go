@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	cfgtypes "github.com/jedi4ever/addt/config"
+	"github.com/jedi4ever/addt/config/otel"
 	"github.com/jedi4ever/addt/config/security"
 )
 
@@ -42,6 +43,8 @@ func GetKeys() []KeyInfo {
 	}
 	// Add security keys
 	keys = append(keys, GetSecurityKeys()...)
+	// Add OTEL keys
+	keys = append(keys, GetOtelKeys()...)
 	return keys
 }
 
@@ -65,6 +68,17 @@ func GetSecurityKeys() []KeyInfo {
 		{Key: "security.ulimit_nofile", Description: "File descriptor limit (soft:hard)", Type: "string", EnvVar: "ADDT_SECURITY_ULIMIT_NOFILE"},
 		{Key: "security.ulimit_nproc", Description: "Process limit (soft:hard)", Type: "string", EnvVar: "ADDT_SECURITY_ULIMIT_NPROC"},
 		{Key: "security.user_namespace", Description: "User namespace: host, private", Type: "string", EnvVar: "ADDT_SECURITY_USER_NAMESPACE"},
+	}
+}
+
+// GetOtelKeys returns all valid OpenTelemetry config keys
+func GetOtelKeys() []KeyInfo {
+	return []KeyInfo{
+		{Key: "otel.enabled", Description: "Enable OpenTelemetry", Type: "bool", EnvVar: "ADDT_OTEL_ENABLED"},
+		{Key: "otel.endpoint", Description: "OTLP endpoint URL", Type: "string", EnvVar: "ADDT_OTEL_ENDPOINT"},
+		{Key: "otel.protocol", Description: "OTLP protocol: http/protobuf or grpc", Type: "string", EnvVar: "ADDT_OTEL_PROTOCOL"},
+		{Key: "otel.service_name", Description: "Service name for telemetry", Type: "string", EnvVar: "ADDT_OTEL_SERVICE_NAME"},
+		{Key: "otel.headers", Description: "OTLP headers (key=value,key2=value2)", Type: "string", EnvVar: "ADDT_OTEL_HEADERS"},
 	}
 }
 
@@ -151,6 +165,17 @@ func GetDefaultValue(key string) string {
 	case "security.ulimit_nproc":
 		return "256:512"
 	case "security.user_namespace":
+		return ""
+	// OTEL defaults
+	case "otel.enabled":
+		return "false"
+	case "otel.endpoint":
+		return "http://localhost:4318"
+	case "otel.protocol":
+		return "http/protobuf"
+	case "otel.service_name":
+		return "addt"
+	case "otel.headers":
 		return ""
 	}
 	return ""
@@ -250,6 +275,10 @@ func GetValue(cfg *cfgtypes.GlobalConfig, key string) string {
 	if strings.HasPrefix(key, "security.") {
 		return GetSecurityValue(cfg.Security, key)
 	}
+	// Check OTEL keys
+	if strings.HasPrefix(key, "otel.") {
+		return GetOtelValue(cfg.Otel, key)
+	}
 	return ""
 }
 
@@ -308,6 +337,36 @@ func GetSecurityValue(sec *security.Settings, key string) string {
 		return sec.UlimitNproc
 	case "security.user_namespace":
 		return sec.UserNamespace
+	}
+	return ""
+}
+
+// GetOtelValue retrieves an OTEL config value
+func GetOtelValue(o *otel.Settings, key string) string {
+	if o == nil {
+		return ""
+	}
+	switch key {
+	case "otel.enabled":
+		if o.Enabled != nil {
+			return fmt.Sprintf("%v", *o.Enabled)
+		}
+	case "otel.endpoint":
+		if o.Endpoint != nil {
+			return *o.Endpoint
+		}
+	case "otel.protocol":
+		if o.Protocol != nil {
+			return *o.Protocol
+		}
+	case "otel.service_name":
+		if o.ServiceName != nil {
+			return *o.ServiceName
+		}
+	case "otel.headers":
+		if o.Headers != nil {
+			return *o.Headers
+		}
 	}
 	return ""
 }
@@ -376,6 +435,13 @@ func SetValue(cfg *cfgtypes.GlobalConfig, key, value string) {
 			}
 			SetSecurityValue(cfg.Security, key, value)
 		}
+		// Check OTEL keys
+		if strings.HasPrefix(key, "otel.") {
+			if cfg.Otel == nil {
+				cfg.Otel = &otel.Settings{}
+			}
+			SetOtelValue(cfg.Otel, key, value)
+		}
 	}
 }
 
@@ -436,6 +502,23 @@ func SetSecurityValue(sec *security.Settings, key, value string) {
 	}
 }
 
+// SetOtelValue sets an OTEL config value
+func SetOtelValue(o *otel.Settings, key, value string) {
+	switch key {
+	case "otel.enabled":
+		b := value == "true"
+		o.Enabled = &b
+	case "otel.endpoint":
+		o.Endpoint = &value
+	case "otel.protocol":
+		o.Protocol = &value
+	case "otel.service_name":
+		o.ServiceName = &value
+	case "otel.headers":
+		o.Headers = &value
+	}
+}
+
 // UnsetValue clears a config value in the config struct
 func UnsetValue(cfg *cfgtypes.GlobalConfig, key string) {
 	switch key {
@@ -484,6 +567,10 @@ func UnsetValue(cfg *cfgtypes.GlobalConfig, key string) {
 		if strings.HasPrefix(key, "security.") && cfg.Security != nil {
 			UnsetSecurityValue(cfg.Security, key)
 		}
+		// Check OTEL keys
+		if strings.HasPrefix(key, "otel.") && cfg.Otel != nil {
+			UnsetOtelValue(cfg.Otel, key)
+		}
 	}
 }
 
@@ -524,5 +611,21 @@ func UnsetSecurityValue(sec *security.Settings, key string) {
 		sec.UlimitNproc = ""
 	case "security.user_namespace":
 		sec.UserNamespace = ""
+	}
+}
+
+// UnsetOtelValue clears an OTEL config value
+func UnsetOtelValue(o *otel.Settings, key string) {
+	switch key {
+	case "otel.enabled":
+		o.Enabled = nil
+	case "otel.endpoint":
+		o.Endpoint = nil
+	case "otel.protocol":
+		o.Protocol = nil
+	case "otel.service_name":
+		o.ServiceName = nil
+	case "otel.headers":
+		o.Headers = nil
 	}
 }
