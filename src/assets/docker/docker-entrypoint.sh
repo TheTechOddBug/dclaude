@@ -26,6 +26,56 @@ debug_log "ADDT_LOG_LEVEL=${ADDT_LOG_LEVEL:-INFO}"
 debug_log "ADDT_COMMAND=${ADDT_COMMAND:-not set}"
 debug_log "Arguments: $*"
 
+# Set up SSH agent proxy via TCP (macOS + podman: Unix sockets can't be mounted)
+# The host runs an SSH proxy on TCP; socat bridges it to a local Unix socket.
+if [ -n "$ADDT_SSH_PROXY_HOST" ] && [ -n "$ADDT_SSH_PROXY_PORT" ]; then
+    debug_log "Setting up SSH agent TCP bridge to $ADDT_SSH_PROXY_HOST:$ADDT_SSH_PROXY_PORT"
+    if command -v socat >/dev/null 2>&1; then
+        setsid socat UNIX-LISTEN:/tmp/ssh-agent.sock,fork,mode=600 \
+              TCP:"$ADDT_SSH_PROXY_HOST":"$ADDT_SSH_PROXY_PORT" &
+        export SSH_AUTH_SOCK=/tmp/ssh-agent.sock
+        debug_log "SSH agent bridge started at $SSH_AUTH_SOCK"
+    else
+        echo "Warning: socat not found, SSH agent forwarding unavailable"
+    fi
+fi
+
+# Set up GPG agent proxy via TCP (macOS + podman: Unix sockets can't be mounted)
+if [ -n "$ADDT_GPG_PROXY_HOST" ] && [ -n "$ADDT_GPG_PROXY_PORT" ]; then
+    debug_log "Setting up GPG agent TCP bridge to $ADDT_GPG_PROXY_HOST:$ADDT_GPG_PROXY_PORT"
+    GPG_SOCK="$HOME/.gnupg/S.gpg-agent"
+    if command -v socat >/dev/null 2>&1; then
+        # Remove stale socket if present
+        rm -f "$GPG_SOCK"
+        setsid socat UNIX-LISTEN:"$GPG_SOCK",fork,mode=600 \
+              TCP:"$ADDT_GPG_PROXY_HOST":"$ADDT_GPG_PROXY_PORT" &
+        debug_log "GPG agent bridge started at $GPG_SOCK"
+    else
+        echo "Warning: socat not found, GPG agent forwarding unavailable"
+    fi
+fi
+
+# Set up tmux proxy via TCP (macOS + podman: Unix sockets can't be mounted)
+if [ -n "$ADDT_TMUX_PROXY_HOST" ] && [ -n "$ADDT_TMUX_PROXY_PORT" ]; then
+    debug_log "Setting up tmux TCP bridge to $ADDT_TMUX_PROXY_HOST:$ADDT_TMUX_PROXY_PORT"
+    TMUX_SOCK="/tmp/tmux-addt/default"
+    if command -v socat >/dev/null 2>&1; then
+        mkdir -p "$(dirname "$TMUX_SOCK")"
+        rm -f "$TMUX_SOCK"
+        setsid socat UNIX-LISTEN:"$TMUX_SOCK",fork,mode=600 \
+              TCP:"$ADDT_TMUX_PROXY_HOST":"$ADDT_TMUX_PROXY_PORT" &
+        # Reconstruct TMUX env: socket_path,pid,window
+        if [ -n "$ADDT_TMUX_PARTS" ]; then
+            export TMUX="$TMUX_SOCK,$ADDT_TMUX_PARTS"
+        else
+            export TMUX="$TMUX_SOCK"
+        fi
+        debug_log "Tmux bridge started: TMUX=$TMUX"
+    else
+        echo "Warning: socat not found, tmux forwarding unavailable"
+    fi
+fi
+
 # Load secrets from file if present (copied via docker cp to tmpfs)
 # Secrets are written to tmpfs at /run/secrets/.secrets by the host
 # This approach keeps secrets out of environment variables entirely
