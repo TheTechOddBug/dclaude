@@ -115,7 +115,7 @@ func (p *PodmanProvider) addContainerVolumesAndEnv(podmanArgs []string, spec *pr
 	}
 
 	// SSH forwarding
-	podmanArgs = append(podmanArgs, p.HandleSSHForwarding(spec.SSHForward, ctx.homeDir, ctx.username, spec.SSHAllowedKeys)...)
+	podmanArgs = append(podmanArgs, p.HandleSSHForwarding(spec.SSHForwardKeys, spec.SSHForwardMode, ctx.homeDir, ctx.username, spec.SSHAllowedKeys)...)
 
 	// GPG forwarding
 	podmanArgs = append(podmanArgs, p.HandleGPGForwarding(spec.GPGForward, ctx.homeDir, ctx.username, spec.GPGAllowedKeyIDs)...)

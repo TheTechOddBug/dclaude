@@ -37,11 +37,8 @@ func (p *DockerProvider) GetStatus(cfg *provider.Config, envName string) string 
 		parts = append(parts, "GH")
 	}
 
-	switch cfg.SSHForward {
-	case "agent":
-		parts = append(parts, "SSH:agent")
-	case "keys":
-		parts = append(parts, "SSH:keys")
+	if cfg.SSHForwardKeys {
+		parts = append(parts, fmt.Sprintf("SSH:%s", cfg.SSHForwardMode))
 	}
 
 	if cfg.GPGForward != "" && cfg.GPGForward != "off" && cfg.GPGForward != "false" {

@@ -122,7 +122,9 @@ firewall_mode: strict
 firewall_allowed:
   - api.anthropic.com
   - registry.npmjs.org
-ssh_forward: proxy
+ssh:
+  forward_keys: true
+  forward_mode: proxy
 github_detect: true
 node_version: "22"
 ```
@@ -221,20 +223,20 @@ addt run claude "Clone git@github.com:org/private-repo.git"
 
 ### SSH Keys (git over SSH)
 
-SSH forwarding is enabled by default using a secure proxy that keeps your private keys on your host machine:
+SSH forwarding is enabled by default using agent mode. You can choose a forwarding mode:
 
 ```bash
-# Default: SSH proxy mode (keys never enter container)
+# Default: agent mode (SSH agent socket forwarded)
 addt run claude "Clone git@github.com:org/private-repo.git"
 
-# Filter which keys are accessible
+# Filter which keys are accessible (auto-enables proxy mode)
 export ADDT_SSH_ALLOWED_KEYS="github,work"
 addt run claude "Clone the repo"
 
 # Alternative modes
-export ADDT_SSH_FORWARD=keys    # Mount ~/.ssh read-only (less secure)
-export ADDT_SSH_FORWARD=agent   # Direct agent forwarding (Linux only)
-export ADDT_SSH_FORWARD=off     # Disable SSH forwarding
+export ADDT_SSH_FORWARD_MODE=proxy   # SSH proxy (keys never enter container)
+export ADDT_SSH_FORWARD_MODE=keys    # Mount ~/.ssh read-only (less secure)
+export ADDT_SSH_FORWARD_KEYS=false   # Disable SSH forwarding
 ```
 
 ### Rebuild Container
@@ -278,10 +280,10 @@ There are three ways to configure addt:
 export ADDT_DOCKER_MEMORY=4g
 
 # Project config (.addt.yaml)
-addt config project set docker_memory 4g
+addt config project set docker.memory 4g
 
 # Global config (~/.addt/config.yaml)
-addt config global set docker_memory 4g
+addt config global set docker.memory 4g
 ```
 
 All three set the same thing. Environment wins if multiple are set.
@@ -292,7 +294,7 @@ Use `addt config project` to manage `.addt.yaml` (commit to git for team sharing
 
 ```bash
 addt config project set persistent true
-addt config project set docker_memory 4g
+addt config project set docker.memory 4g
 addt config project set firewall true
 addt config project list
 ```
@@ -302,8 +304,8 @@ addt config project list
 ```bash
 # Global settings (all projects)
 addt config global list
-addt config global set docker_memory 4g
-addt config global unset docker_memory
+addt config global set docker.memory 4g
+addt config global unset docker.memory
 
 # Project settings (this directory only)
 addt config project list
@@ -319,9 +321,10 @@ addt config extension claude set version 1.0.5
 |----------|-------------|
 | `ADDT_PERSISTENT=true` | Keep container running between sessions |
 | `ADDT_PORTS=3000,8080` | Expose container ports |
-| `ADDT_SSH_FORWARD=proxy` | SSH forwarding mode (proxy is default) |
+| `ADDT_SSH_FORWARD_KEYS=true` | Enable SSH key forwarding (default: true) |
+| `ADDT_SSH_FORWARD_MODE=proxy` | SSH forwarding mode: proxy, agent, or keys |
 | `ADDT_SSH_ALLOWED_KEYS=github` | Filter SSH keys by comment |
-| `ADDT_DIND=true` | Enable Docker-in-Docker |
+| `ADDT_DOCKER_DIND_ENABLE=true` | Enable Docker-in-Docker |
 | `ADDT_FIREWALL=true` | Enable network firewall |
 
 See [Full Reference](#environment-variables-reference) for all options.
@@ -358,20 +361,25 @@ addt config project set history_persist true
 
 ### SSH Forwarding
 
-SSH forwarding defaults to **proxy mode** - the most secure option that works on all platforms:
+SSH forwarding is controlled by two settings:
+- `ssh.forward_keys` (bool): enable/disable SSH forwarding (default: true)
+- `ssh.forward_mode` (string): forwarding method — `proxy` (default), `agent`, or `keys`
 
 ```bash
-# Default: proxy mode (private keys stay on host)
+# Default: proxy mode (private keys never enter the container, works on macOS)
 addt run claude "Clone the private repo"
 
-# Filter to specific keys by comment/name
+# Agent mode: forward SSH agent socket directly (Linux only)
+export ADDT_SSH_FORWARD_MODE=agent
+addt run claude "Clone the private repo"
+
+# Filter to specific keys by comment/name (auto-enables proxy mode)
 export ADDT_SSH_ALLOWED_KEYS="github-personal"
 addt run claude "Only github-personal key is accessible"
 
 # Other modes
-export ADDT_SSH_FORWARD=agent   # Direct agent socket (Linux only)
-export ADDT_SSH_FORWARD=keys    # Mount ~/.ssh read-only
-export ADDT_SSH_FORWARD=off     # Disable SSH
+export ADDT_SSH_FORWARD_MODE=keys    # Mount ~/.ssh read-only
+export ADDT_SSH_FORWARD_KEYS=false   # Disable SSH entirely
 ```
 
 **Proxy mode benefits:**
@@ -383,7 +391,7 @@ export ADDT_SSH_FORWARD=off     # Disable SSH
 ### Docker-in-Docker / Podman-in-Podman
 
 ```bash
-export ADDT_DIND=true
+export ADDT_DOCKER_DIND_ENABLE=true
 addt run claude "Build a Docker image for this app"
 ```
 
@@ -701,13 +709,14 @@ addt cli update                   # Update addt
 ### Forwarding
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ADDT_SSH_FORWARD` | proxy | SSH mode: `proxy`, `agent`, `keys`, or `off` |
+| `ADDT_SSH_FORWARD_KEYS` | true | Enable SSH key forwarding |
+| `ADDT_SSH_FORWARD_MODE` | proxy | SSH mode: `proxy`, `agent`, or `keys` |
 | `ADDT_SSH_ALLOWED_KEYS` | - | Filter SSH keys by comment: `github,work` |
 | `ADDT_GPG_FORWARD` | - | GPG mode: `proxy`, `agent`, `keys`, or `off` |
 | `ADDT_GPG_ALLOWED_KEY_IDS` | - | Filter GPG keys by ID: `ABC123,DEF456` |
 | `ADDT_TMUX_FORWARD` | false | Forward tmux socket into container |
-| `ADDT_DIND` | false | Enable Docker-in-Docker |
-| `ADDT_DIND_MODE` | isolated | DinD mode: `isolated` or `host` |
+| `ADDT_DOCKER_DIND_ENABLE` | false | Enable Docker-in-Docker |
+| `ADDT_DOCKER_DIND_MODE` | isolated | DinD mode: `isolated` or `host` |
 | `ADDT_GITHUB_DETECT` | false | Auto-detect GH token from `gh` CLI |
 
 ### Security

@@ -372,13 +372,15 @@ func (p *DaytonaProvider) GetStatus(cfg *provider.Config, envName string) string
 	}
 
 	// SSH forwarding status
-	switch cfg.SSHForward {
-	case "agent":
-		status += " | SSH:builtin"
-	case "keys":
-		status += " | SSH:keys"
-	default:
-		status += " | SSH:builtin"
+	if cfg.SSHForwardKeys {
+		switch cfg.SSHForwardMode {
+		case "keys":
+			status += " | SSH:keys"
+		default:
+			status += " | SSH:builtin"
+		}
+	} else {
+		status += " | SSH:-"
 	}
 
 	// GPG forwarding status

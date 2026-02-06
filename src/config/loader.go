@@ -74,22 +74,36 @@ func LoadConfig(addtVersion, defaultNodeVersion, defaultGoVersion, defaultUvVers
 		}
 	}
 
-	// SSH forward: default (proxy) -> global -> project -> env
-	cfg.SSHForward = "proxy"
-	if globalCfg.SSHForward != "" {
-		cfg.SSHForward = globalCfg.SSHForward
+	// SSH forward keys: default (true) -> global -> project -> env
+	cfg.SSHForwardKeys = true
+	cfg.SSHForwardMode = "proxy"
+	if globalCfg.SSH != nil {
+		if globalCfg.SSH.ForwardKeys != nil {
+			cfg.SSHForwardKeys = *globalCfg.SSH.ForwardKeys
+		}
+		if globalCfg.SSH.ForwardMode != "" {
+			cfg.SSHForwardMode = globalCfg.SSH.ForwardMode
+		}
+		if len(globalCfg.SSH.AllowedKeys) > 0 {
+			cfg.SSHAllowedKeys = globalCfg.SSH.AllowedKeys
+		}
 	}
-	if projectCfg.SSHForward != "" {
-		cfg.SSHForward = projectCfg.SSHForward
+	if projectCfg.SSH != nil {
+		if projectCfg.SSH.ForwardKeys != nil {
+			cfg.SSHForwardKeys = *projectCfg.SSH.ForwardKeys
+		}
+		if projectCfg.SSH.ForwardMode != "" {
+			cfg.SSHForwardMode = projectCfg.SSH.ForwardMode
+		}
+		if len(projectCfg.SSH.AllowedKeys) > 0 {
+			cfg.SSHAllowedKeys = projectCfg.SSH.AllowedKeys
+		}
 	}
-	if v := os.Getenv("ADDT_SSH_FORWARD"); v != "" {
-		cfg.SSHForward = v
+	if v := os.Getenv("ADDT_SSH_FORWARD_KEYS"); v != "" {
+		cfg.SSHForwardKeys = v == "true"
 	}
-
-	// SSH allowed keys: global -> project -> env
-	cfg.SSHAllowedKeys = globalCfg.SSHAllowedKeys
-	if len(projectCfg.SSHAllowedKeys) > 0 {
-		cfg.SSHAllowedKeys = projectCfg.SSHAllowedKeys
+	if v := os.Getenv("ADDT_SSH_FORWARD_MODE"); v != "" {
+		cfg.SSHForwardMode = v
 	}
 	if v := os.Getenv("ADDT_SSH_ALLOWED_KEYS"); v != "" {
 		cfg.SSHAllowedKeys = strings.Split(v, ",")

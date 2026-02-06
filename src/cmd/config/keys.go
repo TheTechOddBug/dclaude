@@ -31,13 +31,13 @@ func GetKeys() []KeyInfo {
 		{Key: "node_version", Description: "Node.js version", Type: "string", EnvVar: "ADDT_NODE_VERSION"},
 		{Key: "persistent", Description: "Enable persistent container mode", Type: "bool", EnvVar: "ADDT_PERSISTENT"},
 		{Key: "port_range_start", Description: "Starting port for auto allocation", Type: "int", EnvVar: "ADDT_PORT_RANGE_START"},
-		{Key: "ssh_forward", Description: "SSH forwarding mode: proxy, agent, or keys (default: proxy)", Type: "string", EnvVar: "ADDT_SSH_FORWARD"},
-		{Key: "ssh_allowed_keys", Description: "Key filters for proxy mode (comma-separated)", Type: "string", EnvVar: "ADDT_SSH_ALLOWED_KEYS"},
 		{Key: "history_persist", Description: "Persist shell history between sessions (default: false)", Type: "bool", EnvVar: "ADDT_HISTORY_PERSIST"},
 		{Key: "uv_version", Description: "UV Python package manager version", Type: "string", EnvVar: "ADDT_UV_VERSION"},
 		{Key: "workdir", Description: "Override working directory (default: current directory)", Type: "string", EnvVar: "ADDT_WORKDIR"},
 		{Key: "workdir_automount", Description: "Auto-mount working directory to /workspace", Type: "bool", EnvVar: "ADDT_WORKDIR_AUTOMOUNT"},
 	}
+	// Add SSH keys
+	keys = append(keys, GetSSHKeys()...)
 	// Add docker keys
 	keys = append(keys, GetDockerKeys()...)
 	// Add security keys
@@ -130,8 +130,12 @@ func GetDefaultValue(key string) string {
 		return "false"
 	case "port_range_start":
 		return "30000"
-	case "ssh_forward":
-		return "agent"
+	case "ssh.forward_keys":
+		return "true"
+	case "ssh.forward_mode":
+		return "proxy"
+	case "ssh.allowed_keys":
+		return ""
 	case "history_persist":
 		return "false"
 	case "uv_version":
@@ -311,8 +315,6 @@ func GetValue(cfg *cfgtypes.GlobalConfig, key string) string {
 		if cfg.PortRangeStart != nil {
 			return fmt.Sprintf("%d", *cfg.PortRangeStart)
 		}
-	case "ssh_forward":
-		return cfg.SSHForward
 	case "history_persist":
 		if cfg.HistoryPersist != nil {
 			return fmt.Sprintf("%v", *cfg.HistoryPersist)
@@ -325,6 +327,10 @@ func GetValue(cfg *cfgtypes.GlobalConfig, key string) string {
 		if cfg.WorkdirAutomount != nil {
 			return fmt.Sprintf("%v", *cfg.WorkdirAutomount)
 		}
+	}
+	// Check SSH keys
+	if strings.HasPrefix(key, "ssh.") {
+		return GetSSHValue(cfg.SSH, key)
 	}
 	// Check docker keys
 	if strings.HasPrefix(key, "docker.") {
@@ -487,8 +493,6 @@ func SetValue(cfg *cfgtypes.GlobalConfig, key, value string) {
 		var i int
 		fmt.Sscanf(value, "%d", &i)
 		cfg.PortRangeStart = &i
-	case "ssh_forward":
-		cfg.SSHForward = value
 	case "history_persist":
 		b := value == "true"
 		cfg.HistoryPersist = &b
@@ -500,6 +504,13 @@ func SetValue(cfg *cfgtypes.GlobalConfig, key, value string) {
 		b := value == "true"
 		cfg.WorkdirAutomount = &b
 	default:
+		// Check SSH keys
+		if strings.HasPrefix(key, "ssh.") {
+			if cfg.SSH == nil {
+				cfg.SSH = &cfgtypes.SSHSettings{}
+			}
+			SetSSHValue(cfg.SSH, key, value)
+		}
 		// Check docker keys
 		if strings.HasPrefix(key, "docker.") {
 			if cfg.Docker == nil {
@@ -644,8 +655,6 @@ func UnsetValue(cfg *cfgtypes.GlobalConfig, key string) {
 		cfg.Persistent = nil
 	case "port_range_start":
 		cfg.PortRangeStart = nil
-	case "ssh_forward":
-		cfg.SSHForward = ""
 	case "history_persist":
 		cfg.HistoryPersist = nil
 	case "uv_version":
@@ -655,6 +664,10 @@ func UnsetValue(cfg *cfgtypes.GlobalConfig, key string) {
 	case "workdir_automount":
 		cfg.WorkdirAutomount = nil
 	default:
+		// Check SSH keys
+		if strings.HasPrefix(key, "ssh.") && cfg.SSH != nil {
+			UnsetSSHValue(cfg.SSH, key)
+		}
 		// Check docker keys
 		if strings.HasPrefix(key, "docker.") && cfg.Docker != nil {
 			UnsetDockerValue(cfg.Docker, key)
@@ -741,5 +754,61 @@ func UnsetDockerValue(d *cfgtypes.DockerSettings, key string) {
 		if d.Dind != nil {
 			d.Dind.Mode = ""
 		}
+	}
+}
+
+// GetSSHKeys returns all valid SSH config keys
+func GetSSHKeys() []KeyInfo {
+	return []KeyInfo{
+		{Key: "ssh.forward_keys", Description: "Enable SSH key forwarding (default: true)", Type: "bool", EnvVar: "ADDT_SSH_FORWARD_KEYS"},
+		{Key: "ssh.forward_mode", Description: "SSH forwarding mode: agent, keys, or proxy (default: proxy)", Type: "string", EnvVar: "ADDT_SSH_FORWARD_MODE"},
+		{Key: "ssh.allowed_keys", Description: "Key filters for proxy mode (comma-separated)", Type: "string", EnvVar: "ADDT_SSH_ALLOWED_KEYS"},
+	}
+}
+
+// GetSSHValue retrieves an SSH config value
+func GetSSHValue(s *cfgtypes.SSHSettings, key string) string {
+	if s == nil {
+		return ""
+	}
+	switch key {
+	case "ssh.forward_keys":
+		if s.ForwardKeys != nil {
+			return fmt.Sprintf("%v", *s.ForwardKeys)
+		}
+	case "ssh.forward_mode":
+		return s.ForwardMode
+	case "ssh.allowed_keys":
+		return strings.Join(s.AllowedKeys, ",")
+	}
+	return ""
+}
+
+// SetSSHValue sets an SSH config value
+func SetSSHValue(s *cfgtypes.SSHSettings, key, value string) {
+	switch key {
+	case "ssh.forward_keys":
+		b := value == "true"
+		s.ForwardKeys = &b
+	case "ssh.forward_mode":
+		s.ForwardMode = value
+	case "ssh.allowed_keys":
+		if value == "" {
+			s.AllowedKeys = nil
+		} else {
+			s.AllowedKeys = strings.Split(value, ",")
+		}
+	}
+}
+
+// UnsetSSHValue clears an SSH config value
+func UnsetSSHValue(s *cfgtypes.SSHSettings, key string) {
+	switch key {
+	case "ssh.forward_keys":
+		s.ForwardKeys = nil
+	case "ssh.forward_mode":
+		s.ForwardMode = ""
+	case "ssh.allowed_keys":
+		s.AllowedKeys = nil
 	}
 }

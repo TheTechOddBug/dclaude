@@ -11,31 +11,32 @@ import (
 )
 
 // HandleSSHForwarding configures SSH forwarding based on config.
-// Modes:
+// When forwardKeys is true, the forwardMode determines the method:
 //   - "proxy": Forward filtered SSH agent (only allowed keys)
-//   - "agent" or "true": Forward SSH agent socket (not supported on macOS)
+//   - "agent": Forward SSH agent socket (not supported on macOS)
 //   - "keys": Mount ~/.ssh directory read-only
-//   - "" or other: No SSH forwarding
 //
 // If allowedKeys is set, proxy mode is automatically enabled for agent forwarding
-func (p *DockerProvider) HandleSSHForwarding(sshForward, homeDir, username string, allowedKeys []string) []string {
-	var args []string
+func (p *DockerProvider) HandleSSHForwarding(forwardKeys bool, forwardMode, homeDir, username string, allowedKeys []string) []string {
+	if !forwardKeys {
+		return nil
+	}
 
-	// If allowed keys are specified, use proxy mode regardless of sshForward setting
-	if len(allowedKeys) > 0 && (sshForward == "agent" || sshForward == "true" || sshForward == "proxy") {
+	// If allowed keys are specified, use proxy mode regardless of forwardMode setting
+	if len(allowedKeys) > 0 && (forwardMode == "agent" || forwardMode == "proxy") {
 		return p.handleSSHProxyForwarding(homeDir, username, allowedKeys)
 	}
 
-	if sshForward == "proxy" {
+	if forwardMode == "proxy" {
 		// Proxy mode without filters - just forward all keys through proxy
 		return p.handleSSHProxyForwarding(homeDir, username, nil)
-	} else if sshForward == "agent" || sshForward == "true" {
-		args = p.handleSSHAgentForwarding(homeDir, username)
-	} else if sshForward == "keys" {
-		args = p.handleSSHKeysForwarding(homeDir, username)
+	} else if forwardMode == "agent" {
+		return p.handleSSHAgentForwarding(homeDir, username)
+	} else if forwardMode == "keys" {
+		return p.handleSSHKeysForwarding(homeDir, username)
 	}
 
-	return args
+	return nil
 }
 
 // handleSSHProxyForwarding creates a filtered SSH agent proxy
@@ -97,7 +98,7 @@ func (p *DockerProvider) handleSSHAgentForwarding(homeDir, username string) []st
 
 	// Check for macOS launchd sockets (won't work in Docker)
 	if strings.Contains(sshAuthSock, "com.apple.launchd") || strings.Contains(sshAuthSock, "/var/folders/") {
-		fmt.Println("Warning: SSH agent forwarding not supported on macOS (use ADDT_SSH_FORWARD=keys)")
+		fmt.Println("Warning: SSH agent forwarding not supported on macOS (use ADDT_SSH_FORWARD_MODE=keys)")
 		return args
 	}
 

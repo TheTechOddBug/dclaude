@@ -79,7 +79,7 @@ _addt_completions() {
     local firewall_actions="list allow deny remove"
     local extensions_cmds="list info new"
     local extensions="%s"
-    local config_keys="persistent ports ssh_forward gpg_forward dind firewall firewall_mode docker_cpus docker_memory workdir workdir_automount workdir_readonly provider node_version go_version uv_version"
+    local config_keys="persistent ports ssh.forward_keys ssh.forward_mode ssh.allowed_keys gpg_forward dind firewall firewall_mode docker_cpus docker_memory workdir workdir_automount workdir_readonly provider node_version go_version uv_version"
 
     case "${cword}" in
         1)
@@ -203,8 +203,8 @@ _addt() {
     )
 
     config_keys=(
-        'persistent' 'ports' 'ssh_forward' 'gpg_forward' 'dind'
-        'firewall' 'firewall_mode' 'docker_cpus' 'docker_memory'
+        'persistent' 'ports' 'ssh.forward_keys' 'ssh.forward_mode' 'ssh.allowed_keys'
+        'gpg_forward' 'dind' 'firewall' 'firewall_mode' 'docker_cpus' 'docker_memory'
         'workdir' 'workdir_automount' 'workdir_readonly' 'provider'
         'node_version' 'go_version' 'uv_version'
     )

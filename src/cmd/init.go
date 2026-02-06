@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	cfgtypes "github.com/jedi4ever/addt/config"
 	"gopkg.in/yaml.v3"
 )
 
@@ -20,17 +21,17 @@ type ProjectType struct {
 
 // InitConfig holds the configuration being built during init
 type InitConfig struct {
-	Extensions      string   `yaml:"extensions,omitempty"`
-	Persistent      *bool    `yaml:"persistent,omitempty"`
-	Firewall        *bool    `yaml:"firewall,omitempty"`
-	FirewallMode    string   `yaml:"firewall_mode,omitempty"`
-	FirewallAllowed []string `yaml:"firewall_allowed,omitempty"`
-	SSHForward      string   `yaml:"ssh_forward,omitempty"`
-	GPGForward      string   `yaml:"gpg_forward,omitempty"`
-	WorkdirReadonly *bool    `yaml:"workdir_readonly,omitempty"`
-	NodeVersion     string   `yaml:"node_version,omitempty"`
-	GoVersion       string   `yaml:"go_version,omitempty"`
-	GitHubDetect    *bool    `yaml:"github_detect,omitempty"`
+	Extensions      string               `yaml:"extensions,omitempty"`
+	Persistent      *bool                `yaml:"persistent,omitempty"`
+	Firewall        *bool                `yaml:"firewall,omitempty"`
+	FirewallMode    string               `yaml:"firewall_mode,omitempty"`
+	FirewallAllowed []string             `yaml:"firewall_allowed,omitempty"`
+	SSH             *cfgtypes.SSHSettings `yaml:"ssh,omitempty"`
+	GPGForward      string               `yaml:"gpg_forward,omitempty"`
+	WorkdirReadonly *bool                `yaml:"workdir_readonly,omitempty"`
+	NodeVersion     string               `yaml:"node_version,omitempty"`
+	GoVersion       string               `yaml:"go_version,omitempty"`
+	GitHubDetect    *bool                `yaml:"github_detect,omitempty"`
 }
 
 // HandleInitCommand handles the init command
@@ -174,7 +175,11 @@ func configureDefaults(config *InitConfig, project ProjectType) {
 
 	// SSH proxy mode (most secure)
 	if project.HasGit {
-		config.SSHForward = "proxy"
+		t2 := true
+		config.SSH = &cfgtypes.SSHSettings{
+			ForwardKeys: &t2,
+			ForwardMode: "proxy",
+		}
 	}
 
 	// GitHub detection if GitHub project
@@ -231,9 +236,11 @@ func configureInteractive(config *InitConfig, project ProjectType) {
 		fmt.Print("Choice [1]: ")
 		choice = readLine(reader)
 		if choice == "2" {
-			config.SSHForward = "off"
+			sshOff := false
+			config.SSH = &cfgtypes.SSHSettings{ForwardKeys: &sshOff}
 		} else {
-			config.SSHForward = "proxy"
+			sshOn := true
+			config.SSH = &cfgtypes.SSHSettings{ForwardKeys: &sshOn, ForwardMode: "proxy"}
 		}
 		fmt.Println()
 	}

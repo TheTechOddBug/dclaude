@@ -89,7 +89,8 @@ func TestBuildRunOptions_Persistent(t *testing.T) {
 func TestBuildRunOptions_SSHAndGPG(t *testing.T) {
 	cfg := &provider.Config{
 		ImageName:        "test-image",
-		SSHForward:       "keys",
+		SSHForwardKeys:   true,
+		SSHForwardMode:   "keys",
 		GPGForward:       "keys",
 		WorkdirAutomount: true,
 		PortRangeStart:   30000,
@@ -97,8 +98,12 @@ func TestBuildRunOptions_SSHAndGPG(t *testing.T) {
 
 	opts := BuildRunOptions(&mockOptionsProvider{}, cfg, "test-container", []string{}, false)
 
-	if opts.SSHForward != "keys" {
-		t.Errorf("SSHForward = %q, want 'keys'", opts.SSHForward)
+	if !opts.SSHForwardKeys {
+		t.Errorf("SSHForwardKeys = %v, want true", opts.SSHForwardKeys)
+	}
+
+	if opts.SSHForwardMode != "keys" {
+		t.Errorf("SSHForwardMode = %q, want 'keys'", opts.SSHForwardMode)
 	}
 
 	if opts.GPGForward != "keys" {

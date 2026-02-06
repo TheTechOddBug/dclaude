@@ -185,7 +185,9 @@ func TestGetDefaultValue(t *testing.T) {
 		{"persistent", "false"},
 		{"workdir_automount", "true"},
 		{"port_range_start", "30000"},
-		{"ssh_forward", "agent"},
+		{"ssh.forward_keys", "true"},
+		{"ssh.forward_mode", "proxy"},
+		{"ssh.allowed_keys", ""},
 	}
 
 	for _, tt := range tests {

@@ -83,7 +83,8 @@ Environment Variables:
   Security/Network:
     ADDT_FIREWALL          Enable network firewall (default: false)
     ADDT_FIREWALL_MODE     Firewall mode: strict, permissive, off (default: strict)
-    ADDT_SSH_FORWARD       SSH forwarding: proxy, agent, or keys (default: proxy)
+    ADDT_SSH_FORWARD_KEYS  SSH key forwarding: true or false (default: true)
+    ADDT_SSH_FORWARD_MODE  SSH forwarding mode: agent, keys, or proxy (default: proxy)
     ADDT_SSH_ALLOWED_KEYS  Comma-separated key filters for proxy mode (e.g., "github,work")
     ADDT_GPG_FORWARD       Enable GPG forwarding (default: false)
 

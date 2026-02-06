@@ -47,7 +47,8 @@ type Config struct {
 	GitHubDetect          bool
 	Ports                 []string
 	PortRangeStart        int
-	SSHForward            string
+	SSHForwardKeys        bool
+	SSHForwardMode        string
 	SSHAllowedKeys        []string
 	TmuxForward           bool
 	HistoryPersist        bool
@@ -93,7 +94,8 @@ type RunSpec struct {
 	Volumes          []VolumeMount
 	Ports            []PortMapping
 	Env              map[string]string
-	SSHForward       string
+	SSHForwardKeys   bool
+	SSHForwardMode   string
 	SSHAllowedKeys   []string
 	TmuxForward      bool
 	HistoryPersist   bool

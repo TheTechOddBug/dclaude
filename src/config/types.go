@@ -27,6 +27,13 @@ type DockerSettings struct {
 	Memory string        `yaml:"memory,omitempty"`
 }
 
+// SSHSettings holds SSH forwarding configuration
+type SSHSettings struct {
+	ForwardKeys *bool    `yaml:"forward_keys,omitempty"`
+	ForwardMode string   `yaml:"forward_mode,omitempty"`
+	AllowedKeys []string `yaml:"allowed_keys,omitempty"`
+}
+
 // GlobalConfig represents the persistent configuration stored in ~/.addt/config.yaml
 type GlobalConfig struct {
 	Docker           *DockerSettings `yaml:"docker,omitempty"`
@@ -45,8 +52,7 @@ type GlobalConfig struct {
 	NodeVersion      string          `yaml:"node_version,omitempty"`
 	Persistent       *bool           `yaml:"persistent,omitempty"`
 	PortRangeStart   *int            `yaml:"port_range_start,omitempty"`
-	SSHForward       string          `yaml:"ssh_forward,omitempty"`
-	SSHAllowedKeys   []string        `yaml:"ssh_allowed_keys,omitempty"`
+	SSH              *SSHSettings    `yaml:"ssh,omitempty"`
 	TmuxForward      *bool           `yaml:"tmux_forward,omitempty"`
 	HistoryPersist   *bool           `yaml:"history_persist,omitempty"` // Persist shell history between sessions
 	UvVersion        string          `yaml:"uv_version,omitempty"`
@@ -74,7 +80,8 @@ type Config struct {
 	GitHubDetect             bool
 	Ports                    []string
 	PortRangeStart           int
-	SSHForward               string
+	SSHForwardKeys           bool
+	SSHForwardMode           string
 	SSHAllowedKeys           []string
 	TmuxForward              bool
 	HistoryPersist           bool     // Persist shell history between sessions (default: false)

@@ -112,7 +112,7 @@ func (p *DockerProvider) addContainerVolumesAndEnv(dockerArgs []string, spec *pr
 	}
 
 	// SSH forwarding
-	dockerArgs = append(dockerArgs, p.HandleSSHForwarding(spec.SSHForward, ctx.homeDir, ctx.username, spec.SSHAllowedKeys)...)
+	dockerArgs = append(dockerArgs, p.HandleSSHForwarding(spec.SSHForwardKeys, spec.SSHForwardMode, ctx.homeDir, ctx.username, spec.SSHAllowedKeys)...)
 
 	// GPG forwarding
 	dockerArgs = append(dockerArgs, p.HandleGPGForwarding(spec.GPGForward, ctx.homeDir, ctx.username, spec.GPGAllowedKeyIDs)...)

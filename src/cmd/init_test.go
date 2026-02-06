@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	cfgtypes "github.com/jedi4ever/addt/config"
 )
 
 func TestDetectProjectType_NodeJS(t *testing.T) {
@@ -134,8 +136,11 @@ func TestConfigureDefaults(t *testing.T) {
 		t.Errorf("expected strict firewall mode, got %s", config.FirewallMode)
 	}
 
-	if config.SSHForward != "proxy" {
-		t.Errorf("expected proxy SSH forward, got %s", config.SSHForward)
+	if config.SSH == nil || config.SSH.ForwardKeys == nil || !*config.SSH.ForwardKeys {
+		t.Error("expected SSH forward keys to be true")
+	}
+	if config.SSH.ForwardMode != "proxy" {
+		t.Errorf("expected proxy SSH forward mode, got %s", config.SSH.ForwardMode)
 	}
 
 	if config.NodeVersion != "22" {
@@ -245,7 +250,7 @@ func TestWriteConfig(tt *testing.T) {
 		Firewall:        &t,
 		FirewallMode:    "strict",
 		FirewallAllowed: []string{"api.anthropic.com"},
-		SSHForward:      "proxy",
+		SSH:             &cfgtypes.SSHSettings{ForwardKeys: &t, ForwardMode: "proxy"},
 	}
 
 	err := writeConfig(config)
@@ -276,8 +281,11 @@ func TestWriteConfig(tt *testing.T) {
 	if !contains(content, "firewall: true") {
 		tt.Error("expected firewall field")
 	}
-	if !contains(content, "ssh_forward: proxy") {
-		tt.Error("expected ssh_forward field")
+	if !contains(content, "forward_keys: true") {
+		tt.Error("expected forward_keys field")
+	}
+	if !contains(content, "forward_mode: proxy") {
+		tt.Error("expected forward_mode field")
 	}
 }
 

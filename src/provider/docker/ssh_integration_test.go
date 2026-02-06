@@ -63,7 +63,7 @@ func TestSSHForwarding_Integration_KeysMode(t *testing.T) {
 	}
 
 	prov := createTestProvider(t)
-	args := prov.HandleSSHForwarding("keys", tmpHome, "testuser", nil)
+	args := prov.HandleSSHForwarding(true, "keys", tmpHome, "testuser", nil)
 
 	// Should have volume mount for .ssh
 	foundSSHMount := false
@@ -131,7 +131,7 @@ func TestSSHForwarding_Integration_AgentModeNoSocket(t *testing.T) {
 	}()
 
 	prov := createTestProvider(t)
-	args := prov.HandleSSHForwarding("agent", "/home/test", "testuser", nil)
+	args := prov.HandleSSHForwarding(true, "agent", "/home/test", "testuser", nil)
 
 	// Should return empty args when no socket
 	if len(args) > 0 {
@@ -143,7 +143,7 @@ func TestSSHForwarding_Integration_NoForwarding(t *testing.T) {
 	checkDockerForSSH(t)
 
 	prov := createTestProvider(t)
-	args := prov.HandleSSHForwarding("", "/home/test", "testuser", nil)
+	args := prov.HandleSSHForwarding(false, "", "/home/test", "testuser", nil)
 
 	if len(args) != 0 {
 		t.Errorf("Expected empty args for no forwarding, got: %v", args)
@@ -154,7 +154,7 @@ func TestSSHForwarding_Integration_InvalidMode(t *testing.T) {
 	checkDockerForSSH(t)
 
 	prov := createTestProvider(t)
-	args := prov.HandleSSHForwarding("invalid", "/home/test", "testuser", nil)
+	args := prov.HandleSSHForwarding(true, "invalid", "/home/test", "testuser", nil)
 
 	if len(args) != 0 {
 		t.Errorf("Expected empty args for invalid mode, got: %v", args)
@@ -280,11 +280,12 @@ func TestSSHForwarding_Integration_FullProviderWithSSH(t *testing.T) {
 
 	// Create a full provider config
 	cfg := &provider.Config{
-		Extensions:  "claude",
-		SSHForward:  "keys",
-		NodeVersion: "22",
-		GoVersion:   "1.23.5",
-		UvVersion:   "0.4.17",
+		Extensions:     "claude",
+		SSHForwardKeys: true,
+		SSHForwardMode: "keys",
+		NodeVersion:    "22",
+		GoVersion:      "1.23.5",
+		UvVersion:      "0.4.17",
 	}
 
 	prov := &DockerProvider{
@@ -292,7 +293,7 @@ func TestSSHForwarding_Integration_FullProviderWithSSH(t *testing.T) {
 		tempDirs: []string{},
 	}
 
-	args := prov.HandleSSHForwarding(cfg.SSHForward, tmpHome, "addt", nil)
+	args := prov.HandleSSHForwarding(cfg.SSHForwardKeys, cfg.SSHForwardMode, tmpHome, "addt", nil)
 
 	if len(args) == 0 {
 		t.Error("Expected SSH mount args")
