@@ -9,7 +9,10 @@ import (
 	"github.com/jedi4ever/addt/config"
 	"github.com/jedi4ever/addt/core"
 	"github.com/jedi4ever/addt/provider"
+	"github.com/jedi4ever/addt/util"
 )
+
+var shellLogger = util.Log("shell")
 
 // HandleShellCommand handles the "addt shell <extension>" command.
 // Opens an interactive shell in a container with the specified extension.

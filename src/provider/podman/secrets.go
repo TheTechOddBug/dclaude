@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 )
 
 // prepareSecretsJSON collects secret environment variables and returns them as JSON
@@ -58,8 +57,10 @@ func (p *PodmanProvider) copySecretsToContainer(containerName, secretsJSON strin
 	}
 	tmpFile.Close()
 
-	// Set restrictive permissions
-	if err := os.Chmod(tmpPath, 0600); err != nil {
+	// Set readable permissions — podman cp preserves these inside the container,
+	// and the entrypoint runs as addt (not root) so it needs to read the file.
+	// The file lives in a tmpfs and is deleted immediately after parsing.
+	if err := os.Chmod(tmpPath, 0644); err != nil {
 		return fmt.Errorf("failed to set permissions: %w", err)
 	}
 
@@ -73,8 +74,11 @@ func (p *PodmanProvider) copySecretsToContainer(containerName, secretsJSON strin
 }
 
 // addTmpfsSecretsMount adds a tmpfs mount for secrets at /run/secrets
+// World-writable so the entrypoint (running as addt) can read and delete
+// the secrets file. The tmpfs is ephemeral and secrets are deleted immediately
+// after parsing, so the broad permissions are acceptable.
 func (p *PodmanProvider) addTmpfsSecretsMount(podmanArgs []string) []string {
-	return append(podmanArgs, "--tmpfs", "/run/secrets:size=1m,mode=0700")
+	return append(podmanArgs, "--tmpfs", "/run/secrets:size=1m,mode=0777")
 }
 
 // filterSecretEnvVars removes secret env vars from the env map
@@ -83,38 +87,4 @@ func (p *PodmanProvider) filterSecretEnvVars(env map[string]string, secretVarNam
 	for _, varName := range secretVarNames {
 		delete(env, varName)
 	}
-}
-
-// writeSecretsFile writes secrets JSON to a file for later podman cp
-func writeSecretsFile(secretsJSON string) (string, error) {
-	// Create secrets directory
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("failed to get home dir: %w", err)
-	}
-
-	secretsDir := filepath.Join(homeDir, ".addt", "secrets")
-	if err := os.MkdirAll(secretsDir, 0700); err != nil {
-		return "", fmt.Errorf("failed to create secrets dir: %w", err)
-	}
-
-	// Write to temp file
-	tmpFile, err := os.CreateTemp(secretsDir, "secrets-*.json")
-	if err != nil {
-		return "", fmt.Errorf("failed to create temp file: %w", err)
-	}
-
-	if _, err := tmpFile.WriteString(secretsJSON); err != nil {
-		tmpFile.Close()
-		os.Remove(tmpFile.Name())
-		return "", fmt.Errorf("failed to write secrets: %w", err)
-	}
-	tmpFile.Close()
-
-	if err := os.Chmod(tmpFile.Name(), 0600); err != nil {
-		os.Remove(tmpFile.Name())
-		return "", fmt.Errorf("failed to set permissions: %w", err)
-	}
-
-	return tmpFile.Name(), nil
 }

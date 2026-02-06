@@ -43,20 +43,14 @@ func TestAddTmpfsSecretsMount(t *testing.T) {
 	args := []string{"-it", "--rm"}
 	result := p.addTmpfsSecretsMount(args)
 
-	// Should add tmpfs mount
 	if len(result) != 4 {
 		t.Errorf("Expected 4 args, got %d: %v", len(result), result)
 	}
-
-	found := false
-	for i := 0; i < len(result)-1; i++ {
-		if result[i] == "--tmpfs" && result[i+1] == "/run/secrets:size=1m,mode=0700" {
-			found = true
-			break
-		}
+	if result[2] != "--tmpfs" {
+		t.Errorf("Expected --tmpfs flag, got %s", result[2])
 	}
-	if !found {
-		t.Errorf("addTmpfsSecretsMount did not add expected tmpfs mount, got %v", result)
+	if result[3] != "/run/secrets:size=1m,mode=0777" {
+		t.Errorf("Expected tmpfs mount arg, got %s", result[3])
 	}
 }
 

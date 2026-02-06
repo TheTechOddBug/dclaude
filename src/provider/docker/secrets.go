@@ -103,8 +103,11 @@ func copySecretsToContainerPodman(containerName, secretsJSON string) error {
 }
 
 // addTmpfsSecretsMount adds a tmpfs mount for secrets at /run/secrets
+// World-writable so the entrypoint (running as addt) can read and delete
+// the secrets file. The tmpfs is ephemeral and secrets are deleted immediately
+// after parsing, so the broad permissions are acceptable.
 func (p *DockerProvider) addTmpfsSecretsMount(dockerArgs []string) []string {
-	return append(dockerArgs, "--tmpfs", "/run/secrets:size=1m,mode=0700")
+	return append(dockerArgs, "--tmpfs", "/run/secrets:size=1m,mode=0777")
 }
 
 // filterSecretEnvVars removes secret env vars from the env map
@@ -147,4 +150,31 @@ func writeSecretsFile(secretsJSON string) (string, error) {
 	}
 
 	return tmpFile.Name(), nil
+}
+
+// copyDebugLogFromContainer copies the debug log file from the container
+func (p *DockerProvider) copyDebugLogFromContainer(containerName string) ([]byte, error) {
+	// Create a temp file to receive the debug log
+	tmpFile, err := os.CreateTemp("", "addt-debug-log-*.log")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp file: %w", err)
+	}
+	tmpPath := tmpFile.Name()
+	tmpFile.Close()
+	defer os.Remove(tmpPath)
+
+	// Copy debug log from container
+	cmd := exec.Command("docker", "cp", containerName+":/tmp/addt-entrypoint-debug.log", tmpPath)
+	if _, err := cmd.CombinedOutput(); err != nil {
+		// If file doesn't exist yet, that's okay - entrypoint may not have started
+		return nil, nil
+	}
+
+	// Read the copied file
+	content, err := os.ReadFile(tmpPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read debug log: %w", err)
+	}
+
+	return content, nil
 }

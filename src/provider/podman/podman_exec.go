@@ -9,7 +9,10 @@ import (
 
 	"github.com/jedi4ever/addt/assets"
 	"github.com/jedi4ever/addt/provider"
+	"github.com/jedi4ever/addt/util"
 )
+
+var podmanLogger = util.Log("podman")
 
 // containerContext holds common container setup information
 type containerContext struct {
@@ -51,6 +54,9 @@ func (p *PodmanProvider) setupContainerContext(spec *provider.RunSpec) (*contain
 
 // buildBasePodmanArgs creates the base podman arguments for run/exec commands
 func (p *PodmanProvider) buildBasePodmanArgs(spec *provider.RunSpec, ctx *containerContext) []string {
+	podmanLogger.Debugf("buildBasePodmanArgs: spec.Interactive=%v, ctx.useExistingContainer=%v, spec.Persistent=%v",
+		spec.Interactive, ctx.useExistingContainer, spec.Persistent)
+
 	var podmanArgs []string
 
 	if ctx.useExistingContainer {
@@ -66,13 +72,17 @@ func (p *PodmanProvider) buildBasePodmanArgs(spec *provider.RunSpec, ctx *contai
 	// Interactive mode
 	if spec.Interactive {
 		podmanArgs = append(podmanArgs, "-it")
+		podmanLogger.Debug("Added -it flag (interactive mode)")
 		if !ctx.useExistingContainer {
 			podmanArgs = append(podmanArgs, "--init")
 		}
 	} else {
+		// Add -i flag for podman (needed for proper stdin handling)
 		podmanArgs = append(podmanArgs, "-i")
+		podmanLogger.Debug("Added -i flag (non-interactive mode)")
 	}
 
+	podmanLogger.Debugf("buildBasePodmanArgs returning: %v", podmanArgs)
 	return podmanArgs
 }
 
@@ -179,45 +189,81 @@ func (p *PodmanProvider) addContainerVolumesAndEnv(podmanArgs []string, spec *pr
 
 // executePodmanCommand runs the podman command with standard I/O
 func (p *PodmanProvider) executePodmanCommand(podmanArgs []string) error {
+	podmanLogger.Debugf("Executing: podman %v", podmanArgs)
 	cmd := exec.Command("podman", podmanArgs...)
-	cmd.Stdin = os.Stdin
+
+	// Connect stdin if -it or -i flag is present
+	hasInteractive := false
+	for _, arg := range podmanArgs {
+		if arg == "-it" || arg == "-i" {
+			hasInteractive = true
+			break
+		}
+	}
+
+	if hasInteractive {
+		cmd.Stdin = os.Stdin
+	}
+
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	err := cmd.Run()
+	if err != nil {
+		podmanLogger.Debugf("Podman command failed: %v", err)
+	}
+	return err
 }
 
 // Run runs a new container
 func (p *PodmanProvider) Run(spec *provider.RunSpec) error {
+	podmanLogger.Debugf("PodmanProvider.Run called with spec: Name=%s, ImageName=%s, Args=%v, Interactive=%v",
+		spec.Name, spec.ImageName, spec.Args, spec.Interactive)
+
+	podmanLogger.Debug("Setting up container context")
 	ctx, err := p.setupContainerContext(spec)
 	if err != nil {
+		podmanLogger.Debugf("Failed to setup container context: %v", err)
 		return err
 	}
+	podmanLogger.Debugf("Container context: useExistingContainer=%v, homeDir=%s, username=%s",
+		ctx.useExistingContainer, ctx.homeDir, ctx.username)
 
 	// Prepare secrets if enabled (before building args so we can filter env)
 	var secretsJSON string
 	if p.config.Security.IsolateSecrets && !ctx.useExistingContainer {
+		podmanLogger.Debug("Preparing secrets for isolated secrets mode")
 		json, secretVarNames, err := p.prepareSecretsJSON(spec.ImageName, spec.Env)
 		if err == nil && json != "" {
 			secretsJSON = json
 			p.filterSecretEnvVars(spec.Env, secretVarNames)
+			podmanLogger.Debugf("Secrets prepared, %d secret variables filtered", len(secretVarNames))
+		} else if err != nil {
+			podmanLogger.Debugf("Failed to prepare secrets: %v", err)
 		}
 	}
 
+	podmanLogger.Debug("Building base Podman arguments")
+	podmanLogger.Debugf("Spec.Interactive=%v, ctx.useExistingContainer=%v", spec.Interactive, ctx.useExistingContainer)
 	podmanArgs := p.buildBasePodmanArgs(spec, ctx)
+	podmanLogger.Debugf("Base Podman args: %v", podmanArgs)
 
 	// Only add volumes and environment when creating a new container
 	cleanup := func() {}
 	if !ctx.useExistingContainer {
+		podmanLogger.Debug("Adding volumes and environment variables")
 		podmanArgs, cleanup = p.addContainerVolumesAndEnv(podmanArgs, spec, ctx)
+		podmanLogger.Debugf("Podman args after volumes/env (image name and args will be added next): %v", podmanArgs)
 	}
 	defer cleanup()
 
 	// Handle existing container
 	if ctx.useExistingContainer {
+		podmanLogger.Debugf("Using existing container: %s", spec.Name)
 		podmanArgs = append(podmanArgs, spec.Name)
 		// Call entrypoint with args for existing containers
 		podmanArgs = append(podmanArgs, "/usr/local/bin/podman-entrypoint.sh")
 		podmanArgs = append(podmanArgs, spec.Args...)
+		podmanLogger.Debugf("Executing podman exec with args: %v", podmanArgs)
 		return p.executePodmanCommand(podmanArgs)
 	}
 
@@ -226,64 +272,87 @@ func (p *PodmanProvider) Run(spec *provider.RunSpec) error {
 	// 2. Copy secrets via podman cp
 	// 3. Signal container to continue and attach
 	if secretsJSON != "" {
+		podmanLogger.Debug("Running with secrets (two-step process)")
 		return p.runWithSecrets(podmanArgs, spec, secretsJSON)
 	}
 
 	// Normal run without secrets
+	// Note: Image has default ENTRYPOINT ["/usr/local/bin/podman-entrypoint.sh"] set in Dockerfile.base
+	podmanLogger.Debugf("Normal run without secrets, appending image: %s and args: %v", spec.ImageName, spec.Args)
 	podmanArgs = append(podmanArgs, spec.ImageName)
 	podmanArgs = append(podmanArgs, spec.Args...)
+	podmanLogger.Debugf("Executing podman run with final args (entrypoint will be called from image): %v", podmanArgs)
 	return p.executePodmanCommand(podmanArgs)
 }
 
-// runWithSecrets starts a container, copies secrets, then runs entrypoint
+// runWithSecrets starts a container, copies secrets, then execs the entrypoint.
+// Uses a simple approach: start with sleep, copy secrets, exec entrypoint.
+// Entrypoint output goes directly to terminal via exec (no attach needed).
 func (p *PodmanProvider) runWithSecrets(baseArgs []string, spec *provider.RunSpec, secretsJSON string) error {
-	// Remove -it flags from baseArgs for the initial detached run
-	// We'll add them back for the exec
+	// Strip interactive flags from run args — they'll be added to exec instead.
+	// The detached sleep process doesn't need stdin or TTY.
 	var runArgs []string
 	interactive := false
-	for i := 0; i < len(baseArgs); i++ {
-		arg := baseArgs[i]
-		if arg == "-it" {
+	for _, arg := range baseArgs {
+		switch arg {
+		case "-it":
 			interactive = true
-			runArgs = append(runArgs, "-i") // Keep -i for stdin
-		} else if arg == "-t" {
+		case "-i":
 			interactive = true
-			// Skip standalone -t
-		} else {
+		case "-t", "--init":
+			// not needed for detached sleep process
+		default:
 			runArgs = append(runArgs, arg)
 		}
 	}
 
-	// Start container detached, waiting for secrets
-	runArgs = append(runArgs, "-d")
-	runArgs = append(runArgs, "--entrypoint", "/bin/sh")
-	runArgs = append(runArgs, spec.ImageName)
-	// Wait loop: check for .secrets file or .ready signal
-	runArgs = append(runArgs, "-c", "while [ ! -f /run/secrets/.secrets ] && [ ! -f /run/secrets/.ready ]; do sleep 0.05; done; exec /usr/local/bin/podman-entrypoint.sh \"$@\"", "--")
-	runArgs = append(runArgs, spec.Args...)
+	// Start container detached with sleep as keep-alive
+	runArgs = append(runArgs, "-d", "--entrypoint", "sleep", spec.ImageName, "infinity")
+	podmanLogger.Debugf("Starting detached container: podman %v", runArgs)
 
-	// Start the container
 	cmd := exec.Command("podman", runArgs...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to start container: %w\n%s", err, string(output))
 	}
 
-	// Copy secrets to container
+	// Copy secrets to container tmpfs
+	podmanLogger.Debug("Copying secrets to container")
 	if err := p.copySecretsToContainer(spec.Name, secretsJSON); err != nil {
-		// Cleanup: stop and remove container
+		podmanLogger.Debugf("Failed to copy secrets, cleaning up container %s", spec.Name)
 		exec.Command("podman", "rm", "-f", spec.Name).Run()
 		return fmt.Errorf("failed to copy secrets: %w", err)
 	}
 
-	// Attach to container
-	attachArgs := []string{"attach"}
+	// Exec entrypoint — output goes directly to terminal
+	// Note: secrets file is root-owned from podman cp; entrypoint uses sudo to clean it up
+	execArgs := []string{"exec"}
 	if interactive {
-		// Container already has -i, attach will work
+		execArgs = append(execArgs, "-it")
+	} else {
+		execArgs = append(execArgs, "-i")
 	}
-	attachArgs = append(attachArgs, spec.Name)
+	execArgs = append(execArgs, spec.Name, "/usr/local/bin/podman-entrypoint.sh")
+	execArgs = append(execArgs, spec.Args...)
 
-	return p.executePodmanCommand(attachArgs)
+	podmanLogger.Debugf("Executing entrypoint: podman %v", execArgs)
+	execErr := p.executePodmanCommand(execArgs)
+
+	// On failure, dump container logs for debugging
+	if execErr != nil {
+		podmanLogger.Debugf("Entrypoint failed, fetching container logs for %s", spec.Name)
+		if logsOutput, err := exec.Command("podman", "logs", spec.Name).CombinedOutput(); err == nil && len(logsOutput) > 0 {
+			podmanLogger.Debugf("Container logs:\n%s", string(logsOutput))
+		}
+	}
+
+	// Clean up non-persistent containers (stop sleep, triggers --rm if set)
+	if !spec.Persistent {
+		podmanLogger.Debugf("Removing non-persistent container %s", spec.Name)
+		exec.Command("podman", "rm", "-f", spec.Name).Run()
+	}
+
+	return execErr
 }
 
 // Shell opens a shell in a container

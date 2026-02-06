@@ -44,12 +44,12 @@ func TestAddTmpfsSecretsMount(t *testing.T) {
 	result := p.addTmpfsSecretsMount(args)
 
 	if len(result) != 3 {
-		t.Errorf("Expected 3 args, got %d", len(result))
+		t.Errorf("Expected 3 args, got %d: %v", len(result), result)
 	}
 	if result[1] != "--tmpfs" {
 		t.Errorf("Expected --tmpfs flag, got %s", result[1])
 	}
-	if result[2] != "/run/secrets:size=1m,mode=0700" {
+	if result[2] != "/run/secrets:size=1m,mode=0777" {
 		t.Errorf("Expected tmpfs mount arg, got %s", result[2])
 	}
 }

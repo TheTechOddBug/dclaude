@@ -64,11 +64,7 @@ func (p *DockerProvider) DetermineImageName() string {
 
 	// Handle base image case (no extensions)
 	if len(validExts) == 0 {
-		baseImage := fmt.Sprintf("addt:v%s_base", p.config.AddtVersion)
-		if p.ImageExists(baseImage) {
-			return baseImage
-		}
-		return baseImage
+		return fmt.Sprintf("addt:v%s_base-%s", p.config.AddtVersion, p.assetsHash())
 	}
 
 	// Check if all extensions have explicit versions (not dist-tags)
@@ -99,14 +95,8 @@ func (p *DockerProvider) DetermineImageName() string {
 	// Join with underscore
 	tag := strings.Join(tagParts, "_")
 
-	// Prefix with addt version so images are rebuilt when addt is updated
-	imageName := fmt.Sprintf("addt:v%s_%s", p.config.AddtVersion, tag)
-
-	// Check if this exact image exists
-	if p.ImageExists(imageName) {
-		return imageName
-	}
-
+	// Prefix with addt version and assets hash so images are rebuilt when addt or assets change
+	imageName := fmt.Sprintf("addt:v%s_%s-%s", p.config.AddtVersion, tag, p.assetsHash())
 	return imageName
 }
 

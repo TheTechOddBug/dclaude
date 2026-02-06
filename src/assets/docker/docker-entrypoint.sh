@@ -1,10 +1,36 @@
 #!/bin/bash
 set -e
 
+# Debug log file for entrypoint execution
+DEBUG_LOG_FILE="/tmp/addt-entrypoint-debug.log"
+
+# Debug logging function
+# Write to both stderr (for docker logs) and debug log file (for docker cp)
+debug_log() {
+    if [ "${ADDT_LOG_LEVEL:-INFO}" = "DEBUG" ]; then
+        timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+        log_msg="[${timestamp}] [DEBUG] $*"
+        echo "$log_msg" >&2
+        # Also write to debug log file
+        echo "$log_msg" >> "$DEBUG_LOG_FILE" 2>/dev/null || true
+    fi
+}
+
+# Initialize debug log file
+if [ "${ADDT_LOG_LEVEL:-INFO}" = "DEBUG" ]; then
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Entrypoint script started" > "$DEBUG_LOG_FILE"
+fi
+
+debug_log "Entrypoint script started"
+debug_log "ADDT_LOG_LEVEL=${ADDT_LOG_LEVEL:-INFO}"
+debug_log "ADDT_COMMAND=${ADDT_COMMAND:-not set}"
+debug_log "Arguments: $*"
+
 # Load secrets from file if present (copied via docker cp to tmpfs)
 # Secrets are written to tmpfs at /run/secrets/.secrets by the host
 # This approach keeps secrets out of environment variables entirely
 if [ -f /run/secrets/.secrets ]; then
+    debug_log "Loading secrets from /run/secrets/.secrets"
     # Parse JSON and export directly to environment
     eval "$(node -e '
         const fs = require("fs");
@@ -17,12 +43,14 @@ if [ -f /run/secrets/.secrets ]; then
         }
     ')"
 
-    # Delete the secrets file immediately after parsing
-    rm -f /run/secrets/.secrets
+    # Delete the secrets file immediately after parsing (sudo needed: file is root-owned from cp)
+    sudo rm -f /run/secrets/.secrets
+    debug_log "Secrets loaded and file removed"
 fi
 
 # Start Docker daemon if in DinD mode
 if [ "$ADDT_DIND" = "true" ]; then
+    debug_log "DinD mode enabled, starting Docker daemon"
     echo "Starting Docker daemon in isolated mode..."
 
     # Start dockerd in the background
@@ -50,6 +78,7 @@ fi
 
 # Initialize firewall if enabled
 if [ "${ADDT_FIREWALL_ENABLED}" = "true" ] && [ -f /usr/local/bin/init-firewall.sh ]; then
+    debug_log "Firewall enabled, initializing"
     sudo /usr/local/bin/init-firewall.sh
 fi
 
@@ -59,12 +88,14 @@ EXTENSIONS_JSON="$HOME/.addt/extensions.json"
 SETUP_MARKER="$HOME/.addt/.setup-done"
 
 if [ -f "$EXTENSIONS_JSON" ] && [ ! -f "$SETUP_MARKER" ]; then
+    debug_log "Running extension setup scripts"
     # Extract extension names from JSON
     extensions=$(grep -oE '"[a-z]+":' "$EXTENSIONS_JSON" | tr -d '":' | sort -u)
 
     for ext in $extensions; do
         setup_script="$EXTENSIONS_DIR/$ext/setup.sh"
         if [ -f "$setup_script" ]; then
+            debug_log "Running setup for extension: $ext"
             echo "Running setup for extension: $ext"
             bash "$setup_script" || echo "Warning: setup.sh for $ext failed"
         fi
@@ -72,6 +103,7 @@ if [ -f "$EXTENSIONS_JSON" ] && [ ! -f "$SETUP_MARKER" ]; then
 
     # Mark setup as done for this session
     touch "$SETUP_MARKER"
+    debug_log "Extension setup complete"
 fi
 
 # Build system prompt for port mappings (exported for args.sh to use)
@@ -110,7 +142,9 @@ ADDT_CMD_ARGS=()
 
 if [ -n "$ADDT_COMMAND" ]; then
     ADDT_CMD="$ADDT_COMMAND"
+    debug_log "Using ADDT_COMMAND: $ADDT_CMD"
 elif [ -f "$EXTENSIONS_JSON" ]; then
+    debug_log "Auto-detecting command from extensions.json"
     # Auto-detect from first installed extension
     # Entrypoint is now a JSON array, e.g., ["bash","-i"] or ["claude"]
     entrypoint_json=$(grep -oE '"entrypoint":[[:space:]]*\[[^]]*\]' "$EXTENSIONS_JSON" | head -1 | sed 's/.*"entrypoint":[[:space:]]*//')
@@ -130,6 +164,8 @@ fi
 
 # Fallback to claude if still not set
 ADDT_CMD="${ADDT_CMD:-claude}"
+debug_log "Final command: $ADDT_CMD"
+debug_log "Command args: ${ADDT_CMD_ARGS[*]}"
 
 # Find the extension directory for args.sh
 EXTENSIONS_DIR="/usr/local/share/addt/extensions"
@@ -157,15 +193,25 @@ done
 
 # Transform args through extension's args.sh if it exists
 if [ -n "$ARGS_SCRIPT" ] && [ -f "$ARGS_SCRIPT" ]; then
+    debug_log "Using args.sh: $ARGS_SCRIPT"
+    debug_log "Original args: $*"
     # Run args.sh and read transformed args (one per line)
-    mapfile -t TRANSFORMED_ARGS < <(bash "$ARGS_SCRIPT" "$@")
+    # Use timeout to prevent hangs (5 seconds should be plenty for arg transformation)
+    if command -v timeout >/dev/null 2>&1; then
+        mapfile -t TRANSFORMED_ARGS < <(timeout 5 bash "$ARGS_SCRIPT" "$@" 2>&1)
+    else
+        mapfile -t TRANSFORMED_ARGS < <(bash "$ARGS_SCRIPT" "$@" 2>&1)
+    fi
     FINAL_ARGS=("${ADDT_CMD_ARGS[@]}" "${TRANSFORMED_ARGS[@]}")
+    debug_log "Transformed args: ${FINAL_ARGS[*]}"
 else
     # No args.sh - pass args directly
+    debug_log "No args.sh found, passing args directly"
     FINAL_ARGS=("${ADDT_CMD_ARGS[@]}" "$@")
 fi
 
 # Execute with optional time limit
+debug_log "Executing: $ADDT_CMD ${FINAL_ARGS[*]}"
 if [ -n "$ADDT_TIME_LIMIT_SECONDS" ] && [ "$ADDT_TIME_LIMIT_SECONDS" -gt 0 ]; then
     echo "Time limit: $((ADDT_TIME_LIMIT_SECONDS / 60)) minutes"
     exec timeout --signal=TERM "$ADDT_TIME_LIMIT_SECONDS" "$ADDT_CMD" "${FINAL_ARGS[@]}"
