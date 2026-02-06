@@ -12,9 +12,9 @@ BACKLOG_MD_VERSION="${BACKLOG_MD_VERSION:-latest}"
 
 # Install Backlog.md globally via npm
 if [ "$BACKLOG_MD_VERSION" = "latest" ]; then
-    sudo npm install -g backlog.md
+    npm install -g backlog.md
 else
-    sudo npm install -g backlog.md@$BACKLOG_MD_VERSION
+    npm install -g backlog.md@$BACKLOG_MD_VERSION
 fi
 
 # Verify installation

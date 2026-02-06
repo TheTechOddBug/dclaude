@@ -133,8 +133,12 @@ IMPORTANT:
 - Always remind the user to use the host port in their browser"
 fi
 
-# Ensure ~/.local/bin and ~/go/bin are in PATH (for extensions installed there)
-export PATH="$HOME/.local/bin:$HOME/go/bin:$PATH"
+# Set npm global prefix to user-owned directory (so addt user can install/uninstall without sudo)
+export NPM_CONFIG_PREFIX="$HOME/.npm-global"
+mkdir -p "$NPM_CONFIG_PREFIX"
+
+# Ensure ~/.local/bin, npm-global/bin and ~/go/bin are in PATH
+export PATH="$HOME/.local/bin:$NPM_CONFIG_PREFIX/bin:$HOME/go/bin:$PATH"
 
 # Determine which command to run (entrypoint can be array: ["bash", "-i"])
 ADDT_CMD=""

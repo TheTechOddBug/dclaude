@@ -77,7 +77,7 @@ VERSION="${%s_VERSION:-latest}"
 
 # TODO: Add your installation commands here
 # Examples:
-#   sudo npm install -g your-package
+#   npm install -g your-package
 #   pip install your-package
 #   go install github.com/your/package@latest
 

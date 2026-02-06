@@ -11,9 +11,9 @@ OPENCLAW_VERSION="${OPENCLAW_VERSION:-latest}"
 
 # Install OpenClaw globally via npm
 if [ "$OPENCLAW_VERSION" = "latest" ]; then
-    sudo npm install -g openclaw
+    npm install -g openclaw
 else
-    sudo npm install -g openclaw@$OPENCLAW_VERSION
+    npm install -g openclaw@$OPENCLAW_VERSION
 fi
 
 # Verify installation

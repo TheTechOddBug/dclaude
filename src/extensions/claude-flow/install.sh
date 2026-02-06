@@ -12,9 +12,9 @@ CLAUDE_FLOW_VERSION="${CLAUDE_FLOW_VERSION:-alpha}"
 
 # Install Claude Flow globally via npm
 if [ "$CLAUDE_FLOW_VERSION" = "latest" ]; then
-    sudo npm install -g claude-flow
+    npm install -g claude-flow
 else
-    sudo npm install -g claude-flow@$CLAUDE_FLOW_VERSION
+    npm install -g claude-flow@$CLAUDE_FLOW_VERSION
 fi
 
 # Verify installation

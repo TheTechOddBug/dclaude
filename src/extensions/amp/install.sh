@@ -11,9 +11,9 @@ AMP_VERSION="${AMP_VERSION:-latest}"
 
 # Install Amp globally via npm
 if [ "$AMP_VERSION" = "latest" ]; then
-    sudo npm install -g @sourcegraph/amp
+    npm install -g @sourcegraph/amp
 else
-    sudo npm install -g @sourcegraph/amp@$AMP_VERSION
+    npm install -g @sourcegraph/amp@$AMP_VERSION
 fi
 
 # Verify installation

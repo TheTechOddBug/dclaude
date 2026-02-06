@@ -11,9 +11,9 @@ GEMINI_VERSION="${GEMINI_VERSION:-latest}"
 
 # Install Gemini CLI globally via npm
 if [ "$GEMINI_VERSION" = "latest" ]; then
-    sudo npm install -g @google/gemini-cli
+    npm install -g @google/gemini-cli
 else
-    sudo npm install -g @google/gemini-cli@$GEMINI_VERSION
+    npm install -g @google/gemini-cli@$GEMINI_VERSION
 fi
 
 # Verify installation

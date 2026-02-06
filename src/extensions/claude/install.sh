@@ -5,23 +5,31 @@
 set -e
 
 echo "Extension [claude]: Installing Claude Code..."
+echo "Extension [claude]: NPM_CONFIG_PREFIX: $NPM_CONFIG_PREFIX"
 
 # Get version from environment or default to latest
 CLAUDE_VERSION="${CLAUDE_VERSION:-latest}"
 
-# Install via npm (globally, requires root)
-if [ "$CLAUDE_VERSION" = "latest" ] || [ "$CLAUDE_VERSION" = "stable" ]; then
-    sudo npm install -g @anthropic-ai/claude-code
-else
-    sudo npm install -g @anthropic-ai/claude-code@$CLAUDE_VERSION
-fi
-
 # native installer
+# we need to install this first as it will DELETE the npm install
 echo "Extension [claude]: Installing Claude Code Native Installer"
 # this will install in $HOME/.local/bin/claude
 # this has precedence over the npm install
 # simple removing it selects the npm install
-curl -fsSL https://claude.ai/install.sh | bash
+# https://code.claude.com/docs/en/setup#install-a-specific-version
+curl -fsSL https://claude.ai/install.sh | bash -s $CLAUDE_VERSION
+
+#TODO - figure how to set the version
+
+# Disable AUTO UPDATE
+# DISABLE_AUTOUPDATER=1 ??
+
+# Install via npm (globally, to user-owned NPM_CONFIG_PREFIX)
+if [ "$CLAUDE_VERSION" = "latest" ] || [ "$CLAUDE_VERSION" = "stable" ]; then
+    npm install -g @anthropic-ai/claude-code
+else
+    npm install -g @anthropic-ai/claude-code@$CLAUDE_VERSION 
+fi
 
 # Verify installation
 INSTALLED_VERSION=$(claude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo "unknown")

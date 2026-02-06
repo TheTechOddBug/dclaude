@@ -12,9 +12,9 @@ TESSL_VERSION="${TESSL_VERSION:-latest}"
 
 # Install via npm (globally, requires root)
 if [ "$TESSL_VERSION" = "latest" ]; then
-    sudo npm install -g @tessl/cli
+    npm install -g @tessl/cli
 else
-    sudo npm install -g @tessl/cli@$TESSL_VERSION
+    npm install -g @tessl/cli@$TESSL_VERSION
 fi
 
 echo "Extension [tessl]: Done. Installed tessl CLI"

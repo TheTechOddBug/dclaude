@@ -20,6 +20,12 @@ RUN chmod +x /usr/local/share/addt/install.sh && \
 # Install requested extensions (as addt user for go installs)
 # EXTENSION_VERSIONS overrides default versions from config.yaml
 USER addt
+
+# Set npm global prefix to user-owned directory (so addt user can install/uninstall without sudo)
+ENV NPM_CONFIG_PREFIX="/home/addt/.npm-global"
+RUN mkdir -p "$NPM_CONFIG_PREFIX"
+RUN echo 'export PATH="/home/addt/.local/bin:/home/addt/.npm-global/bin:/home/addt/go/bin:/usr/local/go/bin:$PATH"' >> /home/addt/.bashrc
+
 RUN EXTENSION_VERSIONS="${EXTENSION_VERSIONS}" \
     /usr/local/share/addt/install.sh "${ADDT_EXTENSIONS}"
 

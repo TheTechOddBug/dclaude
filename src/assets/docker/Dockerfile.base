@@ -79,12 +79,13 @@ WORKDIR /workspace
 # Change ownership of workspace (use numeric IDs to avoid group name issues)
 RUN chown -R ${USER_ID}:${GROUP_ID} /workspace
 
-# Add Go, UV to PATH environment and bash profile
-ENV PATH="/home/${USERNAME}/go/bin:/home/${USERNAME}/.local/bin:/usr/local/go/bin:${PATH}"
-RUN echo 'export PATH="/home/'${USERNAME}'/go/bin:/home/'${USERNAME}'/.local/bin:/usr/local/go/bin:$PATH"' >> /home/${USERNAME}/.bashrc
+# Add Go, UV, npm global to PATH environment and bash profile
+ENV PATH="/home/${USERNAME}/.local/bin:/home/${USERNAME}/.npm-global/bin:/home/${USERNAME}/go/bin:/usr/local/go/bin:${PATH}"
+RUN echo 'export PATH="/home/'${USERNAME}'/.local/bin:/home/'${USERNAME}'/.npm-global/bin:/home/'${USERNAME}'/go/bin:/usr/local/go/bin:$PATH"' >> /home/${USERNAME}/.bashrc
 
 # Switch to non-root user
 USER ${USERNAME}
+
 
 # Add version labels for tracking
 LABEL org.opencontainers.image.title="addt-base"

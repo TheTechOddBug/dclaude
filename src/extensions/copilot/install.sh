@@ -11,9 +11,9 @@ COPILOT_VERSION="${COPILOT_VERSION:-latest}"
 
 # Install Copilot CLI globally via npm
 if [ "$COPILOT_VERSION" = "latest" ]; then
-    sudo npm install -g @github/copilot
+    npm install -g @github/copilot
 else
-    sudo npm install -g @github/copilot@$COPILOT_VERSION
+    npm install -g @github/copilot@$COPILOT_VERSION
 fi
 
 # Verify installation

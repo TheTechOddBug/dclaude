@@ -1,15 +1,19 @@
 name: claude
 description: Claude Code - AI coding assistant by Anthropic
-entrypoint:
+entrypoint2:
   - bash
   - -i
-entrypoint2: claude
+entrypoint: claude
 default_version: stable
 auto_mount: false
 dependencies: []
 credential_script: credentials.sh
+
+# export DISABLE_AUTOUPDATER=1
+# https://code.claude.com/docs/en/setup#auto-updates
 env_vars:
   - ANTHROPIC_API_KEY
+  - DISABLE_AUTOUPDATER=1
 otel_vars:
   # Claude Code specific - enable telemetry by default when OTEL is active
   - CLAUDE_CODE_ENABLE_TELEMETRY=1

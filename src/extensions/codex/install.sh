@@ -11,9 +11,9 @@ CODEX_VERSION="${CODEX_VERSION:-latest}"
 
 # Install codex globally via npm
 if [ "$CODEX_VERSION" = "latest" ]; then
-    sudo npm install -g @openai/codex
+    npm install -g @openai/codex
 else
-    sudo npm install -g @openai/codex@$CODEX_VERSION
+    npm install -g @openai/codex@$CODEX_VERSION
 fi
 
 # Verify installation
