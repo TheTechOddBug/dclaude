@@ -1,6 +1,7 @@
 package podman
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"os/exec"
 	"os/user"
@@ -44,16 +45,22 @@ func (p *PodmanProvider) GetImageLabel(imageName, label string) string {
 	return strings.TrimSpace(string(output))
 }
 
+// assetsHash returns a short hash of the embedded build assets (Dockerfile.base, entrypoint, firewall)
+// Used in image tags so that changes to these files trigger a rebuild
+func (p *PodmanProvider) assetsHash() string {
+	h := sha256.New()
+	h.Write(p.embeddedDockerfileBase)
+	h.Write(p.embeddedEntrypoint)
+	h.Write(p.embeddedInitFirewall)
+	return fmt.Sprintf("%x", h.Sum(nil))[:8]
+}
+
 // GetBaseImageName returns the base image name for the current config
 func (p *PodmanProvider) GetBaseImageName() string {
-	// Get current user info for UID/GID in tag
 	currentUser, err := user.Current()
 	if err != nil {
 		return "addt-base:latest"
 	}
-	// Base image is tagged with addt version, tool versions, and UID to ensure compatibility
-	// When any of these change, a new base image will be built
-	// Note: Using same image names as Docker for cache sharing when possible
-	return fmt.Sprintf("addt-base:v%s-node%s-go%s-uv%s-uid%s",
-		p.config.AddtVersion, p.config.NodeVersion, p.config.GoVersion, p.config.UvVersion, currentUser.Uid)
+	return fmt.Sprintf("addt-base:v%s-node%s-go%s-uv%s-uid%s-%s",
+		p.config.AddtVersion, p.config.NodeVersion, p.config.GoVersion, p.config.UvVersion, currentUser.Uid, p.assetsHash())
 }
