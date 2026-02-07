@@ -23,6 +23,7 @@ Commands:
   addt firewall [list|add|rm|reset]  Manage firewall
   addt extensions [list|info|new]    Manage extensions
   addt config [list|set|get|unset] [-g]   Manage configuration
+  addt config extension <name> [list|set|get|unset]  Extension config
   addt completion [bash|zsh|fish]    Generate shell completions
   addt doctor                        Check system health
   addt cli [update|install-podman]   Manage addt CLI
@@ -54,6 +55,7 @@ Container management (via agent):
   <agent> addt firewall [list|add|rm|reset]  Manage network firewall
   <agent> addt extensions [list|info|new]    Manage extensions
   <agent> addt config [list|set|get|unset] [-g]   Manage configuration
+  <agent> addt config extension <name> [list|set|get|unset]  Extension config
   <agent> addt cli [update]                  Manage addt CLI
   <agent> addt version                       Show version info
 
@@ -128,9 +130,16 @@ Configuration:
   Use 'addt config' to manage persistent settings:
     addt config list                                # Show project config (default)
     addt config list -g                             # Show global config
-    addt config set container.cpus 2                 # Set in project config
-    addt config set container.cpus 2 -g              # Set in global config
+    addt config set container.cpus 2                # Set in project config
+    addt config set container.cpus 2 -g             # Set in global config
+    addt config get container.memory                # Get a value
+    addt config unset container.cpus                # Remove a value
+
+  Extension configuration:
+    addt config extension claude list               # List claude config
     addt config extension claude set version 1.0.5  # Set extension version
+    addt config extension claude set yolo true      # Set extension flag
+    addt config extension claude list -g            # List global extension config
 
   Precedence: env vars > project (.addt.yaml) > global (~/.addt/config.yaml) > defaults
 
