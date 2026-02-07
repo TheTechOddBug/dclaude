@@ -31,6 +31,8 @@ func GetKeys() []KeyInfo {
 	}
 	// Add firewall keys
 	keys = append(keys, GetFirewallKeys()...)
+	// Add git keys
+	keys = append(keys, GetGitKeys()...)
 	// Add github keys
 	keys = append(keys, GetGitHubKeys()...)
 	// Add GPG keys
@@ -83,6 +85,10 @@ func GetDefaultValue(key string) string {
 		return "false"
 	case "firewall.mode":
 		return "strict"
+	case "git.forward_config":
+		return "true"
+	case "git.config_path":
+		return ""
 	case "github.forward_token":
 		return "true"
 	case "github.token_source":
@@ -315,6 +321,10 @@ func GetValue(cfg *cfgtypes.GlobalConfig, key string) string {
 	if strings.HasPrefix(key, "firewall.") {
 		return GetFirewallValue(cfg.Firewall, key)
 	}
+	// Check git keys
+	if strings.HasPrefix(key, "git.") && !strings.HasPrefix(key, "github.") {
+		return GetGitValue(cfg.Git, key)
+	}
 	// Check github keys
 	if strings.HasPrefix(key, "github.") {
 		return GetGitHubValue(cfg.GitHub, key)
@@ -392,6 +402,13 @@ func SetValue(cfg *cfgtypes.GlobalConfig, key, value string) {
 				cfg.Firewall = &cfgtypes.FirewallSettings{}
 			}
 			SetFirewallValue(cfg.Firewall, key, value)
+		}
+		// Check git keys
+		if strings.HasPrefix(key, "git.") && !strings.HasPrefix(key, "github.") {
+			if cfg.Git == nil {
+				cfg.Git = &cfgtypes.GitSettings{}
+			}
+			SetGitValue(cfg.Git, key, value)
 		}
 		// Check github keys
 		if strings.HasPrefix(key, "github.") {
@@ -491,6 +508,10 @@ func UnsetValue(cfg *cfgtypes.GlobalConfig, key string) {
 		// Check firewall keys
 		if strings.HasPrefix(key, "firewall.") && cfg.Firewall != nil {
 			UnsetFirewallValue(cfg.Firewall, key)
+		}
+		// Check git keys
+		if strings.HasPrefix(key, "git.") && !strings.HasPrefix(key, "github.") && cfg.Git != nil {
+			UnsetGitValue(cfg.Git, key)
 		}
 		// Check github keys
 		if strings.HasPrefix(key, "github.") && cfg.GitHub != nil {

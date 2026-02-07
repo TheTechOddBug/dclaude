@@ -23,6 +23,76 @@ func requireGitHubToken(t *testing.T) {
 	t.Skip("No GitHub token available (GH_TOKEN not set and gh auth token failed)")
 }
 
+func TestGitHub_Addt_DefaultValues(t *testing.T) {
+	// Scenario: User starts with no GitHub config and checks defaults.
+	// github.forward_token should default to true, token_source to gh_auth.
+	_, cleanup := setupAddtDir(t, "", ``)
+	defer cleanup()
+
+	output := captureOutput(t, func() {
+		configcmd.HandleCommand([]string{"list"})
+	})
+
+	lines := strings.Split(output, "\n")
+	foundToken := false
+	foundSource := false
+	for _, line := range lines {
+		if strings.Contains(line, "github.forward_token") {
+			foundToken = true
+			if !strings.Contains(line, "true") {
+				t.Errorf("Expected github.forward_token default=true, got line: %s", line)
+			}
+			if !strings.Contains(line, "default") {
+				t.Errorf("Expected github.forward_token source=default, got line: %s", line)
+			}
+		}
+		if strings.Contains(line, "github.token_source") {
+			foundSource = true
+			if !strings.Contains(line, "gh_auth") {
+				t.Errorf("Expected github.token_source default=gh_auth, got line: %s", line)
+			}
+			if !strings.Contains(line, "default") {
+				t.Errorf("Expected github.token_source source=default, got line: %s", line)
+			}
+		}
+	}
+	if !foundToken {
+		t.Errorf("Expected output to contain github.forward_token, got:\n%s", output)
+	}
+	if !foundSource {
+		t.Errorf("Expected output to contain github.token_source, got:\n%s", output)
+	}
+}
+
+func TestGitHub_Addt_ConfigViaSet(t *testing.T) {
+	// Scenario: User disables GitHub token forwarding via 'config set github.forward_token false',
+	// then verifies it appears as false in config list.
+	_, cleanup := setupAddtDir(t, "", ``)
+	defer cleanup()
+
+	captureOutput(t, func() {
+		configcmd.HandleCommand([]string{"set", "github.forward_token", "false"})
+	})
+
+	output := captureOutput(t, func() {
+		configcmd.HandleCommand([]string{"list"})
+	})
+
+	lines := strings.Split(output, "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "github.forward_token") {
+			if !strings.Contains(line, "false") {
+				t.Errorf("Expected github.forward_token=false after config set, got line: %s", line)
+			}
+			if !strings.Contains(line, "project") {
+				t.Errorf("Expected github.forward_token source=project after config set, got line: %s", line)
+			}
+			return
+		}
+	}
+	t.Errorf("Expected output to contain github.forward_token, got:\n%s", output)
+}
+
 func TestGitHub_Addt_ConfigLoaded(t *testing.T) {
 	_, cleanup := setupAddtDir(t, "", `
 github:

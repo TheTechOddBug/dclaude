@@ -55,6 +55,8 @@ type Config struct {
 	SSHDir                  string
 	TmuxForward             bool
 	HistoryPersist          bool
+	GitForwardConfig        bool     // Forward .gitconfig to container (default: true)
+	GitConfigPath           string   // Custom .gitconfig file path
 	GPGForward              string   // "proxy", "agent", "keys", or "off"
 	GPGAllowedKeyIDs        []string // GPG key IDs (fingerprints) that are allowed
 	GPGDir                  string

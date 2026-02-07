@@ -118,10 +118,17 @@ func (p *PodmanProvider) addContainerVolumesAndEnv(podmanArgs []string, spec *pr
 	// Add extension mounts
 	podmanArgs = p.AddExtensionMounts(podmanArgs, spec.ImageName, ctx.homeDir)
 
-	// Mount .gitconfig
-	gitconfigPath := fmt.Sprintf("%s/.gitconfig", ctx.homeDir)
-	if _, err := os.Stat(gitconfigPath); err == nil {
-		podmanArgs = append(podmanArgs, "-v", fmt.Sprintf("%s:/home/%s/.gitconfig:ro", gitconfigPath, ctx.username))
+	// Mount .gitconfig (if forwarding enabled)
+	if p.config.GitForwardConfig {
+		gitconfigPath := p.config.GitConfigPath
+		if gitconfigPath == "" {
+			gitconfigPath = filepath.Join(ctx.homeDir, ".gitconfig")
+		} else {
+			gitconfigPath = util.ExpandTilde(gitconfigPath)
+		}
+		if _, err := os.Stat(gitconfigPath); err == nil {
+			podmanArgs = append(podmanArgs, "-v", fmt.Sprintf("%s:/home/%s/.gitconfig:ro", gitconfigPath, ctx.username))
+		}
 	}
 
 	// Add env file if exists (skip when isolate_secrets is on — values are

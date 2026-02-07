@@ -74,6 +74,12 @@ type GPGSettings struct {
 	Dir           string   `yaml:"dir,omitempty"`
 }
 
+// GitSettings holds git config forwarding configuration
+type GitSettings struct {
+	ForwardConfig *bool  `yaml:"forward_config,omitempty"`
+	ConfigPath    string `yaml:"config_path,omitempty"`
+}
+
 // LogSettings holds logging configuration
 type LogSettings struct {
 	Enabled  *bool  `yaml:"enabled,omitempty"`   // Enable command logging
@@ -100,6 +106,7 @@ type GlobalConfig struct {
 	Docker         *DockerSettings    `yaml:"docker,omitempty"`
 	Vm             *VmSettings        `yaml:"vm,omitempty"`
 	Firewall       *FirewallSettings  `yaml:"firewall,omitempty"`
+	Git            *GitSettings       `yaml:"git,omitempty"`
 	GitHub         *GitHubSettings    `yaml:"github,omitempty"`
 	EnvFileLoad    *bool              `yaml:"env_file_load,omitempty"`
 	EnvFile        string             `yaml:"env_file,omitempty"`
@@ -143,6 +150,8 @@ type Config struct {
 	TmuxForward              bool
 	HistoryPersist           bool     // Persist shell history between sessions (default: false)
 	SSHDir                   string   // SSH directory path (default: ~/.ssh)
+	GitForwardConfig         bool     // Forward .gitconfig to container (default: true)
+	GitConfigPath            string   // Custom .gitconfig file path
 	GPGForward               string   // "proxy", "agent", "keys", or "off"
 	GPGAllowedKeyIDs         []string // GPG key IDs allowed for signing
 	GPGDir                   string   // GPG directory path (default: ~/.gnupg)

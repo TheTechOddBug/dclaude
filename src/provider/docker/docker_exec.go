@@ -110,10 +110,17 @@ func (p *DockerProvider) addContainerVolumesAndEnv(dockerArgs []string, spec *pr
 	// Add extension mounts
 	dockerArgs = p.AddExtensionMounts(dockerArgs, spec.ImageName, ctx.homeDir)
 
-	// Mount .gitconfig
-	gitconfigPath := fmt.Sprintf("%s/.gitconfig", ctx.homeDir)
-	if _, err := os.Stat(gitconfigPath); err == nil {
-		dockerArgs = append(dockerArgs, "-v", fmt.Sprintf("%s:/home/%s/.gitconfig:ro", gitconfigPath, ctx.username))
+	// Mount .gitconfig (if forwarding enabled)
+	if p.config.GitForwardConfig {
+		gitconfigPath := p.config.GitConfigPath
+		if gitconfigPath == "" {
+			gitconfigPath = filepath.Join(ctx.homeDir, ".gitconfig")
+		} else {
+			gitconfigPath = util.ExpandTilde(gitconfigPath)
+		}
+		if _, err := os.Stat(gitconfigPath); err == nil {
+			dockerArgs = append(dockerArgs, "-v", fmt.Sprintf("%s:/home/%s/.gitconfig:ro", gitconfigPath, ctx.username))
+		}
 	}
 
 	// Note: Claude config mounts (~/.claude, ~/.claude.json) are now handled

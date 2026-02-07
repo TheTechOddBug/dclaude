@@ -172,6 +172,8 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 		SSHForwardMode:          cfg.SSHForwardMode,
 		SSHAllowedKeys:          cfg.SSHAllowedKeys,
 		SSHDir:                  cfg.SSHDir,
+		GitForwardConfig:        cfg.GitForwardConfig,
+		GitConfigPath:           cfg.GitConfigPath,
 		GPGForward:              cfg.GPGForward,
 		GPGAllowedKeyIDs:        cfg.GPGAllowedKeyIDs,
 		GPGDir:                  cfg.GPGDir,

@@ -421,6 +421,30 @@ func LoadConfig(addtVersion, defaultNodeVersion, defaultGoVersion, defaultUvVers
 		cfg.GitHubForwardToken = v == "true"
 	}
 
+	// Git forward config: default (true) -> global -> project -> env
+	cfg.GitForwardConfig = true
+	if globalCfg.Git != nil && globalCfg.Git.ForwardConfig != nil {
+		cfg.GitForwardConfig = *globalCfg.Git.ForwardConfig
+	}
+	if projectCfg.Git != nil && projectCfg.Git.ForwardConfig != nil {
+		cfg.GitForwardConfig = *projectCfg.Git.ForwardConfig
+	}
+	if v := os.Getenv("ADDT_GIT_FORWARD_CONFIG"); v != "" {
+		cfg.GitForwardConfig = v == "true"
+	}
+
+	// Git config path: default ("") -> global -> project -> env
+	cfg.GitConfigPath = ""
+	if globalCfg.Git != nil && globalCfg.Git.ConfigPath != "" {
+		cfg.GitConfigPath = globalCfg.Git.ConfigPath
+	}
+	if projectCfg.Git != nil && projectCfg.Git.ConfigPath != "" {
+		cfg.GitConfigPath = projectCfg.Git.ConfigPath
+	}
+	if v := os.Getenv("ADDT_GIT_CONFIG_PATH"); v != "" {
+		cfg.GitConfigPath = v
+	}
+
 	// GitHub token source: default ("gh_auth") -> global -> project -> env
 	cfg.GitHubTokenSource = "gh_auth"
 	if globalCfg.GitHub != nil && globalCfg.GitHub.TokenSource != "" {
