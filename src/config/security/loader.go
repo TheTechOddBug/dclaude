@@ -48,8 +48,8 @@ func ApplySettings(cfg *Config, settings *Settings) {
 	if settings.DisableIPC != nil {
 		cfg.DisableIPC = *settings.DisableIPC
 	}
-	if settings.TimeLimit > 0 {
-		cfg.TimeLimit = settings.TimeLimit
+	if settings.TimeLimit != nil {
+		cfg.TimeLimit = *settings.TimeLimit
 	}
 	if settings.UserNamespace != "" {
 		cfg.UserNamespace = settings.UserNamespace

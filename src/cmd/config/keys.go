@@ -465,10 +465,9 @@ func GetSecurityValue(sec *security.Settings, key string) string {
 			return fmt.Sprintf("%v", *sec.IsolateSecrets)
 		}
 	case "security.time_limit":
-		if sec.TimeLimit > 0 {
-			return fmt.Sprintf("%d", sec.TimeLimit)
+		if sec.TimeLimit != nil {
+			return fmt.Sprintf("%d", *sec.TimeLimit)
 		}
-		return "0"
 	case "security.tmpfs_home_size":
 		return sec.TmpfsHomeSize
 	case "security.tmpfs_tmp_size":
@@ -667,7 +666,7 @@ func SetSecurityValue(sec *security.Settings, key, value string) {
 	case "security.time_limit":
 		var i int
 		fmt.Sscanf(value, "%d", &i)
-		sec.TimeLimit = i
+		sec.TimeLimit = &i
 	case "security.tmpfs_home_size":
 		sec.TmpfsHomeSize = value
 	case "security.tmpfs_tmp_size":
@@ -806,7 +805,7 @@ func UnsetSecurityValue(sec *security.Settings, key string) {
 	case "security.isolate_secrets":
 		sec.IsolateSecrets = nil
 	case "security.time_limit":
-		sec.TimeLimit = 0
+		sec.TimeLimit = nil
 	case "security.tmpfs_home_size":
 		sec.TmpfsHomeSize = ""
 	case "security.tmpfs_tmp_size":

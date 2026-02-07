@@ -14,7 +14,7 @@ type Settings struct {
 	SeccompProfile  string   `yaml:"seccomp_profile,omitempty"`   // Seccomp profile: "default", "unconfined", or path
 	NetworkMode     string   `yaml:"network_mode,omitempty"`      // Network mode: "bridge", "none", "host" (default: "bridge")
 	DisableIPC      *bool    `yaml:"disable_ipc,omitempty"`       // Disable IPC namespace sharing (default: false)
-	TimeLimit       int      `yaml:"time_limit,omitempty"`        // Auto-kill container after N minutes (default: 0 = disabled)
+	TimeLimit       *int     `yaml:"time_limit,omitempty"`        // Auto-kill container after N minutes (default: 0 = disabled)
 	UserNamespace   string   `yaml:"user_namespace,omitempty"`    // User namespace: "host", "private", or "" (default: "")
 	DisableDevices  *bool    `yaml:"disable_devices,omitempty"`   // Drop MKNOD capability (default: false)
 	MemorySwap      string   `yaml:"memory_swap,omitempty"`       // Memory swap limit: "-1" to disable, or size (default: "")
