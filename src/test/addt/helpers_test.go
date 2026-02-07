@@ -67,6 +67,44 @@ func TestBuildHelper(t *testing.T) {
 	cmd.Execute(testVersion, testNodeVersion, testGoVersion, testUvVersion, testPortRangeStart)
 }
 
+// TestShellSubcommandHelper is invoked as a subprocess by runShellSubcommand.
+// It routes through the "addt shell <ext>" subcommand path, which calls
+// provider.Shell() (sets entrypoint to /bin/bash) rather than provider.Run().
+func TestShellSubcommandHelper(t *testing.T) {
+	ext := os.Getenv("ADDT_TEST_SHELLSUB_EXT")
+	if ext == "" {
+		t.Skip("not invoked as subprocess")
+	}
+
+	// Build os.Args: "addt shell <ext> [args...]"
+	osArgs := []string{"addt", "shell", ext}
+	argsStr := os.Getenv("ADDT_TEST_SHELLSUB_ARGS")
+	if argsStr != "" {
+		osArgs = append(osArgs, strings.Split(argsStr, "\n")...)
+	}
+	os.Args = osArgs
+
+	cmd.Execute(testVersion, testNodeVersion, testGoVersion, testUvVersion, testPortRangeStart)
+}
+
+// runShellSubcommand runs a command via the "addt shell" subcommand path.
+// Unlike runShellCommand (which uses the run path with ADDT_COMMAND=/bin/bash),
+// this goes through HandleShellCommand → runner.Shell → provider.Shell.
+// The first arg is the extension name; the rest are passed as shell args
+// (typically: "-c", "command string").
+func runShellSubcommand(t *testing.T, dir string, ext string, args ...string) (string, error) {
+	t.Helper()
+
+	c := exec.Command(os.Args[0], "-test.run=^TestShellSubcommandHelper$", "-test.v")
+	c.Dir = dir
+	c.Env = append(os.Environ(),
+		"ADDT_TEST_SHELLSUB_EXT="+ext,
+		"ADDT_TEST_SHELLSUB_ARGS="+strings.Join(args, "\n"),
+	)
+	output, err := c.CombinedOutput()
+	return string(output), err
+}
+
 // --- Provider detection ---
 
 // availableProviders returns container providers available on this machine.
