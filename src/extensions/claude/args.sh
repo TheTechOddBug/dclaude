@@ -42,5 +42,5 @@ if [ -n "$ADDT_SYSTEM_PROMPT" ]; then
     ARGS+=(--append-system-prompt "$ADDT_SYSTEM_PROMPT")
 fi
 
-# Output transformed args (one per line for proper handling)
-printf '%s\n' "${ARGS[@]}"
+# Output transformed args (null-delimited to preserve multi-line values)
+printf '%s\0' "${ARGS[@]}"

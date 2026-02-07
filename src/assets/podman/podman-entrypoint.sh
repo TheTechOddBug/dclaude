@@ -247,12 +247,12 @@ done
 if [ -n "$ARGS_SCRIPT" ] && [ -f "$ARGS_SCRIPT" ]; then
     debug_log "Using args.sh: $ARGS_SCRIPT"
     debug_log "Original args: $*"
-    # Run args.sh and read transformed args (one per line)
+    # Run args.sh and read transformed args (null-delimited to handle multi-line values)
     # Use timeout to prevent hangs (5 seconds should be plenty for arg transformation)
     if command -v timeout >/dev/null 2>&1; then
-        mapfile -t TRANSFORMED_ARGS < <(timeout 5 bash "$ARGS_SCRIPT" "$@" 2>&1)
+        mapfile -t -d '' TRANSFORMED_ARGS < <(timeout 5 bash "$ARGS_SCRIPT" "$@")
     else
-        mapfile -t TRANSFORMED_ARGS < <(bash "$ARGS_SCRIPT" "$@" 2>&1)
+        mapfile -t -d '' TRANSFORMED_ARGS < <(bash "$ARGS_SCRIPT" "$@")
     fi
     FINAL_ARGS=("${ADDT_CMD_ARGS[@]}" "${TRANSFORMED_ARGS[@]}")
     debug_log "Transformed args: ${FINAL_ARGS[*]}"
