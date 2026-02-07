@@ -379,6 +379,42 @@ func setDummyAnthropicKey(t *testing.T) func() {
 	}
 }
 
+// TestAliasHelper is invoked as a subprocess by runAliasCommand.
+// It simulates running addt via a symlink alias (e.g., "addt-codex") by setting
+// os.Args[0] to "addt-<alias>" which triggers binary name detection in cmd/root.go.
+func TestAliasHelper(t *testing.T) {
+	alias := os.Getenv("ADDT_TEST_ALIAS_NAME")
+	if alias == "" {
+		t.Skip("not invoked as subprocess")
+	}
+
+	// Set os.Args[0] to "addt-<alias>" to trigger binary name detection
+	osArgs := []string{"addt-" + alias}
+	argsStr := os.Getenv("ADDT_TEST_ALIAS_ARGS")
+	if argsStr != "" {
+		osArgs = append(osArgs, strings.Split(argsStr, "\n")...)
+	}
+	os.Args = osArgs
+
+	cmd.Execute(testVersion, testNodeVersion, testGoVersion, testUvVersion, testPortRangeStart)
+}
+
+// runAliasCommand runs addt as if invoked via a symlink alias (e.g., "addt-codex").
+// The aliasName is the extension name (e.g., "codex"); args are the CLI arguments
+// that follow the binary name.
+func runAliasCommand(t *testing.T, dir string, aliasName string, args ...string) (string, error) {
+	t.Helper()
+
+	c := exec.Command(os.Args[0], "-test.run=^TestAliasHelper$", "-test.v")
+	c.Dir = dir
+	c.Env = append(os.Environ(),
+		"ADDT_TEST_ALIAS_NAME="+aliasName,
+		"ADDT_TEST_ALIAS_ARGS="+strings.Join(args, "\n"),
+	)
+	output, err := c.CombinedOutput()
+	return string(output), err
+}
+
 // ensureAddtImage builds the extension image via TestBuildHelper subprocess.
 func ensureAddtImage(t *testing.T, dir, extension string) {
 	t.Helper()
