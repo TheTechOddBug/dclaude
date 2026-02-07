@@ -17,7 +17,7 @@
 - [x] GIT config (git_config_test.go: 4 tests - default enabled, config via set, config path, completion)
 - [ ] TMUX
 - [ ] OTEL
-- [ ] ENV file
+- [x] ENV file (envfile_test.go: 10 tests - default values, config loaded, config via set, disabled via config, vars loaded, multiple vars, custom file path, disabled no vars, comments and empty lines, missing file no error)
 - [x] NPM install with readonly root (npm_readonly_test.go: 7 tests - default value, config loaded, config via set, npm install with readonly, npm install without readonly, readonly root write fails, tmp writable)
 
 ## Container Lifecycle

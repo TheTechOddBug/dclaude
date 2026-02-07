@@ -1,4 +1,4 @@
-.PHONY: all build clean test help install dist fmt release build-otel build-orchestrator setup
+.PHONY: all build clean test test-addt help install dist fmt release build-otel build-orchestrator setup
 
 # Variables
 BINARY_NAME=addt
@@ -30,6 +30,7 @@ help:
 	@echo "  make install            - Build and install to /usr/local/bin"
 	@echo "  make clean              - Remove build artifacts"
 	@echo "  make test               - Run tests"
+	@echo "  make test-addt          - Run addt integration tests"
 	@echo "  make release            - Create and push a new release (requires VERSION and CHANGELOG.md updated)"
 	@echo "  make setup              - Configure git hooks"
 	@echo "  make help               - Show this help"
@@ -98,6 +99,11 @@ install: build
 test:
 	@echo "Running tests..."
 	@cd $(SRC_DIR) && go test -v ./...
+
+# Run addt integration tests
+test-addt:
+	@echo "Running addt integration tests..."
+	@cd $(SRC_DIR) && go test -tags addt -v -timeout 300s ./test/addt/
 
 # Clean build artifacts
 clean:
