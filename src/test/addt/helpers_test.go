@@ -122,6 +122,34 @@ func TestShellSubcommandHelper(t *testing.T) {
 	cmd.Execute(testVersion, testNodeVersion, testGoVersion, testUvVersion, testPortRangeStart)
 }
 
+// TestContainersSubcommandHelper is invoked as a subprocess by runContainersSubcommand.
+// It routes through the "addt containers <action> [args...]" subcommand path.
+func TestContainersSubcommandHelper(t *testing.T) {
+	argsStr := os.Getenv("ADDT_TEST_CONTAINERS_ARGS")
+	if argsStr == "" {
+		t.Skip("not invoked as subprocess")
+	}
+
+	osArgs := []string{"addt", "containers"}
+	osArgs = append(osArgs, strings.Split(argsStr, "\n")...)
+	os.Args = osArgs
+
+	cmd.Execute(testVersion, testNodeVersion, testGoVersion, testUvVersion, testPortRangeStart)
+}
+
+// runContainersSubcommand runs "addt containers <args...>" via subprocess.
+func runContainersSubcommand(t *testing.T, dir string, args ...string) (string, error) {
+	t.Helper()
+
+	c := exec.Command(os.Args[0], "-test.run=^TestContainersSubcommandHelper$", "-test.v")
+	c.Dir = dir
+	c.Env = append(os.Environ(),
+		"ADDT_TEST_CONTAINERS_ARGS="+strings.Join(args, "\n"),
+	)
+	output, err := c.CombinedOutput()
+	return string(output), err
+}
+
 // runShellSubcommand runs a command via the "addt shell" subcommand path.
 // Unlike runShellCommand (which uses the run path with ADDT_COMMAND=/bin/bash),
 // this goes through HandleShellCommand → runner.Shell → provider.Shell.
