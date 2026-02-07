@@ -645,4 +645,3 @@ func (p *PodmanProvider) addSecuritySettings(podmanArgs []string) []string {
 
 	return podmanArgs
 }
-

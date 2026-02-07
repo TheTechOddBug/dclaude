@@ -18,9 +18,9 @@ import (
 // tmuxSession holds info about a dedicated tmux server started for testing.
 // Uses a separate socket so the user's real tmux is not affected.
 type tmuxSession struct {
-	socketPath string
+	socketPath  string
 	sessionName string
-	tmuxEnv    string // value for TMUX env var
+	tmuxEnv     string // value for TMUX env var
 }
 
 // startTestTmuxServer starts an isolated tmux server with its own socket.
