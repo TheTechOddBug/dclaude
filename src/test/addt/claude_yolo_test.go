@@ -32,7 +32,7 @@ func extractArgsResult(output string) string {
 // Scenario: A user enables yolo mode via project config so that
 // claude receives --dangerously-skip-permissions. The env var
 // ADDT_EXTENSION_CLAUDE_YOLO should be set inside the container.
-func TestYolo_Addt_ConfigSetsEnvVar(t *testing.T) {
+func TestClaudeYolo_Addt_ConfigSetsEnvVar(t *testing.T) {
 	providers := requireProviders(t)
 
 	for _, prov := range providers {
@@ -64,7 +64,7 @@ extensions:
 
 // Scenario: A user does NOT enable yolo mode. The env var
 // ADDT_EXTENSION_CLAUDE_YOLO should not be set inside the container.
-func TestYolo_Addt_NotSetByDefault(t *testing.T) {
+func TestClaudeYolo_Addt_NotSetByDefault(t *testing.T) {
 	providers := requireProviders(t)
 
 	for _, prov := range providers {
@@ -92,7 +92,7 @@ func TestYolo_Addt_NotSetByDefault(t *testing.T) {
 // Scenario: Inside the container, the claude extension's args.sh script
 // transforms --yolo into --dangerously-skip-permissions so that claude
 // receives the correct flag. Verify the transformation works.
-func TestYolo_Addt_ArgsTransformation(t *testing.T) {
+func TestClaudeYolo_Addt_ArgsTransformation(t *testing.T) {
 	providers := requireProviders(t)
 
 	for _, prov := range providers {
@@ -126,7 +126,7 @@ func TestYolo_Addt_ArgsTransformation(t *testing.T) {
 // Scenario: When yolo is enabled via config (env var), args.sh should
 // inject --dangerously-skip-permissions even without --yolo on the command
 // line. This is the config-driven path.
-func TestYolo_Addt_ArgsTransformationViaEnv(t *testing.T) {
+func TestClaudeYolo_Addt_ArgsTransformationViaEnv(t *testing.T) {
 	providers := requireProviders(t)
 
 	for _, prov := range providers {
