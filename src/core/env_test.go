@@ -297,6 +297,56 @@ func TestAddFlagEnvVars_NilExtensionFlagSettings(t *testing.T) {
 	}
 }
 
+func TestAddFlagEnvVars_GlobalYoloFallback(t *testing.T) {
+	env := make(map[string]string)
+	cfg := &provider.Config{
+		Extensions:            "claude",
+		ExtensionFlagSettings: nil,
+	}
+	cfg.Security.Yolo = true
+	args := []string{"do something"} // no --yolo flag
+
+	addFlagEnvVars(env, cfg, args)
+
+	if env["ADDT_EXTENSION_CLAUDE_YOLO"] != "true" {
+		t.Errorf("ADDT_EXTENSION_CLAUDE_YOLO = %q, want 'true' (from global security.yolo)", env["ADDT_EXTENSION_CLAUDE_YOLO"])
+	}
+}
+
+func TestAddFlagEnvVars_PerExtensionOverridesGlobalYolo(t *testing.T) {
+	env := make(map[string]string)
+	cfg := &provider.Config{
+		Extensions: "claude",
+		ExtensionFlagSettings: map[string]map[string]bool{
+			"claude": {"yolo": false}, // per-extension explicitly disables
+		},
+	}
+	cfg.Security.Yolo = true // global enables
+	args := []string{"do something"}
+
+	addFlagEnvVars(env, cfg, args)
+
+	if _, ok := env["ADDT_EXTENSION_CLAUDE_YOLO"]; ok {
+		t.Error("ADDT_EXTENSION_CLAUDE_YOLO should not be set when per-extension explicitly disables yolo")
+	}
+}
+
+func TestAddFlagEnvVars_GlobalYoloFalseNoEffect(t *testing.T) {
+	env := make(map[string]string)
+	cfg := &provider.Config{
+		Extensions:            "claude",
+		ExtensionFlagSettings: nil,
+	}
+	cfg.Security.Yolo = false
+	args := []string{"do something"}
+
+	addFlagEnvVars(env, cfg, args)
+
+	if _, ok := env["ADDT_EXTENSION_CLAUDE_YOLO"]; ok {
+		t.Error("ADDT_EXTENSION_CLAUDE_YOLO should not be set when global security.yolo is false")
+	}
+}
+
 func TestParseEnvVarSpec(t *testing.T) {
 	tests := []struct {
 		spec        string

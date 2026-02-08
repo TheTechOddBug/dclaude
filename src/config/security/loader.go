@@ -72,6 +72,9 @@ func ApplySettings(cfg *Config, settings *Settings) {
 	if settings.AuditLogFile != "" {
 		cfg.AuditLogFile = settings.AuditLogFile
 	}
+	if settings.Yolo != nil {
+		cfg.Yolo = *settings.Yolo
+	}
 }
 
 // ApplyEnvOverrides applies environment variable overrides to a Config
@@ -136,6 +139,9 @@ func ApplyEnvOverrides(cfg *Config) {
 	}
 	if v := os.Getenv("ADDT_SECURITY_AUDIT_LOG_FILE"); v != "" {
 		cfg.AuditLogFile = v
+	}
+	if v := os.Getenv("ADDT_SECURITY_YOLO"); v != "" {
+		cfg.Yolo = v == "true"
 	}
 }
 

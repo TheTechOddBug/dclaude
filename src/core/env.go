@@ -183,15 +183,25 @@ func addFlagEnvVars(env map[string]string, cfg *provider.Config, args []string) 
 				}
 			}
 
-			// If not set by CLI, check config settings
+			// If not set by CLI, check config settings then global fallback
 			if !cliSet {
+				configSet := false
 				if cfg.ExtensionFlagSettings != nil {
 					if flagSettings, ok := cfg.ExtensionFlagSettings[ext.Name]; ok {
-						if val, ok := flagSettings[flagKey]; ok && val {
-							env[flag.EnvVar] = "true"
-							envLogger.Debugf("Flag %s (config) sets %s=true", flag.Flag, flag.EnvVar)
+						if val, ok := flagSettings[flagKey]; ok {
+							configSet = true
+							if val {
+								env[flag.EnvVar] = "true"
+								envLogger.Debugf("Flag %s (config) sets %s=true", flag.Flag, flag.EnvVar)
+							}
 						}
 					}
+				}
+
+				// Fallback: if flag is "yolo" and no per-extension setting, use global security.yolo
+				if !configSet && flagKey == "yolo" && cfg.Security.Yolo {
+					env[flag.EnvVar] = "true"
+					envLogger.Debugf("Flag %s (global security.yolo) sets %s=true", flag.Flag, flag.EnvVar)
 				}
 			}
 		}

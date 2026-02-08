@@ -21,6 +21,7 @@ type Settings struct {
 	IsolateSecrets  *bool    `yaml:"isolate_secrets,omitempty"`   // Isolate secrets from child processes (default: true)
 	AuditLog        *bool    `yaml:"audit_log,omitempty"`         // Enable security audit logging (default: false)
 	AuditLogFile    string   `yaml:"audit_log_file,omitempty"`    // Path to audit log file (default: ~/.addt/audit.log)
+	Yolo            *bool    `yaml:"yolo,omitempty"`              // Enable yolo mode globally for all extensions (default: false)
 }
 
 // Config holds runtime security configuration with defaults applied
@@ -44,6 +45,7 @@ type Config struct {
 	IsolateSecrets  bool     // Isolate secrets from child processes (default: true)
 	AuditLog        bool     // Enable security audit logging (default: false)
 	AuditLogFile    string   // Path to audit log file (default: ~/.addt/audit.log)
+	Yolo            bool     // Enable yolo mode globally for all extensions (default: false)
 }
 
 // DefaultConfig returns a Config with secure defaults applied
@@ -68,5 +70,6 @@ func DefaultConfig() Config {
 		IsolateSecrets:  true,  // Secure by default: isolate secrets from child processes
 		AuditLog:        false, // Disabled by default
 		AuditLogFile:    "",    // Empty = use default ~/.addt/audit.log
+		Yolo:            false, // Disabled by default
 	}
 }

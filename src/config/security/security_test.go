@@ -195,3 +195,59 @@ func TestIsolateSecretsEnvOverride(t *testing.T) {
 		t.Error("IsolateSecrets = false, want true (from env)")
 	}
 }
+
+func TestYoloDefault(t *testing.T) {
+	cfg := DefaultConfig()
+	if cfg.Yolo {
+		t.Error("Yolo = true, want false (default)")
+	}
+}
+
+func TestYoloSettings(t *testing.T) {
+	cfg := DefaultConfig()
+
+	enabled := true
+	settings := &Settings{
+		Yolo: &enabled,
+	}
+
+	ApplySettings(&cfg, settings)
+
+	if !cfg.Yolo {
+		t.Error("Yolo = false, want true (from settings)")
+	}
+}
+
+func TestYoloEnvOverride(t *testing.T) {
+	cfg := DefaultConfig()
+
+	os.Setenv("ADDT_SECURITY_YOLO", "true")
+	defer os.Unsetenv("ADDT_SECURITY_YOLO")
+
+	ApplyEnvOverrides(&cfg)
+
+	if !cfg.Yolo {
+		t.Error("Yolo = false, want true (from env)")
+	}
+}
+
+func TestYoloLoadConfig(t *testing.T) {
+	os.Unsetenv("ADDT_SECURITY_YOLO")
+
+	// Global sets yolo true, project overrides to false
+	globalYolo := true
+	globalSettings := &Settings{
+		Yolo: &globalYolo,
+	}
+
+	projectYolo := false
+	projectSettings := &Settings{
+		Yolo: &projectYolo,
+	}
+
+	cfg := LoadConfig(globalSettings, projectSettings)
+
+	if cfg.Yolo {
+		t.Error("Yolo = true, want false (project overrides global)")
+	}
+}

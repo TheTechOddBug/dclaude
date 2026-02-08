@@ -23,6 +23,9 @@ func DisplayStatus(p provider.Provider, cfg *provider.Config, envName string) {
 	}
 
 	fmt.Printf("⚠ addt:%s is experimental - things are not perfect yet\n", extension)
+	if cfg.Security.Yolo {
+		fmt.Printf("⚠ security.yolo is enabled - extensions will run with --yolo flag\n")
+	}
 	fmt.Printf("✓ %s\n", status)
 }
 

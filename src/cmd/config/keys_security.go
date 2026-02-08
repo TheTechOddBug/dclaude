@@ -27,6 +27,7 @@ func GetSecurityKeys() []KeyInfo {
 		{Key: "security.ulimit_nofile", Description: "File descriptor limit (soft:hard)", Type: "string", EnvVar: "ADDT_SECURITY_ULIMIT_NOFILE"},
 		{Key: "security.ulimit_nproc", Description: "Process limit (soft:hard)", Type: "string", EnvVar: "ADDT_SECURITY_ULIMIT_NPROC"},
 		{Key: "security.user_namespace", Description: "User namespace: host, private", Type: "string", EnvVar: "ADDT_SECURITY_USER_NAMESPACE"},
+		{Key: "security.yolo", Description: "Enable yolo mode globally for all extensions (default: false)", Type: "bool", EnvVar: "ADDT_SECURITY_YOLO"},
 	}
 }
 
@@ -84,6 +85,10 @@ func GetSecurityValue(sec *security.Settings, key string) string {
 		return sec.UlimitNproc
 	case "security.user_namespace":
 		return sec.UserNamespace
+	case "security.yolo":
+		if sec.Yolo != nil {
+			return fmt.Sprintf("%v", *sec.Yolo)
+		}
 	}
 	return ""
 }
@@ -142,6 +147,9 @@ func SetSecurityValue(sec *security.Settings, key, value string) {
 		sec.UlimitNproc = value
 	case "security.user_namespace":
 		sec.UserNamespace = value
+	case "security.yolo":
+		b := value == "true"
+		sec.Yolo = &b
 	}
 }
 
@@ -182,5 +190,7 @@ func UnsetSecurityValue(sec *security.Settings, key string) {
 		sec.UlimitNproc = ""
 	case "security.user_namespace":
 		sec.UserNamespace = ""
+	case "security.yolo":
+		sec.Yolo = nil
 	}
 }
