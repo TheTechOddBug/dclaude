@@ -6,7 +6,7 @@ entrypoint:
 default_version: latest
 env_vars:
   - TESSL_TOKEN
-auto_mount: true
+auto_mount: false
 dependencies:
   - claude
 mounts:
