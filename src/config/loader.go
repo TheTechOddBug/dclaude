@@ -18,10 +18,13 @@ func LoadConfig(addtVersion, defaultNodeVersion, defaultGoVersion, defaultUvVers
 
 	// Start with defaults, then apply global config, then project config, then env vars
 	cfg := &Config{
-		AddtVersion:           addtVersion,
-		ExtensionVersions:     make(map[string]string),
-		ExtensionAutomount:    make(map[string]bool),
-		ExtensionFlagSettings: make(map[string]map[string]bool),
+		AddtVersion:                 addtVersion,
+		ExtensionVersions:           make(map[string]string),
+		ExtensionAutomount:          make(map[string]bool),
+		ExtensionAutoTrustWorkspace: make(map[string]bool),
+		ExtensionAutoLogin:          make(map[string]bool),
+		ExtensionLoginMethod:        make(map[string]string),
+		ExtensionFlagSettings:       make(map[string]map[string]bool),
 	}
 
 	// Node version: default -> global -> project -> env
@@ -567,6 +570,15 @@ func LoadConfig(addtVersion, defaultNodeVersion, defaultGoVersion, defaultUvVers
 			if extCfg.Automount != nil {
 				cfg.ExtensionAutomount[extName] = *extCfg.Automount
 			}
+			if extCfg.AutoTrustWorkspace != nil {
+				cfg.ExtensionAutoTrustWorkspace[extName] = *extCfg.AutoTrustWorkspace
+			}
+			if extCfg.AutoLogin != nil {
+				cfg.ExtensionAutoLogin[extName] = *extCfg.AutoLogin
+			}
+			if extCfg.LoginMethod != "" {
+				cfg.ExtensionLoginMethod[extName] = extCfg.LoginMethod
+			}
 		}
 	}
 	if projectCfg.Extensions != nil {
@@ -576,6 +588,15 @@ func LoadConfig(addtVersion, defaultNodeVersion, defaultGoVersion, defaultUvVers
 			}
 			if extCfg.Automount != nil {
 				cfg.ExtensionAutomount[extName] = *extCfg.Automount
+			}
+			if extCfg.AutoTrustWorkspace != nil {
+				cfg.ExtensionAutoTrustWorkspace[extName] = *extCfg.AutoTrustWorkspace
+			}
+			if extCfg.AutoLogin != nil {
+				cfg.ExtensionAutoLogin[extName] = *extCfg.AutoLogin
+			}
+			if extCfg.LoginMethod != "" {
+				cfg.ExtensionLoginMethod[extName] = extCfg.LoginMethod
 			}
 		}
 	}
@@ -625,6 +646,30 @@ func LoadConfig(addtVersion, defaultNodeVersion, defaultGoVersion, defaultUvVers
 			extName = strings.TrimSuffix(extName, "_AUTOMOUNT")
 			extName = strings.ToLower(extName)
 			cfg.ExtensionAutomount[extName] = value != "false"
+		}
+
+		// Check for ADDT_<EXT>_AUTO_TRUST_WORKSPACE pattern
+		if strings.HasPrefix(key, "ADDT_") && strings.HasSuffix(key, "_AUTO_TRUST_WORKSPACE") {
+			extName := strings.TrimPrefix(key, "ADDT_")
+			extName = strings.TrimSuffix(extName, "_AUTO_TRUST_WORKSPACE")
+			extName = strings.ToLower(extName)
+			cfg.ExtensionAutoTrustWorkspace[extName] = value == "true"
+		}
+
+		// Check for ADDT_<EXT>_AUTO_LOGIN pattern
+		if strings.HasPrefix(key, "ADDT_") && strings.HasSuffix(key, "_AUTO_LOGIN") {
+			extName := strings.TrimPrefix(key, "ADDT_")
+			extName = strings.TrimSuffix(extName, "_AUTO_LOGIN")
+			extName = strings.ToLower(extName)
+			cfg.ExtensionAutoLogin[extName] = value == "true"
+		}
+
+		// Check for ADDT_<EXT>_LOGIN_METHOD pattern
+		if strings.HasPrefix(key, "ADDT_") && strings.HasSuffix(key, "_LOGIN_METHOD") {
+			extName := strings.TrimPrefix(key, "ADDT_")
+			extName = strings.TrimSuffix(extName, "_LOGIN_METHOD")
+			extName = strings.ToLower(extName)
+			cfg.ExtensionLoginMethod[extName] = value
 		}
 	}
 

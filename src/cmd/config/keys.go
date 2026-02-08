@@ -64,6 +64,9 @@ func GetExtensionKeys() []KeyInfo {
 	return []KeyInfo{
 		{Key: "version", Description: "Extension version", Type: "string", EnvVar: "ADDT_%s_VERSION"},
 		{Key: "automount", Description: "Auto-mount extension config directories", Type: "bool", EnvVar: "ADDT_%s_AUTOMOUNT"},
+		{Key: "auto_trust_workspace", Description: "Trust the /workspace directory on first launch", Type: "bool", EnvVar: "ADDT_%s_AUTO_TRUST_WORKSPACE"},
+		{Key: "auto_login", Description: "Automatically handle authentication on first launch", Type: "bool", EnvVar: "ADDT_%s_AUTO_LOGIN"},
+		{Key: "login_method", Description: "Authentication method: native, env, auto (default: auto)", Type: "string", EnvVar: "ADDT_%s_LOGIN_METHOD"},
 	}
 }
 

@@ -24,7 +24,10 @@ echo "Setup [claude]: Creating $CLAUDE_JSON"
 BYPASS="${ADDT_EXTENSION_CLAUDE_YOLO:-false}"
 echo "Setup [claude]: bypassPermissionsModeAccepted=$BYPASS"
 
-cat > "$CLAUDE_JSON" << EOF
+# Build the base config JSON
+if [ "$ADDT_EXT_AUTO_TRUST_WORKSPACE" = "true" ]; then
+    echo "Setup [claude]: Auto-trusting /workspace directory"
+    cat > "$CLAUDE_JSON" << EOF
 {
   "hasCompletedOnboarding": true,
   "hasTrustDialogAccepted": true,
@@ -38,6 +41,15 @@ cat > "$CLAUDE_JSON" << EOF
   }
 }
 EOF
+else
+    cat > "$CLAUDE_JSON" << EOF
+{
+  "hasCompletedOnboarding": true,
+  "hasTrustDialogAccepted": true,
+  "bypassPermissionsModeAccepted": $BYPASS
+}
+EOF
+fi
 
 # Create internal config (~/.claude/claude.json) - hooks trust dialog
 echo "Setup [claude]: Creating $CLAUDE_INTERNAL_JSON (trusting hooks)"
@@ -48,39 +60,41 @@ cat > "$CLAUDE_INTERNAL_JSON" << 'EOF'
 }
 EOF
 
-# If ANTHROPIC_API_KEY is set, configure Claude Code for headless operation
-if [ -n "$ANTHROPIC_API_KEY" ]; then
-    # Extract last 20 characters of API key for trust configuration
-    API_KEY_LAST_20="${ANTHROPIC_API_KEY: -20}"
+# If auto_login is enabled, configure authentication based on login_method
+# login_method: env = API key, native = OAuth, auto = try env first then native
+if [ "$ADDT_EXT_AUTO_LOGIN" = "true" ]; then
+    method="${ADDT_EXT_LOGIN_METHOD:-auto}"
 
-    # Create user config (~/.claude.json) - onboarding, API key trust, and project trust
-    echo "Setup [claude]: Found ANTHROPIC_API_KEY, configuring for API key authentication"
-    # Insert customApiKeyResponses into existing $CLAUDE_JSON (don't overwrite, merge)
-    if command -v jq >/dev/null 2>&1; then
-        # Use jq to merge customApiKeyResponses
-        tmpfile="$(mktemp)"
-        jq --arg ak "$API_KEY_LAST_20" '
-            .customApiKeyResponses = {
-                approved: [$ak],
-                rejected: []
-            }
-        ' "$CLAUDE_JSON" > "$tmpfile" && mv "$tmpfile" "$CLAUDE_JSON"
-    else
-        echo "Warning: jq not found, cannot insert API key into $CLAUDE_JSON"
-        exit 1
+    # env or auto: configure API key authentication if ANTHROPIC_API_KEY is available
+    if [ "$method" = "env" ] || [ "$method" = "auto" ]; then
+        if [ -n "$ANTHROPIC_API_KEY" ]; then
+            API_KEY_LAST_20="${ANTHROPIC_API_KEY: -20}"
+            echo "Setup [claude]: Found ANTHROPIC_API_KEY, configuring for API key authentication"
+            if command -v jq >/dev/null 2>&1; then
+                tmpfile="$(mktemp)"
+                jq --arg ak "$API_KEY_LAST_20" '
+                    .customApiKeyResponses = {
+                        approved: [$ak],
+                        rejected: []
+                    }
+                ' "$CLAUDE_JSON" > "$tmpfile" && mv "$tmpfile" "$CLAUDE_JSON"
+            else
+                echo "Warning: jq not found, cannot insert API key into $CLAUDE_JSON"
+                exit 1
+            fi
+            echo "Setup [claude]: Configured for API key authentication"
+        fi
     fi
-EOF
 
-    echo "Setup [claude]: Configured for API key authentication"
-fi
-
-# Next setup Claude credentials.json if it exists
-if [ -n "$CLAUDE_OAUTH_CREDENTIALS" ]; then
-    echo "Setup [claude]: Found $CLAUDE_CREDENTIALS_FILE, configuring for OAuth authentication"
-    # base64 decode the Claude credentials.json
-    echo "$CLAUDE_OAUTH_CREDENTIALS" | base64 -d > "$CLAUDE_CREDENTIALS_FILE"
-    echo "Setup [claude]: Decoded $CLAUDE_CREDENTIALS_FILE"
-    echo "Setup [claude]: Completed OAuth authentication setup"
+    # native or auto: configure OAuth credentials if available
+    if [ "$method" = "native" ] || [ "$method" = "auto" ]; then
+        if [ -n "$CLAUDE_OAUTH_CREDENTIALS" ]; then
+            echo "Setup [claude]: Found OAuth credentials, configuring for OAuth authentication"
+            echo "$CLAUDE_OAUTH_CREDENTIALS" | base64 -d > "$CLAUDE_CREDENTIALS_FILE"
+            echo "Setup [claude]: Decoded $CLAUDE_CREDENTIALS_FILE"
+            echo "Setup [claude]: Completed OAuth authentication setup"
+        fi
+    fi
 fi
 
 echo "Setup [claude]: Completed Claude Code environment setup"

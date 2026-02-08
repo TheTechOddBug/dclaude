@@ -7,11 +7,14 @@ import (
 
 // ExtensionSettings holds per-extension configuration settings
 type ExtensionSettings struct {
-	Version         string           `yaml:"version,omitempty"`
-	Automount       *bool            `yaml:"automount,omitempty"`
-	FirewallAllowed []string         `yaml:"firewall_allowed,omitempty"`
-	FirewallDenied  []string         `yaml:"firewall_denied,omitempty"`
-	Flags           map[string]*bool `yaml:"flags,omitempty"`
+	Version             string           `yaml:"version,omitempty"`
+	Automount           *bool            `yaml:"automount,omitempty"`
+	AutoTrustWorkspace  *bool            `yaml:"auto_trust_workspace,omitempty"`
+	AutoLogin           *bool            `yaml:"auto_login,omitempty"`
+	LoginMethod         string           `yaml:"login_method,omitempty"`
+	FirewallAllowed     []string         `yaml:"firewall_allowed,omitempty"`
+	FirewallDenied      []string         `yaml:"firewall_denied,omitempty"`
+	Flags               map[string]*bool `yaml:"flags,omitempty"`
 }
 
 // DindSettings holds Docker-in-Docker configuration
@@ -190,9 +193,12 @@ type Config struct {
 	Provider                 string                     // Provider type: docker or daytona
 	Extensions               string                     // Comma-separated list of extensions to install (e.g., "claude,codex")
 	Command                  string                     // Command to run instead of claude (e.g., "gt" for gastown)
-	ExtensionVersions        map[string]string          // Per-extension versions (e.g., {"claude": "1.0.5", "codex": "latest"})
-	ExtensionAutomount       map[string]bool            // Per-extension automount control (e.g., {"claude": true, "codex": false})
-	ExtensionFlagSettings    map[string]map[string]bool // Per-extension flag settings from config (e.g., {"claude": {"yolo": true}})
+	ExtensionVersions          map[string]string          // Per-extension versions (e.g., {"claude": "1.0.5", "codex": "latest"})
+	ExtensionAutomount         map[string]bool            // Per-extension automount control (e.g., {"claude": true, "codex": false})
+	ExtensionAutoTrustWorkspace map[string]bool           // Per-extension workspace trust override
+	ExtensionAutoLogin         map[string]bool            // Per-extension auto-login override
+	ExtensionLoginMethod       map[string]string          // Per-extension login method override (native, env, auto)
+	ExtensionFlagSettings      map[string]map[string]bool // Per-extension flag settings from config (e.g., {"claude": {"yolo": true}})
 	ContainerCPUs            string                     // Container CPU limit (e.g., "2", "0.5", "1.5")
 	ContainerMemory          string                     // Container memory limit (e.g., "512m", "2g", "4gb")
 

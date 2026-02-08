@@ -395,20 +395,24 @@ echo "Extensions: Writing metadata to $METADATA_FILE"
         description=$(yaml_get "$config" "description")
         entrypoint=$(yaml_get_entrypoint_json "$config")
         auto_mount=$(yaml_get "$config" "auto_mount")
+        auto_trust_workspace=$(yaml_get "$config" "auto_trust_workspace")
+        auto_login=$(yaml_get "$config" "auto_login")
+        login_method=$(yaml_get "$config" "login_method")
         mounts=$(yaml_get_mounts_json "$config")
         flags=$(yaml_get_flags_json "$config")
         env_vars=$(yaml_get_env_vars_json "$config")
 
         [ "$first" = true ] && first=false || echo ","
-        # Build JSON with optional auto_mount field
+        # Build JSON — start with required fields
         # Note: entrypoint is already JSON array format
-        if [ -n "$auto_mount" ]; then
-            printf '"%s":{"name":"%s","description":"%s","entrypoint":%s,"auto_mount":%s,"mounts":%s,"flags":%s,"env_vars":%s}' \
-                "$ext" "$name" "$description" "$entrypoint" "$auto_mount" "$mounts" "$flags" "$env_vars"
-        else
-            printf '"%s":{"name":"%s","description":"%s","entrypoint":%s,"mounts":%s,"flags":%s,"env_vars":%s}' \
-                "$ext" "$name" "$description" "$entrypoint" "$mounts" "$flags" "$env_vars"
-        fi
+        printf '"%s":{"name":"%s","description":"%s","entrypoint":%s' \
+            "$ext" "$name" "$description" "$entrypoint"
+        # Add optional fields
+        [ -n "$auto_mount" ] && printf ',"auto_mount":%s' "$auto_mount"
+        [ -n "$auto_trust_workspace" ] && printf ',"auto_trust_workspace":%s' "$auto_trust_workspace"
+        [ -n "$auto_login" ] && printf ',"auto_login":%s' "$auto_login"
+        [ -n "$login_method" ] && printf ',"login_method":"%s"' "$login_method"
+        printf ',"mounts":%s,"flags":%s,"env_vars":%s}' "$mounts" "$flags" "$env_vars"
     done
     echo '}}'
 } > "$METADATA_FILE"

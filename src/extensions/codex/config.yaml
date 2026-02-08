@@ -4,6 +4,9 @@ entrypoint: codex
 default_version: latest
 dependencies: []
 auto_mount: false
+auto_trust_workspace: false
+auto_login: true
+login_method: auto
 env_vars:
   - OPENAI_API_KEY
 mounts:

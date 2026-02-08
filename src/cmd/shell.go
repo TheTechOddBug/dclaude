@@ -50,8 +50,11 @@ func HandleShellCommand(args []string, version, defaultNodeVersion, defaultGoVer
 	providerCfg := &provider.Config{
 		AddtVersion:             cfg.AddtVersion,
 		ExtensionVersions:       cfg.ExtensionVersions,
-		ExtensionAutomount:      cfg.ExtensionAutomount,
-		ExtensionFlagSettings:   cfg.ExtensionFlagSettings,
+		ExtensionAutomount:          cfg.ExtensionAutomount,
+		ExtensionAutoTrustWorkspace: cfg.ExtensionAutoTrustWorkspace,
+		ExtensionAutoLogin:          cfg.ExtensionAutoLogin,
+		ExtensionLoginMethod:        cfg.ExtensionLoginMethod,
+		ExtensionFlagSettings:       cfg.ExtensionFlagSettings,
 		NodeVersion:             cfg.NodeVersion,
 		GoVersion:               cfg.GoVersion,
 		UvVersion:               cfg.UvVersion,

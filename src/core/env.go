@@ -22,6 +22,9 @@ func BuildEnvironment(p provider.Provider, cfg *provider.Config) map[string]stri
 	// Add extension-required environment variables
 	addExtensionEnvVars(env, p, cfg)
 
+	// Add per-extension config overrides (auto_trust_workspace, auto_login)
+	addExtensionConfigEnvVars(env, cfg)
+
 	// Add user-configured environment variables
 	addUserEnvVars(env, cfg)
 
@@ -242,6 +245,32 @@ func addGitHubScopeEnvVars(env map[string]string, cfg *provider.Config) {
 	}
 	if len(cfg.GitHubScopeRepos) > 0 {
 		env["ADDT_GITHUB_SCOPE_REPOS"] = strings.Join(cfg.GitHubScopeRepos, ",")
+	}
+}
+
+// addExtensionConfigEnvVars passes per-extension config overrides to the container
+// These override defaults from extensions.json inside the container
+func addExtensionConfigEnvVars(env map[string]string, cfg *provider.Config) {
+	extNames := getActiveExtensionNames(cfg)
+
+	for _, extName := range extNames {
+		extName = strings.TrimSpace(extName)
+		extUpper := strings.ToUpper(strings.ReplaceAll(extName, "-", "_"))
+
+		// Pass auto_trust_workspace override
+		if val, ok := cfg.ExtensionAutoTrustWorkspace[extName]; ok {
+			env[fmt.Sprintf("ADDT_%s_AUTO_TRUST_WORKSPACE", extUpper)] = fmt.Sprintf("%v", val)
+		}
+
+		// Pass auto_login override
+		if val, ok := cfg.ExtensionAutoLogin[extName]; ok {
+			env[fmt.Sprintf("ADDT_%s_AUTO_LOGIN", extUpper)] = fmt.Sprintf("%v", val)
+		}
+
+		// Pass login_method override
+		if val, ok := cfg.ExtensionLoginMethod[extName]; ok {
+			env[fmt.Sprintf("ADDT_%s_LOGIN_METHOD", extUpper)] = val
+		}
 	}
 }
 

@@ -69,6 +69,16 @@ func listExtension(extName string, useGlobal, verbose bool) {
 				if extCfg.Automount != nil {
 					configValue = fmt.Sprintf("%v", *extCfg.Automount)
 				}
+			case "auto_trust_workspace":
+				if extCfg.AutoTrustWorkspace != nil {
+					configValue = fmt.Sprintf("%v", *extCfg.AutoTrustWorkspace)
+				}
+			case "auto_login":
+				if extCfg.AutoLogin != nil {
+					configValue = fmt.Sprintf("%v", *extCfg.AutoLogin)
+				}
+			case "login_method":
+				configValue = extCfg.LoginMethod
 			default:
 				// Check flag keys
 				if IsFlagKey(k.Key, extName) && extCfg.Flags != nil {
@@ -86,6 +96,16 @@ func listExtension(extName string, useGlobal, verbose bool) {
 				defaultValue = extDefaults.DefaultVersion
 			case "automount":
 				defaultValue = fmt.Sprintf("%v", extDefaults.AutoMount)
+			case "auto_trust_workspace":
+				defaultValue = fmt.Sprintf("%v", extDefaults.AutoTrustWorkspace)
+			case "auto_login":
+				defaultValue = fmt.Sprintf("%v", extDefaults.AutoLogin)
+			case "login_method":
+				if extDefaults.LoginMethod != "" {
+					defaultValue = extDefaults.LoginMethod
+				} else {
+					defaultValue = "auto"
+				}
 			default:
 				// Flag keys default to "false"
 				if IsFlagKey(k.Key, extName) {
@@ -165,6 +185,16 @@ func getExtension(extName, key string, useGlobal bool) {
 		if extCfg.Automount != nil {
 			val = fmt.Sprintf("%v", *extCfg.Automount)
 		}
+	case "auto_trust_workspace":
+		if extCfg.AutoTrustWorkspace != nil {
+			val = fmt.Sprintf("%v", *extCfg.AutoTrustWorkspace)
+		}
+	case "auto_login":
+		if extCfg.AutoLogin != nil {
+			val = fmt.Sprintf("%v", *extCfg.AutoLogin)
+		}
+	case "login_method":
+		val = extCfg.LoginMethod
 	default:
 		// Check flag keys
 		if IsFlagKey(key, extName) && extCfg.Flags != nil {
@@ -188,11 +218,20 @@ func setExtension(extName, key, value string, useGlobal bool) {
 		os.Exit(1)
 	}
 
-	// Validate bool values for automount and flag keys
-	if key == "automount" || IsFlagKey(key, extName) {
+	// Validate bool values for automount, auto_trust_workspace, auto_login, and flag keys
+	if key == "automount" || key == "auto_trust_workspace" || key == "auto_login" || IsFlagKey(key, extName) {
 		value = strings.ToLower(value)
 		if value != "true" && value != "false" {
 			fmt.Printf("Invalid value for %s: must be 'true' or 'false'\n", key)
+			os.Exit(1)
+		}
+	}
+
+	// Validate login_method values
+	if key == "login_method" {
+		value = strings.ToLower(value)
+		if value != "native" && value != "env" && value != "auto" {
+			fmt.Printf("Invalid value for %s: must be 'native', 'env', or 'auto'\n", key)
 			os.Exit(1)
 		}
 	}
@@ -226,6 +265,14 @@ func setExtension(extName, key, value string, useGlobal bool) {
 	case "automount":
 		b := value == "true"
 		extCfg.Automount = &b
+	case "auto_trust_workspace":
+		b := value == "true"
+		extCfg.AutoTrustWorkspace = &b
+	case "auto_login":
+		b := value == "true"
+		extCfg.AutoLogin = &b
+	case "login_method":
+		extCfg.LoginMethod = value
 	default:
 		// Handle flag keys
 		if IsFlagKey(key, extName) {
@@ -288,6 +335,12 @@ func unsetExtension(extName, key string, useGlobal bool) {
 		extCfg.Version = ""
 	case "automount":
 		extCfg.Automount = nil
+	case "auto_trust_workspace":
+		extCfg.AutoTrustWorkspace = nil
+	case "auto_login":
+		extCfg.AutoLogin = nil
+	case "login_method":
+		extCfg.LoginMethod = ""
 	default:
 		// Handle flag keys
 		if IsFlagKey(key, extName) && extCfg.Flags != nil {
@@ -299,7 +352,7 @@ func unsetExtension(extName, key string, useGlobal bool) {
 	}
 
 	// Clean up empty extension config
-	if extCfg.Version == "" && extCfg.Automount == nil && len(extCfg.Flags) == 0 {
+	if extCfg.Version == "" && extCfg.Automount == nil && extCfg.AutoTrustWorkspace == nil && extCfg.AutoLogin == nil && extCfg.LoginMethod == "" && len(extCfg.Flags) == 0 {
 		delete(cfg.Extensions, extName)
 	}
 
