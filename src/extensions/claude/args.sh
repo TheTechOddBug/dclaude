@@ -22,9 +22,9 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# If ADDT_EXTENSION_CLAUDE_YOLO is set via config/env and --dangerously-skip-permissions
-# wasn't already added by a --yolo CLI flag, inject it now
-if [ "${ADDT_EXTENSION_CLAUDE_YOLO}" = "true" ]; then
+# If ADDT_EXTENSION_CLAUDE_YOLO or global ADDT_SECURITY_YOLO is set via config/env
+# and --dangerously-skip-permissions wasn't already added by a --yolo CLI flag, inject it now
+if [ "${ADDT_EXTENSION_CLAUDE_YOLO}" = "true" ] || [ "${ADDT_SECURITY_YOLO}" = "true" ]; then
     already_set=false
     for arg in "${ARGS[@]}"; do
         if [ "$arg" = "--dangerously-skip-permissions" ]; then

@@ -18,9 +18,9 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# If ADDT_EXTENSION_CODEX_YOLO is set via config/env and --full-auto
-# wasn't already added by a --yolo CLI flag, inject it now
-if [ "${ADDT_EXTENSION_CODEX_YOLO}" = "true" ]; then
+# If ADDT_EXTENSION_CODEX_YOLO or global ADDT_SECURITY_YOLO is set via config/env
+# and --full-auto wasn't already added by a --yolo CLI flag, inject it now
+if [ "${ADDT_EXTENSION_CODEX_YOLO}" = "true" ] || [ "${ADDT_SECURITY_YOLO}" = "true" ]; then
     already_set=false
     for arg in "${ARGS[@]}"; do
         if [ "$arg" = "--full-auto" ]; then

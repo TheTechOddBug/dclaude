@@ -52,6 +52,11 @@ func BuildEnvironment(p provider.Provider, cfg *provider.Config) map[string]stri
 	// Add OpenTelemetry configuration
 	addOtelEnvVars(env, cfg)
 
+	// Pass global security.yolo to container so args.sh scripts can use it as fallback
+	if cfg.Security.Yolo {
+		env["ADDT_SECURITY_YOLO"] = "true"
+	}
+
 	return env
 }
 
