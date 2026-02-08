@@ -144,9 +144,14 @@ if [ -f /run/secrets/.secrets ]; then
     PERMISSIONS=$(stat -c '%a' /run/secrets/.secrets)
     debug_log "Secrets file permissions: $PERMISSIONS"
 
-    # Delete the secrets file immediately after parsing (ownership fixed by root phase)
+    # Overwrite secrets file with random data before deleting to prevent recovery
+    if [ -f /run/secrets/.secrets ]; then
+        filesize=$(stat -c %s /run/secrets/.secrets 2>/dev/null || stat -f %z /run/secrets/.secrets 2>/dev/null || echo 256)
+        dd if=/dev/urandom of=/run/secrets/.secrets bs="$filesize" count=1 conv=notrunc 2>/dev/null
+        sync
+    fi
     rm -f /run/secrets/.secrets
-    debug_log "Secrets loaded and file removed"
+    debug_log "Secrets loaded, scrubbed, and file removed"
 fi
 
 # Validate nested Podman if in DinD mode (Podman-in-Podman)
@@ -188,11 +193,22 @@ if [ -f "$EXTENSIONS_JSON" ] && [ ! -f "$SETUP_MARKER" ]; then
 fi
 
 # Clear credential env vars after setup so they don't leak into shell sessions
+# Overwrite with random data before unsetting to prevent recovery
+# from /proc/*/environ or memory dumps
+# Inspired by: https://github.com/IngmarKrusch/claude-docker
 if [ -n "$ADDT_CREDENTIAL_VARS" ]; then
     IFS=',' read -ra CRED_VARS <<< "$ADDT_CREDENTIAL_VARS"
     for var in "${CRED_VARS[@]}"; do
+        if [ -n "${!var+x}" ]; then
+            eval "val_len=\${#$var}"
+            if [ "$val_len" -gt 0 ]; then
+                random_data=$(head -c "$val_len" /dev/urandom | base64 | head -c "$val_len")
+                export "$var=$random_data"
+            fi
+        fi
         unset "$var" 2>/dev/null || true
     done
+    export ADDT_CREDENTIAL_VARS="$(head -c ${#ADDT_CREDENTIAL_VARS} /dev/urandom | base64 | head -c ${#ADDT_CREDENTIAL_VARS})"
     unset ADDT_CREDENTIAL_VARS
 fi
 

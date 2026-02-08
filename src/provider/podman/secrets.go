@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/jedi4ever/addt/util"
 )
 
 // prepareSecretsJSON collects secret environment variables and returns them as JSON
@@ -58,7 +60,7 @@ func (p *PodmanProvider) copySecretsToContainer(containerName, secretsJSON strin
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 	tmpPath := tmpFile.Name()
-	defer os.Remove(tmpPath)
+	defer util.ScrubAndRemove(tmpPath)
 
 	if _, err := tmpFile.WriteString(secretsJSON); err != nil {
 		tmpFile.Close()

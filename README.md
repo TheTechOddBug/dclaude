@@ -528,6 +528,8 @@ Containers run with security defaults enabled:
 | `memory_swap` | "" | Memory swap limit: "-1" to disable swap |
 | `isolate_secrets` | false | Isolate secrets from child processes via tmpfs |
 
+**Credential scrubbing**: Credential environment variables (e.g., API keys from credential scripts) are overwritten with random data before being unset inside the container. This prevents recovery from `/proc/*/environ` snapshots or process memory dumps. Similarly, the secrets file (`/run/secrets/.secrets`) is overwritten with random data before deletion, and host-side temporary files used during `docker cp`/`podman cp` are scrubbed before removal.
+
 Configure in `~/.addt/config.yaml`:
 ```yaml
 security:
@@ -846,6 +848,8 @@ See [docs/README-development.md](docs/README-development.md) for development set
 ## Credits
 
 Network firewall inspired by [claude-clamp](https://github.com/Richargh/claude-clamp).
+
+Credential scrubbing (overwriting secrets with random data before unsetting/deleting) inspired by [IngmarKrusch/claude-docker](https://github.com/IngmarKrusch/claude-docker).
 
 ## License
 

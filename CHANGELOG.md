@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Credential scrubbing**: Credential env vars are overwritten with random data before unsetting inside containers, preventing recovery from `/proc/*/environ` or memory dumps. Secrets files are similarly scrubbed before deletion. Host-side temp files used during `docker cp`/`podman cp` are scrubbed before removal. Inspired by [IngmarKrusch/claude-docker](https://github.com/IngmarKrusch/claude-docker).
+
 ## [0.0.10] - 2026-02-07
 
 ### Added

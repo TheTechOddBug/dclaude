@@ -1,0 +1,5 @@
+name: debug-creds
+description: Debug extension with credential script for testing scrub behavior
+entrypoint: /bin/bash
+default_version: latest
+credential_script: credentials.sh

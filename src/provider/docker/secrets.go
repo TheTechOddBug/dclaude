@@ -61,7 +61,7 @@ func (p *DockerProvider) copySecretsToContainer(containerName, secretsJSON strin
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 	tmpPath := tmpFile.Name()
-	defer os.Remove(tmpPath)
+	defer util.ScrubAndRemove(tmpPath)
 
 	if _, err := tmpFile.WriteString(secretsJSON); err != nil {
 		tmpFile.Close()
@@ -91,7 +91,7 @@ func copySecretsToContainerPodman(containerName, secretsJSON string) error {
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 	tmpPath := tmpFile.Name()
-	defer os.Remove(tmpPath)
+	defer util.ScrubAndRemove(tmpPath)
 
 	if _, err := tmpFile.WriteString(secretsJSON); err != nil {
 		tmpFile.Close()
