@@ -1,0 +1,548 @@
+keys:
+  # Root-level keys (1-segment path on GlobalConfig)
+  - key: env_file_load
+    description: "Load .env file (default: true)"
+    type: bool
+    env_var: ADDT_ENV_FILE_LOAD
+    default: "true"
+    namespace: general
+
+  - key: env_file
+    description: "Path to .env file (default: .env)"
+    type: string
+    env_var: ADDT_ENV_FILE
+    default: ".env"
+    namespace: general
+
+  - key: go_version
+    description: "Go version"
+    type: string
+    env_var: ADDT_GO_VERSION
+    default: "latest"
+    namespace: general
+
+  - key: node_version
+    description: "Node.js version"
+    type: string
+    env_var: ADDT_NODE_VERSION
+    default: "22"
+    namespace: general
+
+  - key: persistent
+    description: "Enable persistent container mode"
+    type: bool
+    env_var: ADDT_PERSISTENT
+    default: "false"
+    namespace: general
+
+  - key: history_persist
+    description: "Persist shell history between sessions (default: false)"
+    type: bool
+    env_var: ADDT_HISTORY_PERSIST
+    default: "false"
+    namespace: general
+
+  - key: tmux_forward
+    description: "Forward tmux socket to container (default: false)"
+    type: bool
+    env_var: ADDT_TMUX_FORWARD
+    default: "false"
+    namespace: general
+
+  - key: uv_version
+    description: "UV Python package manager version"
+    type: string
+    env_var: ADDT_UV_VERSION
+    default: "latest"
+    namespace: general
+
+  # Auth keys
+  - key: auth.autologin
+    description: "Automatically handle authentication on first launch (default: true)"
+    type: bool
+    env_var: ADDT_AUTH_AUTOLOGIN
+    default: "true"
+    namespace: auth
+
+  - key: auth.method
+    description: "Authentication method: native, env, auto (default: auto)"
+    type: string
+    env_var: ADDT_AUTH_METHOD
+    default: "auto"
+    namespace: auth
+
+  # Config keys
+  - key: config.automount
+    description: "Auto-mount extension config directories (default: false)"
+    type: bool
+    env_var: ADDT_CONFIG_AUTOMOUNT
+    default: "false"
+    namespace: config
+
+  - key: config.readonly
+    description: "Mount extension config directories as read-only (default: false)"
+    type: bool
+    env_var: ADDT_CONFIG_READONLY
+    default: "false"
+    namespace: config
+
+  # Container keys
+  - key: container.cpus
+    description: "CPU limit for container (e.g., \"2\", \"0.5\")"
+    type: string
+    env_var: ADDT_CONTAINER_CPUS
+    default: "2"
+    namespace: container
+
+  - key: container.memory
+    description: "Memory limit for container (e.g., \"512m\", \"2g\")"
+    type: string
+    env_var: ADDT_CONTAINER_MEMORY
+    default: "4g"
+    namespace: container
+
+  # Docker keys (3-level nesting)
+  - key: docker.dind.enable
+    description: "Enable Docker-in-Docker"
+    type: bool
+    env_var: ADDT_DOCKER_DIND_ENABLE
+    default: "false"
+    namespace: docker
+
+  - key: docker.dind.mode
+    description: "Docker-in-Docker mode: host or isolated"
+    type: string
+    env_var: ADDT_DOCKER_DIND_MODE
+    default: "isolated"
+    namespace: docker
+
+  # Firewall keys
+  - key: firewall.enabled
+    description: "Enable network firewall (default: false)"
+    type: bool
+    env_var: ADDT_FIREWALL
+    default: "false"
+    namespace: firewall
+
+  - key: firewall.mode
+    description: "Firewall mode: strict, permissive, off (default: strict)"
+    type: string
+    env_var: ADDT_FIREWALL_MODE
+    default: "strict"
+    namespace: firewall
+
+  # Git keys
+  - key: git.disable_hooks
+    description: "Neutralize git hooks inside container (default: true)"
+    type: bool
+    env_var: ADDT_GIT_DISABLE_HOOKS
+    default: "true"
+    namespace: git
+
+  - key: git.forward_config
+    description: "Forward .gitconfig to container (default: true)"
+    type: bool
+    env_var: ADDT_GIT_FORWARD_CONFIG
+    default: "true"
+    namespace: git
+
+  - key: git.config_path
+    description: "Custom .gitconfig file path"
+    type: string
+    env_var: ADDT_GIT_CONFIG_PATH
+    default: ""
+    namespace: git
+
+  # GitHub keys
+  - key: github.forward_token
+    description: "Forward GH_TOKEN to container (default: true)"
+    type: bool
+    env_var: ADDT_GITHUB_FORWARD_TOKEN
+    default: "true"
+    namespace: github
+
+  - key: github.token_source
+    description: "Token source: env or gh_auth (default: gh_auth)"
+    type: string
+    env_var: ADDT_GITHUB_TOKEN_SOURCE
+    default: "gh_auth"
+    namespace: github
+
+  - key: github.scope_token
+    description: "Scope GH_TOKEN to workspace repo via git credential-cache (default: true)"
+    type: bool
+    env_var: ADDT_GITHUB_SCOPE_TOKEN
+    default: "true"
+    namespace: github
+
+  - key: github.scope_repos
+    description: "Additional repos to allow when scoping (comma-separated owner/repo)"
+    type: string_list
+    env_var: ADDT_GITHUB_SCOPE_REPOS
+    default: ""
+    namespace: github
+
+  # GPG keys
+  - key: gpg.forward
+    description: "GPG forwarding mode: proxy, agent, keys, or off"
+    type: string
+    env_var: ADDT_GPG_FORWARD
+    default: ""
+    namespace: gpg
+
+  - key: gpg.allowed_key_ids
+    description: "GPG key IDs allowed for signing (comma-separated)"
+    type: string_list
+    env_var: ADDT_GPG_ALLOWED_KEY_IDS
+    default: ""
+    namespace: gpg
+
+  - key: gpg.dir
+    description: "GPG directory path (default: ~/.gnupg)"
+    type: string
+    env_var: ADDT_GPG_DIR
+    default: ""
+    namespace: gpg
+
+  # Log keys
+  - key: log.enabled
+    description: "Enable command logging"
+    type: bool
+    env_var: ADDT_LOG
+    default: "false"
+    namespace: log
+
+  - key: log.output
+    description: "Output target: stderr, stdout, file (default: stderr)"
+    type: string
+    env_var: ADDT_LOG_OUTPUT
+    default: "stderr"
+    namespace: log
+
+  - key: log.file
+    description: "Log file name (default: addt.log)"
+    type: string
+    env_var: ADDT_LOG_FILE
+    default: "addt.log"
+    namespace: log
+
+  - key: log.dir
+    description: "Log directory (default: ~/.addt/logs)"
+    type: string
+    env_var: ADDT_LOG_DIR
+    default: ""
+    namespace: log
+
+  - key: log.level
+    description: "Log level: DEBUG, INFO, WARN, ERROR (default: INFO)"
+    type: string
+    env_var: ADDT_LOG_LEVEL
+    default: "INFO"
+    namespace: log
+
+  - key: log.modules
+    description: "Comma-separated module filter (default: * for all)"
+    type: string
+    env_var: ADDT_LOG_MODULES
+    default: "*"
+    namespace: log
+
+  - key: log.rotate
+    description: "Enable log rotation (default: false)"
+    type: bool
+    env_var: ADDT_LOG_ROTATE
+    default: "false"
+    namespace: log
+
+  - key: log.max_size
+    description: "Max file size before rotating (e.g. 10m)"
+    type: string
+    env_var: ADDT_LOG_MAX_SIZE
+    default: "10m"
+    namespace: log
+
+  - key: log.max_files
+    description: "Number of rotated files to keep (default: 5)"
+    type: int
+    env_var: ADDT_LOG_MAX_FILES
+    default: "5"
+    namespace: log
+
+  # Ports keys
+  - key: ports.forward
+    description: "Enable port forwarding (default: true)"
+    type: bool
+    env_var: ADDT_PORTS_FORWARD
+    default: "true"
+    namespace: ports
+
+  - key: ports.expose
+    description: "Container ports to expose (comma-separated)"
+    type: string_list
+    env_var: ADDT_PORTS
+    default: ""
+    namespace: ports
+
+  - key: ports.inject_system_prompt
+    description: "Inject port mappings into AI system prompt (default: true)"
+    type: bool
+    env_var: ADDT_PORTS_INJECT_SYSTEM_PROMPT
+    default: "true"
+    namespace: ports
+
+  - key: ports.range_start
+    description: "Starting port for auto allocation"
+    type: int
+    env_var: ADDT_PORT_RANGE_START
+    default: "30000"
+    namespace: ports
+
+  # SSH keys
+  - key: ssh.forward_keys
+    description: "Enable SSH key forwarding (default: true)"
+    type: bool
+    env_var: ADDT_SSH_FORWARD_KEYS
+    default: "true"
+    namespace: ssh
+
+  - key: ssh.forward_mode
+    description: "SSH forwarding mode: agent, keys, or proxy (default: proxy)"
+    type: string
+    env_var: ADDT_SSH_FORWARD_MODE
+    default: "proxy"
+    namespace: ssh
+
+  - key: ssh.allowed_keys
+    description: "Key filters for proxy mode (comma-separated)"
+    type: string_list
+    env_var: ADDT_SSH_ALLOWED_KEYS
+    default: ""
+    namespace: ssh
+
+  - key: ssh.dir
+    description: "SSH directory path (default: ~/.ssh)"
+    type: string
+    env_var: ADDT_SSH_DIR
+    default: ""
+    namespace: ssh
+
+  # VM keys
+  - key: vm.cpus
+    description: "VM CPU allocation (Podman machine/Docker Desktop)"
+    type: string
+    env_var: ADDT_VM_CPUS
+    default: "4"
+    namespace: vm
+
+  - key: vm.memory
+    description: "VM memory in MB (Podman machine/Docker Desktop)"
+    type: string
+    env_var: ADDT_VM_MEMORY
+    default: "8192"
+    namespace: vm
+
+  # Workdir keys
+  - key: workdir.path
+    description: "Override working directory (default: current directory)"
+    type: string
+    env_var: ADDT_WORKDIR
+    default: "."
+    namespace: workdir
+
+  - key: workdir.automount
+    description: "Auto-mount working directory to /workspace"
+    type: bool
+    env_var: ADDT_WORKDIR_AUTOMOUNT
+    default: "true"
+    namespace: workdir
+
+  - key: workdir.readonly
+    description: "Mount working directory as read-only"
+    type: bool
+    env_var: ADDT_WORKDIR_READONLY
+    default: "false"
+    namespace: workdir
+
+  - key: workdir.autotrust
+    description: "Trust /workspace directory on first launch (default: true)"
+    type: bool
+    env_var: ADDT_WORKDIR_AUTOTRUST
+    default: "true"
+    namespace: workdir
+
+  # Security keys
+  - key: security.cap_add
+    description: "Capabilities to add (comma-separated)"
+    type: string_list
+    env_var: ADDT_SECURITY_CAP_ADD
+    default: "CHOWN,SETUID,SETGID"
+    namespace: security
+
+  - key: security.cap_drop
+    description: "Capabilities to drop (comma-separated)"
+    type: string_list
+    env_var: ADDT_SECURITY_CAP_DROP
+    default: "ALL"
+    namespace: security
+
+  - key: security.disable_devices
+    description: "Drop MKNOD capability"
+    type: bool
+    env_var: ADDT_SECURITY_DISABLE_DEVICES
+    default: "false"
+    namespace: security
+
+  - key: security.disable_ipc
+    description: "Disable IPC namespace sharing"
+    type: bool
+    env_var: ADDT_SECURITY_DISABLE_IPC
+    default: "false"
+    namespace: security
+
+  - key: security.memory_swap
+    description: "Memory swap limit (\"-1\" to disable)"
+    type: string
+    env_var: ADDT_SECURITY_MEMORY_SWAP
+    default: ""
+    namespace: security
+
+  - key: security.network_mode
+    description: "Network mode: bridge, none, host"
+    type: string
+    env_var: ADDT_SECURITY_NETWORK_MODE
+    default: ""
+    namespace: security
+
+  - key: security.no_new_privileges
+    description: "Prevent privilege escalation"
+    type: bool
+    env_var: ADDT_SECURITY_NO_NEW_PRIVILEGES
+    default: "true"
+    namespace: security
+
+  - key: security.pids_limit
+    description: "Max number of processes"
+    type: int
+    env_var: ADDT_SECURITY_PIDS_LIMIT
+    default: "200"
+    namespace: security
+
+  - key: security.read_only_rootfs
+    description: "Read-only root filesystem"
+    type: bool
+    env_var: ADDT_SECURITY_READ_ONLY_ROOTFS
+    default: "false"
+    namespace: security
+
+  - key: security.seccomp_profile
+    description: "Seccomp profile: default, restrictive, unconfined"
+    type: string
+    env_var: ADDT_SECURITY_SECCOMP_PROFILE
+    default: ""
+    namespace: security
+
+  - key: security.isolate_secrets
+    description: "Isolate secrets from child processes"
+    type: bool
+    env_var: ADDT_SECURITY_ISOLATE_SECRETS
+    default: "true"
+    namespace: security
+
+  - key: security.time_limit
+    description: "Auto-kill after N minutes (0=disabled)"
+    type: int
+    env_var: ADDT_SECURITY_TIME_LIMIT
+    default: "0"
+    namespace: security
+
+  - key: security.tmpfs_home_size
+    description: "Size of /home tmpfs (e.g., \"512m\")"
+    type: string
+    env_var: ADDT_SECURITY_TMPFS_HOME_SIZE
+    default: "512m"
+    namespace: security
+
+  - key: security.tmpfs_tmp_size
+    description: "Size of /tmp tmpfs (e.g., \"256m\")"
+    type: string
+    env_var: ADDT_SECURITY_TMPFS_TMP_SIZE
+    default: "256m"
+    namespace: security
+
+  - key: security.ulimit_nofile
+    description: "File descriptor limit (soft:hard)"
+    type: string
+    env_var: ADDT_SECURITY_ULIMIT_NOFILE
+    default: "4096:8192"
+    namespace: security
+
+  - key: security.ulimit_nproc
+    description: "Process limit (soft:hard)"
+    type: string
+    env_var: ADDT_SECURITY_ULIMIT_NPROC
+    default: "256:512"
+    namespace: security
+
+  - key: security.user_namespace
+    description: "User namespace: host, private"
+    type: string
+    env_var: ADDT_SECURITY_USER_NAMESPACE
+    default: ""
+    namespace: security
+
+  - key: security.yolo
+    description: "Enable yolo mode globally for all extensions (default: false)"
+    type: bool
+    env_var: ADDT_SECURITY_YOLO
+    default: "false"
+    namespace: security
+
+  - key: security.audit_log
+    description: "Enable security audit logging (default: false)"
+    type: bool
+    env_var: ADDT_SECURITY_AUDIT_LOG
+    default: "false"
+    namespace: security
+
+  - key: security.audit_log_file
+    description: "Path to audit log file"
+    type: string
+    env_var: ADDT_SECURITY_AUDIT_LOG_FILE
+    default: ""
+    namespace: security
+
+  # OTEL keys
+  - key: otel.enabled
+    description: "Enable OpenTelemetry"
+    type: bool
+    env_var: ADDT_OTEL_ENABLED
+    default: "false"
+    namespace: otel
+
+  - key: otel.endpoint
+    description: "OTLP endpoint URL"
+    type: string
+    env_var: ADDT_OTEL_ENDPOINT
+    default: "http://host.docker.internal:4318"
+    namespace: otel
+
+  - key: otel.protocol
+    description: "OTLP protocol: http/json, http/protobuf, or grpc"
+    type: string
+    env_var: ADDT_OTEL_PROTOCOL
+    default: "http/json"
+    namespace: otel
+
+  - key: otel.service_name
+    description: "Service name for telemetry"
+    type: string
+    env_var: ADDT_OTEL_SERVICE_NAME
+    default: "addt"
+    namespace: otel
+
+  - key: otel.headers
+    description: "OTLP headers (key=value,key2=value2)"
+    type: string
+    env_var: ADDT_OTEL_HEADERS
+    default: ""
+    namespace: otel
