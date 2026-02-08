@@ -202,7 +202,13 @@ func GetDefaultValue(key string) string {
 	case "security.seccomp_profile":
 		return ""
 	case "security.isolate_secrets":
+		return "true"
+	case "security.yolo":
 		return "false"
+	case "security.audit_log":
+		return "false"
+	case "security.audit_log_file":
+		return ""
 	case "security.time_limit":
 		return "0"
 	case "security.tmpfs_home_size":

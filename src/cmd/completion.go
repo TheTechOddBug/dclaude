@@ -7,6 +7,7 @@ import (
 
 	cfgcmd "github.com/jedi4ever/addt/cmd/config"
 	extcmd "github.com/jedi4ever/addt/cmd/extensions"
+	profilecmd "github.com/jedi4ever/addt/cmd/profile"
 )
 
 // HandleCompletionCommand generates shell completion scripts
@@ -75,9 +76,15 @@ func getConfigKeyNames() []string {
 	return names
 }
 
+// getProfileNames returns available profile names for completion
+func getProfileNames() []string {
+	return profilecmd.GetProfileNames()
+}
+
 func bashCompletion() string {
 	extensions := strings.Join(getExtensionNames(), " ")
 	configKeys := strings.Join(getConfigKeyNames(), " ")
+	profileNames := strings.Join(getProfileNames(), " ")
 
 	return fmt.Sprintf(`# addt bash completion
 _addt_completions() {
@@ -92,8 +99,10 @@ _addt_completions() {
         cword=$COMP_CWORD
     fi
 
-    local commands="run update build shell containers config extensions firewall completion doctor version cli"
+    local commands="run update build shell containers config profile extensions firewall completion doctor version cli"
     local config_cmds="list get set unset extension path"
+    local profile_cmds="list show apply"
+    local profile_names="%s"
     local containers_cmds="list clean"
     local firewall_cmds="global project"
     local firewall_actions="list allow deny remove"
@@ -112,6 +121,9 @@ _addt_completions() {
                     ;;
                 config)
                     COMPREPLY=($(compgen -W "${config_cmds}" -- "${cur}"))
+                    ;;
+                profile)
+                    COMPREPLY=($(compgen -W "${profile_cmds}" -- "${cur}"))
                     ;;
                 containers)
                     COMPREPLY=($(compgen -W "${containers_cmds}" -- "${cur}"))
@@ -139,6 +151,13 @@ _addt_completions() {
                             ;;
                     esac
                     ;;
+                profile)
+                    case "${prev}" in
+                        show|apply)
+                            COMPREPLY=($(compgen -W "${profile_names}" -- "${cur}"))
+                            ;;
+                    esac
+                    ;;
                 firewall)
                     COMPREPLY=($(compgen -W "${firewall_actions}" -- "${cur}"))
                     ;;
@@ -155,17 +174,18 @@ _addt_completions() {
 }
 
 complete -F _addt_completions addt
-`, extensions, configKeys)
+`, profileNames, extensions, configKeys)
 }
 
 func zshCompletion() string {
 	extensions := strings.Join(getExtensionNames(), " ")
 	configKeys := strings.Join(getConfigKeyNames(), " ")
+	profileNames := strings.Join(getProfileNames(), " ")
 
 	return fmt.Sprintf(`#compdef addt
 
 _addt() {
-    local -a commands extensions config_cmds containers_cmds firewall_cmds firewall_actions extensions_cmds config_keys
+    local -a commands extensions config_cmds profile_cmds profile_names containers_cmds firewall_cmds firewall_actions extensions_cmds config_keys
 
     commands=(
         'run:Run an agent in a container'
@@ -174,6 +194,7 @@ _addt() {
         'shell:Open a shell in a container'
         'containers:Manage containers'
         'config:Manage configuration'
+        'profile:Apply configuration presets'
         'extensions:Manage extensions'
         'firewall:Manage firewall rules'
         'completion:Generate shell completions'
@@ -192,6 +213,14 @@ _addt() {
         'extension:Manage extension configuration'
         'path:Show config file paths'
     )
+
+    profile_cmds=(
+        'list:List available profiles'
+        'show:Show profile settings'
+        'apply:Apply a profile'
+    )
+
+    profile_names=(%s)
 
     containers_cmds=(
         'list:List containers'
@@ -236,6 +265,9 @@ _addt() {
                 config)
                     _describe -t config_cmds 'config commands' config_cmds
                     ;;
+                profile)
+                    _describe -t profile_cmds 'profile commands' profile_cmds
+                    ;;
                 containers)
                     _describe -t containers_cmds 'container commands' containers_cmds
                     ;;
@@ -262,6 +294,13 @@ _addt() {
                             ;;
                     esac
                     ;;
+                profile)
+                    case "$words[3]" in
+                        show|apply)
+                            _describe -t profile_names 'profiles' profile_names
+                            ;;
+                    esac
+                    ;;
                 firewall)
                     _describe -t firewall_actions 'firewall actions' firewall_actions
                     ;;
@@ -278,7 +317,7 @@ _addt() {
 }
 
 _addt "$@"
-`, extensions, configKeys)
+`, extensions, profileNames, configKeys)
 }
 
 func fishCompletion() string {
@@ -298,6 +337,7 @@ func fishCompletion() string {
 	sb.WriteString("complete -c addt -n '__fish_use_subcommand' -a 'shell' -d 'Open a shell in a container'\n")
 	sb.WriteString("complete -c addt -n '__fish_use_subcommand' -a 'containers' -d 'Manage containers'\n")
 	sb.WriteString("complete -c addt -n '__fish_use_subcommand' -a 'config' -d 'Manage configuration'\n")
+	sb.WriteString("complete -c addt -n '__fish_use_subcommand' -a 'profile' -d 'Apply configuration presets'\n")
 	sb.WriteString("complete -c addt -n '__fish_use_subcommand' -a 'extensions' -d 'Manage extensions'\n")
 	sb.WriteString("complete -c addt -n '__fish_use_subcommand' -a 'firewall' -d 'Manage firewall rules'\n")
 	sb.WriteString("complete -c addt -n '__fish_use_subcommand' -a 'completion' -d 'Generate shell completions'\n")
@@ -328,6 +368,21 @@ func fishCompletion() string {
 	configKeys := getConfigKeyNames()
 	for _, key := range configKeys {
 		sb.WriteString(fmt.Sprintf("complete -c addt -n '__fish_seen_subcommand_from config; and __fish_seen_subcommand_from get set unset' -a '%s'\n", key))
+	}
+	sb.WriteString("\n")
+
+	// Profile subcommands
+	sb.WriteString("# Profile subcommands\n")
+	sb.WriteString("complete -c addt -n '__fish_seen_subcommand_from profile' -a 'list' -d 'List available profiles'\n")
+	sb.WriteString("complete -c addt -n '__fish_seen_subcommand_from profile' -a 'show' -d 'Show profile settings'\n")
+	sb.WriteString("complete -c addt -n '__fish_seen_subcommand_from profile' -a 'apply' -d 'Apply a profile'\n")
+	sb.WriteString("\n")
+
+	// Profile names for show/apply
+	sb.WriteString("# Profile names\n")
+	profileNames := getProfileNames()
+	for _, name := range profileNames {
+		sb.WriteString(fmt.Sprintf("complete -c addt -n '__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from show apply' -a '%s'\n", name))
 	}
 	sb.WriteString("\n")
 

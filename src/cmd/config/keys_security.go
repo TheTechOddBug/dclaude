@@ -28,6 +28,8 @@ func GetSecurityKeys() []KeyInfo {
 		{Key: "security.ulimit_nproc", Description: "Process limit (soft:hard)", Type: "string", EnvVar: "ADDT_SECURITY_ULIMIT_NPROC"},
 		{Key: "security.user_namespace", Description: "User namespace: host, private", Type: "string", EnvVar: "ADDT_SECURITY_USER_NAMESPACE"},
 		{Key: "security.yolo", Description: "Enable yolo mode globally for all extensions (default: false)", Type: "bool", EnvVar: "ADDT_SECURITY_YOLO"},
+		{Key: "security.audit_log", Description: "Enable security audit logging (default: false)", Type: "bool", EnvVar: "ADDT_SECURITY_AUDIT_LOG"},
+		{Key: "security.audit_log_file", Description: "Path to audit log file", Type: "string", EnvVar: "ADDT_SECURITY_AUDIT_LOG_FILE"},
 	}
 }
 
@@ -89,6 +91,12 @@ func GetSecurityValue(sec *security.Settings, key string) string {
 		if sec.Yolo != nil {
 			return fmt.Sprintf("%v", *sec.Yolo)
 		}
+	case "security.audit_log":
+		if sec.AuditLog != nil {
+			return fmt.Sprintf("%v", *sec.AuditLog)
+		}
+	case "security.audit_log_file":
+		return sec.AuditLogFile
 	}
 	return ""
 }
@@ -150,6 +158,11 @@ func SetSecurityValue(sec *security.Settings, key, value string) {
 	case "security.yolo":
 		b := value == "true"
 		sec.Yolo = &b
+	case "security.audit_log":
+		b := value == "true"
+		sec.AuditLog = &b
+	case "security.audit_log_file":
+		sec.AuditLogFile = value
 	}
 }
 
@@ -192,5 +205,9 @@ func UnsetSecurityValue(sec *security.Settings, key string) {
 		sec.UserNamespace = ""
 	case "security.yolo":
 		sec.Yolo = nil
+	case "security.audit_log":
+		sec.AuditLog = nil
+	case "security.audit_log_file":
+		sec.AuditLogFile = ""
 	}
 }

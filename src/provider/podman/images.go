@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	profilecmd "github.com/jedi4ever/addt/cmd/profile"
 	"github.com/jedi4ever/addt/extensions"
 	"github.com/jedi4ever/addt/util"
 )
@@ -116,6 +117,24 @@ func (p *PodmanProvider) extAssetsHash() string {
 
 	// Hash extra extensions (ADDT_EXTENSIONS_DIR) so changes trigger rebuild
 	hashDir(h, extensions.GetExtraExtensionsDir(), logger, &fileCount, &totalBytes)
+
+	// Hash profile presets so changes trigger rebuild
+	presetsFS := profilecmd.GetPresetsFS()
+	fs.WalkDir(presetsFS, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		content, err := presetsFS.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		h.Write([]byte(path))
+		h.Write(content)
+		fileCount++
+		totalBytes += len(content)
+		logger.Debugf("  hashing: %s (%d bytes)", path, len(content))
+		return nil
+	})
 
 	hash := fmt.Sprintf("%x", h.Sum(nil))[:8]
 	logger.Debugf("extAssetsHash: %d files, %d bytes total -> %s", fileCount, totalBytes, hash)

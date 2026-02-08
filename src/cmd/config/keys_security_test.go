@@ -113,7 +113,7 @@ func TestSecurityGetDefaultValue(t *testing.T) {
 	}{
 		{"security.pids_limit", "200"},
 		{"security.no_new_privileges", "true"},
-		{"security.isolate_secrets", "false"},
+		{"security.isolate_secrets", "true"},
 		{"security.cap_drop", "ALL"},
 		{"security.cap_add", "CHOWN,SETUID,SETGID"},
 		{"security.ulimit_nofile", "4096:8192"},

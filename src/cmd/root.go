@@ -9,6 +9,7 @@ import (
 	configcmd "github.com/jedi4ever/addt/cmd/config"
 	extcmd "github.com/jedi4ever/addt/cmd/extensions"
 	firewallcmd "github.com/jedi4ever/addt/cmd/firewall"
+	profilecmd "github.com/jedi4ever/addt/cmd/profile"
 	"github.com/jedi4ever/addt/config"
 	"github.com/jedi4ever/addt/core"
 	"github.com/jedi4ever/addt/provider"
@@ -61,7 +62,7 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 		// Check if first arg is a known addt command (matches switch cases below)
 		switch args[0] {
 		case "run", "build", "update", "shell", "containers", "firewall",
-			"extensions", "cli", "config", "version", "completion", "doctor", "init":
+			"extensions", "cli", "config", "profile", "version", "completion", "doctor", "init":
 			// Known command, continue processing
 		default:
 			// Unknown command, show help
@@ -90,6 +91,9 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 			return
 		case "config":
 			configcmd.HandleCommand(args[1:])
+			return
+		case "profile":
+			profilecmd.HandleCommand(args[1:])
 			return
 		case "extensions":
 			extcmd.HandleCommand(args[1:])
@@ -131,6 +135,8 @@ func Execute(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion str
 				handleCliCommand(subArgs, version)
 			case "config":
 				configcmd.HandleCommand(subArgs)
+			case "profile":
+				profilecmd.HandleCommand(subArgs)
 			case "version":
 				PrintVersion(version, defaultNodeVersion, defaultGoVersion, defaultUvVersion)
 			default:
