@@ -23,7 +23,7 @@ settings:
   workdir.readonly: "true"
   workdir.autotrust: "false"
   ssh.forward_keys: "false"
-  gpg.forward: ""
+  gpg.forward: "off"
   github.forward_token: "false"
   git.forward_config: "false"
   config.readonly: "true"

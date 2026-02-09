@@ -147,10 +147,10 @@ keys:
     namespace: git
 
   - key: git.config_path
-    description: "Custom .gitconfig file path"
+    description: "Custom .gitconfig file path (default: ~/.gitconfig)"
     type: string
     env_var: ADDT_GIT_CONFIG_PATH
-    default: ""
+    default: "~/.gitconfig"
     namespace: git
 
   # GitHub keys
@@ -184,10 +184,10 @@ keys:
 
   # GPG keys
   - key: gpg.forward
-    description: "GPG forwarding mode: proxy, agent, keys, or off"
+    description: "GPG forwarding mode: proxy, agent, keys, or off (default: off)"
     type: string
     env_var: ADDT_GPG_FORWARD
-    default: ""
+    default: "off"
     namespace: gpg
 
   - key: gpg.allowed_key_ids
@@ -201,7 +201,7 @@ keys:
     description: "GPG directory path (default: ~/.gnupg)"
     type: string
     env_var: ADDT_GPG_DIR
-    default: ""
+    default: "~/.gnupg"
     namespace: gpg
 
   # Log keys
@@ -230,7 +230,7 @@ keys:
     description: "Log directory (default: ~/.addt/logs)"
     type: string
     env_var: ADDT_LOG_DIR
-    default: ""
+    default: "~/.addt/logs"
     namespace: log
 
   - key: log.level
@@ -331,7 +331,7 @@ keys:
     description: "SSH directory path (default: ~/.ssh)"
     type: string
     env_var: ADDT_SSH_DIR
-    default: ""
+    default: "~/.ssh"
     namespace: ssh
 
   # VM keys
@@ -415,10 +415,10 @@ keys:
     namespace: security
 
   - key: security.network_mode
-    description: "Network mode: bridge, none, host"
+    description: "Network mode: bridge, none, host (default: bridge)"
     type: string
     env_var: ADDT_SECURITY_NETWORK_MODE
-    default: ""
+    default: "bridge"
     namespace: security
 
   - key: security.no_new_privileges
@@ -443,10 +443,10 @@ keys:
     namespace: security
 
   - key: security.seccomp_profile
-    description: "Seccomp profile: default, restrictive, unconfined"
+    description: "Seccomp profile: default, restrictive, unconfined (default: default)"
     type: string
     env_var: ADDT_SECURITY_SECCOMP_PROFILE
-    default: ""
+    default: "default"
     namespace: security
 
   - key: security.isolate_secrets
@@ -513,10 +513,10 @@ keys:
     namespace: security
 
   - key: security.audit_log_file
-    description: "Path to audit log file"
+    description: "Path to audit log file (default: ~/.addt/audit.log)"
     type: string
     env_var: ADDT_SECURITY_AUDIT_LOG_FILE
-    default: ""
+    default: "~/.addt/audit.log"
     namespace: security
 
   # OTEL keys
