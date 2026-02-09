@@ -11,6 +11,9 @@ import (
 // checkDockerForOrchestrator verifies Docker is available
 func checkDockerForOrchestrator(t *testing.T) {
 	t.Helper()
+	if testing.Short() {
+		t.Skip("skipping container test in short mode")
+	}
 	if _, err := exec.LookPath("docker"); err != nil {
 		t.Skip("Docker not found in PATH, skipping integration test")
 	}
