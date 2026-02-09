@@ -1,3 +1,4 @@
+copy and paste blocks in claude in container
 ====
 - resume sessions - mount or .addt ?
     or in ~/.addt outside of dir

@@ -146,17 +146,11 @@ func (p *DockerProvider) handleGPGAgentForwarding(gpgDir, username string) []str
 		return args
 	}
 
-	// macOS: can't mount Unix sockets into Docker containers
-	if runtime.GOOS == "darwin" {
-		fmt.Println("Warning: GPG agent forwarding not supported on macOS (use ADDT_GPG_FORWARD=proxy)")
-		return args
-	}
+	// Mount safe GPG files writable first (socket needs writable parent dir)
+	args = append(args, p.mountSafeGPGFilesWritable(gpgDir, username)...)
 
-	// Mount the agent socket
+	// Mount the agent socket on top (Docker/OrbStack support Unix socket forwarding on macOS)
 	args = append(args, "-v", fmt.Sprintf("%s:/home/%s/.gnupg/S.gpg-agent", agentSocket, username))
-
-	// Mount safe GPG files only
-	args = append(args, p.mountSafeGPGFiles(gpgDir, username)...)
 
 	// Set GPG_TTY
 	args = append(args, "-e", "GPG_TTY=/dev/console")
