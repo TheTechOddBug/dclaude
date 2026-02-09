@@ -133,9 +133,16 @@ func TestDevelopProfileMatchesDefaults(t *testing.T) {
 		t.Fatal("GetProfile(develop) returned nil")
 	}
 
+	// Develop profile intentionally enables SSH and GitHub forwarding
+	// for convenience, even though the global defaults are off.
+	allowedOverrides := map[string]bool{
+		"ssh.forward_keys":     true,
+		"github.forward_token": true,
+	}
+
 	for key, val := range p.Settings {
 		def := cfgcmd.GetDefaultValue(key)
-		if val != def {
+		if val != def && !allowedOverrides[key] {
 			t.Errorf("develop profile key %q = %q, differs from default %q", key, val, def)
 		}
 	}

@@ -25,7 +25,7 @@ func requireGitHubToken(t *testing.T) {
 
 func TestGitHub_Addt_DefaultValues(t *testing.T) {
 	// Scenario: User starts with no GitHub config and checks defaults.
-	// github.forward_token should default to true, token_source to gh_auth.
+	// github.forward_token should default to false, token_source to gh_auth.
 	_, cleanup := setupAddtDir(t, "", ``)
 	defer cleanup()
 
@@ -39,8 +39,8 @@ func TestGitHub_Addt_DefaultValues(t *testing.T) {
 	for _, line := range lines {
 		if strings.Contains(line, "github.forward_token") {
 			foundToken = true
-			if !strings.Contains(line, "true") {
-				t.Errorf("Expected github.forward_token default=true, got line: %s", line)
+			if !strings.Contains(line, "false") {
+				t.Errorf("Expected github.forward_token default=false, got line: %s", line)
 			}
 			if !strings.Contains(line, "default") {
 				t.Errorf("Expected github.forward_token source=default, got line: %s", line)

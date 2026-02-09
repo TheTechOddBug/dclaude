@@ -40,7 +40,7 @@ func TestRegistryGetDefaultValue(t *testing.T) {
 		{"firewall.mode", "strict"},
 		{"docker.dind.enable", "false"},
 		{"docker.dind.mode", "isolated"},
-		{"ssh.forward_keys", "true"},
+		{"ssh.forward_keys", "false"},
 		{"ssh.forward_mode", "proxy"},
 		{"security.pids_limit", "200"},
 		{"security.no_new_privileges", "true"},

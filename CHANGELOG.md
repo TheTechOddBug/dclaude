@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Extension namespacing**: Restructured extension config with auth/config global keys and per-extension namespace
 - **Test reorganization**: Extracted shared helpers to `test/util`, moved extension tests to `test/extension`
 - **Extension updates**: Gemini, Codex, Copilot, Cursor, Tessl extensions updated with API key auth, workspace trust, and setup improvements
+- **SSH/GPG/GitHub off by default**: `ssh.forward_keys` and `github.forward_token` now default to `false` (GPG was already off). Enable explicitly in project config or via `addt init` interactive wizard.
 
 ### Fixed
 - **TERM override**: Force `TERM=xterm-256color` for container terminfo compatibility

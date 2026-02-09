@@ -102,8 +102,8 @@ func LoadConfig(addtVersion, defaultNodeVersion, defaultGoVersion, defaultUvVers
 		cfg.PortsInjectSystemPrompt = v == "true"
 	}
 
-	// SSH forward keys: default (true) -> global -> project -> env
-	cfg.SSHForwardKeys = true
+	// SSH forward keys: default (false) -> global -> project -> env
+	cfg.SSHForwardKeys = false
 	cfg.SSHForwardMode = "proxy"
 	if globalCfg.SSH != nil {
 		if globalCfg.SSH.ForwardKeys != nil {
@@ -437,8 +437,8 @@ func LoadConfig(addtVersion, defaultNodeVersion, defaultGoVersion, defaultUvVers
 	}
 	// Extension firewall rules are loaded below after determining the extension
 
-	// GitHub forward token: default (true) -> global -> project -> env
-	cfg.GitHubForwardToken = true
+	// GitHub forward token: default (false) -> global -> project -> env
+	cfg.GitHubForwardToken = false
 	if globalCfg.GitHub != nil && globalCfg.GitHub.ForwardToken != nil {
 		cfg.GitHubForwardToken = *globalCfg.GitHub.ForwardToken
 	}

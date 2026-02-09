@@ -171,22 +171,9 @@ func configureDefaults(config *InitConfig, project ProjectType) {
 		Allowed: getDefaultAllowedDomains(project),
 	}
 
-	// SSH proxy mode (most secure)
-	if project.HasGit {
-		t2 := true
-		config.SSH = &cfgtypes.SSHSettings{
-			ForwardKeys: &t2,
-			ForwardMode: "proxy",
-		}
-	}
-
-	// GitHub token forwarding if GitHub project
-	if project.HasGitHub {
-		config.GitHub = &cfgtypes.GitHubSettings{
-			ForwardToken: &t,
-			TokenSource:  "gh_auth",
-		}
-	}
+	// SSH and GitHub off by default (safer)
+	// Users can enable via `addt config set ssh.forward_keys true`
+	// and `addt config set github.forward_token true`
 
 	// Set tool versions based on project
 	switch project.Language {
@@ -238,16 +225,20 @@ func configureInteractive(config *InitConfig, project ProjectType) {
 	// 2. Git operations?
 	if project.HasGit {
 		fmt.Println("Does this project need Git operations? (clone, push, PRs)")
-		fmt.Println("  1) Yes - enable SSH key forwarding [default]")
-		fmt.Println("  2) No - disable SSH forwarding")
+		fmt.Println("  1) No - disable SSH and GitHub forwarding [default]")
+		fmt.Println("  2) Yes - enable SSH key forwarding and GitHub token")
 		fmt.Print("Choice [1]: ")
 		choice = readLine(reader)
 		if choice == "2" {
-			sshOff := false
-			config.SSH = &cfgtypes.SSHSettings{ForwardKeys: &sshOff}
-		} else {
 			sshOn := true
 			config.SSH = &cfgtypes.SSHSettings{ForwardKeys: &sshOn, ForwardMode: "proxy"}
+			if project.HasGitHub {
+				ghOn := true
+				config.GitHub = &cfgtypes.GitHubSettings{
+					ForwardToken: &ghOn,
+					TokenSource:  "gh_auth",
+				}
+			}
 		}
 		fmt.Println()
 	}
@@ -320,14 +311,6 @@ func configureInteractive(config *InitConfig, project ProjectType) {
 		config.Persistent = &f
 	}
 	fmt.Println()
-
-	// GitHub token forwarding if GitHub project
-	if project.HasGitHub {
-		config.GitHub = &cfgtypes.GitHubSettings{
-			ForwardToken: &t,
-			TokenSource:  "gh_auth",
-		}
-	}
 
 	// Set tool versions
 	switch project.Language {

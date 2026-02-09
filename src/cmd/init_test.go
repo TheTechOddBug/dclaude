@@ -136,18 +136,12 @@ func TestConfigureDefaults(t *testing.T) {
 		t.Errorf("expected strict firewall mode, got %s", config.Firewall.Mode)
 	}
 
-	if config.SSH == nil || config.SSH.ForwardKeys == nil || !*config.SSH.ForwardKeys {
-		t.Error("expected SSH forward keys to be true")
+	// SSH and GitHub forwarding are off by default
+	if config.SSH != nil {
+		t.Error("expected SSH to be nil (off by default)")
 	}
-	if config.SSH.ForwardMode != "proxy" {
-		t.Errorf("expected proxy SSH forward mode, got %s", config.SSH.ForwardMode)
-	}
-
-	if config.GitHub == nil || config.GitHub.ForwardToken == nil || !*config.GitHub.ForwardToken {
-		t.Error("expected GitHub.ForwardToken to be true")
-	}
-	if config.GitHub.TokenSource != "gh_auth" {
-		t.Errorf("expected GitHub.TokenSource to be gh_auth, got %s", config.GitHub.TokenSource)
+	if config.GitHub != nil {
+		t.Error("expected GitHub to be nil (off by default)")
 	}
 
 	if config.NodeVersion != "22" {

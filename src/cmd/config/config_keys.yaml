@@ -155,10 +155,10 @@ keys:
 
   # GitHub keys
   - key: github.forward_token
-    description: "Forward GH_TOKEN to container (default: true)"
+    description: "Forward GH_TOKEN to container (default: false)"
     type: bool
     env_var: ADDT_GITHUB_FORWARD_TOKEN
-    default: "true"
+    default: "false"
     namespace: github
 
   - key: github.token_source
@@ -307,10 +307,10 @@ keys:
 
   # SSH keys
   - key: ssh.forward_keys
-    description: "Enable SSH key forwarding (default: true)"
+    description: "Enable SSH key forwarding (default: false)"
     type: bool
     env_var: ADDT_SSH_FORWARD_KEYS
-    default: "true"
+    default: "false"
     namespace: ssh
 
   - key: ssh.forward_mode
