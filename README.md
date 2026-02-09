@@ -117,11 +117,12 @@ Example generated config:
 # .addt.yaml
 extensions: claude
 persistent: false
-firewall: true
-firewall_mode: strict
-firewall_allowed:
-  - api.anthropic.com
-  - registry.npmjs.org
+firewall:
+  enabled: true
+  mode: strict
+  allowed:
+    - api.anthropic.com
+    - registry.npmjs.org
 ssh:
   forward_keys: true
   forward_mode: proxy
@@ -168,7 +169,7 @@ This mounts `~/.claude` and `~/.claude.json` into the container.
 
 **Your code:** Your current directory is automatically mounted at `/workspace` in the container. The agent can read and edit your files directly.
 
-**For GitHub operations:** If the agent needs to create PRs, push commits, or access private repos, addt automatically picks up your token from `gh auth token` (requires [GitHub CLI](https://cli.github.com/) installed and `gh auth login` done). You can also set a token explicitly:
+**For GitHub operations:** If the agent needs to create PRs, push commits, or access private repos, enable GitHub token forwarding first. addt picks up your token from `gh auth token` (requires [GitHub CLI](https://cli.github.com/) installed and `gh auth login` done). You can also set a token explicitly:
 ```bash
 export GH_TOKEN="ghp_..."
 ```
@@ -222,17 +223,18 @@ ports:
 
 Or via CLI:
 ```bash
-addt config global set ports.expose "3000,8080"
-addt config global set ports.range_start 40000
-addt config global set ports.forward false   # disable port forwarding
+addt config set ports.expose "3000,8080" -g
+addt config set ports.range_start 40000 -g
+addt config set ports.forward false -g   # disable port forwarding
 ```
 
 ### GitHub Access (private repos, PRs)
 
-By default, addt auto-detects your GitHub token via `gh auth token` (requires [GitHub CLI](https://cli.github.com/) and `gh auth login`):
+GitHub token forwarding is disabled by default. Enable it to give the agent access to private repos and PRs. When enabled, addt auto-detects your token via `gh auth token` (requires [GitHub CLI](https://cli.github.com/) and `gh auth login`):
 
 ```bash
-# Just works if gh CLI is installed and authenticated
+# Enable token forwarding
+addt config set github.forward_token true
 addt run claude "Clone git@github.com:org/private-repo.git"
 ```
 
@@ -288,13 +290,14 @@ Inspired by [IngmarKrusch/claude-docker](https://github.com/IngmarKrusch/claude-
 
 ### SSH Keys (git over SSH)
 
-SSH forwarding is enabled by default using agent mode. You can choose a forwarding mode:
+SSH forwarding is disabled by default. Enable it and choose a forwarding mode:
 
 ```bash
-# Default: agent mode (SSH agent socket forwarded)
+# Enable SSH forwarding (proxy mode is the default mode)
+export ADDT_SSH_FORWARD_KEYS=true
 addt run claude "Clone git@github.com:org/private-repo.git"
 
-# Filter which keys are accessible (auto-enables proxy mode)
+# Filter which keys are accessible
 export ADDT_SSH_ALLOWED_KEYS="github,work"
 addt run claude "Clone the repo"
 
@@ -345,36 +348,37 @@ There are three ways to configure addt:
 export ADDT_CONTAINER_MEMORY=4g
 
 # Project config (.addt.yaml)
-addt config project set container.memory 4g
+addt config set container.memory 4g
 
 # Global config (~/.addt/config.yaml)
-addt config global set container.memory 4g
+addt config set container.memory 4g -g
 ```
 
 All three set the same thing. Environment wins if multiple are set.
 
 ### Project Config File
 
-Use `addt config project` to manage `.addt.yaml` (commit to git for team sharing):
+Use `addt config` to manage `.addt.yaml` (commit to git for team sharing):
 
 ```bash
-addt config project set persistent true
-addt config project set container.memory 4g
-addt config project set firewall true
-addt config project list
+addt config set persistent true
+addt config set container.memory 4g
+addt config set firewall.enabled true
+addt config list
 ```
 
 ### Config Commands
 
 ```bash
-# Global settings (all projects)
-addt config global list
-addt config global set container.memory 4g
-addt config global unset container.memory
+# Project settings (this directory, default)
+addt config list
+addt config set firewall.enabled true
+addt config unset firewall.enabled
 
-# Project settings (this directory only)
-addt config project list
-addt config project set firewall true
+# Global settings (all projects)
+addt config list -g
+addt config set container.memory 4g -g
+addt config unset container.memory -g
 
 # Per-extension
 addt config extension claude set version 1.0.5
@@ -416,7 +420,7 @@ Shows which security settings are enabled/disabled across global and project con
 | `ADDT_PERSISTENT=true` | Keep container running between sessions |
 | `ADDT_PORTS_FORWARD=true` | Enable port forwarding (default: true) |
 | `ADDT_PORTS=3000,8080` | Expose container ports |
-| `ADDT_SSH_FORWARD_KEYS=true` | Enable SSH key forwarding (default: true) |
+| `ADDT_SSH_FORWARD_KEYS=true` | Enable SSH key forwarding (default: false) |
 | `ADDT_SSH_FORWARD_MODE=proxy` | SSH forwarding mode: proxy, agent, or keys |
 | `ADDT_SSH_ALLOWED_KEYS=github` | Filter SSH keys by comment |
 | `ADDT_DOCKER_DIND_ENABLE=true` | Enable Docker-in-Docker |
@@ -451,13 +455,13 @@ History files are stored per-project at `~/.addt/history/<project-hash>/` on you
 
 Configure via project config:
 ```bash
-addt config project set history_persist true
+addt config set history_persist true
 ```
 
 ### SSH Forwarding
 
 SSH forwarding is controlled by two settings:
-- `ssh.forward_keys` (bool): enable/disable SSH forwarding (default: true)
+- `ssh.forward_keys` (bool): enable/disable SSH forwarding (default: false)
 - `ssh.forward_mode` (string): forwarding method — `proxy` (default), `agent`, or `keys`
 
 ```bash
@@ -563,7 +567,7 @@ Enable forwarding of terminal identification variables (TERM_PROGRAM, KITTY_WIND
 
 ```bash
 # Enable OSC forwarding (disabled by default)
-addt config project set terminal.osc true
+addt config set terminal.osc true
 # Or via env var
 export ADDT_TERMINAL_OSC=true
 ```
@@ -576,7 +580,7 @@ Control which domains the agent can access:
 
 ```bash
 # Enable firewall
-addt config global set firewall true
+addt config set firewall.enabled true -g
 
 # Manage allowed/denied domains
 addt firewall global allow api.example.com
@@ -607,8 +611,8 @@ addt run claude
 
 Or via config:
 ```bash
-addt config global set container.cpus 2
-addt config global set container.memory 4g
+addt config set container.cpus 2 -g
+addt config set container.memory 4g -g
 ```
 
 ### Security Hardening
@@ -626,7 +630,7 @@ Containers run with security defaults enabled:
 | `read_only_rootfs` | false | Read-only root filesystem |
 | `tmpfs_tmp_size` | 256m | Size of /tmp when read_only_rootfs is enabled |
 | `tmpfs_home_size` | 512m | Size of /home/addt when read_only_rootfs is enabled |
-| `network_mode` | bridge | Network mode: "bridge", "none" (air-gapped), "host" |
+| `network_mode` | "" | Network mode: "bridge", "none" (air-gapped), "host" (empty = provider default) |
 | `seccomp_profile` | default | Seccomp: "default", "restrictive", "unconfined", or path |
 | `disable_ipc` | false | Disable IPC namespace sharing (`--ipc=none`) |
 | `time_limit` | 0 | Auto-terminate after N minutes (0 = disabled) |
@@ -639,7 +643,7 @@ Containers run with security defaults enabled:
 
 **Global yolo mode**: Set `security.yolo: true` to enable yolo/auto-accept mode across all extensions. Per-extension overrides take precedence:
 ```bash
-addt config global set security.yolo true           # Enable globally
+addt config set security.yolo true -g                # Enable globally
 addt config extension claude set yolo false          # But disable for claude
 ```
 
@@ -693,7 +697,7 @@ Send telemetry data to an OTEL collector for observability:
 |---------|---------|-------------|
 | `enabled` | false | Enable OpenTelemetry |
 | `endpoint` | http://host.docker.internal:4318 | OTLP endpoint URL |
-| `protocol` | http/protobuf | Protocol: http/protobuf or grpc |
+| `protocol` | http/json | Protocol: http/json, http/protobuf, or grpc |
 | `service_name` | addt | Service name for traces |
 | `headers` | "" | OTLP headers (key=value,key2=value2) |
 
@@ -702,7 +706,7 @@ Configure in `~/.addt/config.yaml`:
 otel:
   enabled: true
   endpoint: http://host.docker.internal:4318
-  protocol: http/protobuf
+  protocol: http/json
   service_name: my-project
 ```
 
@@ -807,19 +811,23 @@ addt run codex --help
 # Container management
 addt build <agent>                # Build container image
 addt build claude --force         # Rebuild without cache
+addt build claude --rebuild-base  # Rebuild base image too
 addt shell <agent>                # Open shell in container
 addt containers list              # List running containers
 addt containers clean             # Remove all containers
+addt update <agent> [version]     # Force-rebuild agent to version
 
 # Configuration
-addt config global list           # Show global settings
-addt config global set <k> <v>    # Set global setting
-addt config project list          # Show project settings
+addt config list                  # Show project settings
+addt config list -g               # Show global settings
+addt config set <k> <v>           # Set project setting
+addt config set <k> <v> -g       # Set global setting
 addt config extension <n> list    # Show extension settings
 addt config audit                 # Review security posture
 
 # Profiles
 addt profile list                 # List available profiles
+addt profile show <name>          # Show profile details
 addt profile apply <name>         # Apply a security profile
 
 # Firewall
@@ -833,6 +841,8 @@ addt firewall project deny <d>    # Deny domain for project
 addt extensions list              # List available agents
 addt extensions info <name>       # Show agent details
 addt extensions new <name>        # Create custom agent
+addt extensions clone <src> [dst] # Clone extension from source
+addt extensions remove <name>     # Remove local extension
 
 # Developer tools
 addt doctor                       # Check system health
@@ -868,16 +878,19 @@ addt cli update                   # Update addt
 | `ADDT_PERSISTENT` | false | Keep container running |
 | `ADDT_PORTS_FORWARD` | true | Enable port forwarding |
 | `ADDT_PORTS` | - | Ports to expose: `3000,8080` |
+| `ADDT_PORT_RANGE_START` | 30000 | Starting port for auto allocation |
 | `ADDT_CONTAINER_CPUS` | 2 | CPU limit: `2` |
 | `ADDT_CONTAINER_MEMORY` | 4g | Memory limit: `4g` |
 | `ADDT_WORKDIR` | `.` | Working directory to mount |
 | `ADDT_WORKDIR_READONLY` | false | Mount workspace as read-only |
 | `ADDT_HISTORY_PERSIST` | false | Persist shell history between sessions |
+| `ADDT_VM_CPUS` | 4 | VM CPU allocation (Podman machine/Docker Desktop) |
+| `ADDT_VM_MEMORY` | 8192 | VM memory in MB (Podman machine/Docker Desktop) |
 
 ### Forwarding
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ADDT_SSH_FORWARD_KEYS` | true | Enable SSH key forwarding |
+| `ADDT_SSH_FORWARD_KEYS` | false | Enable SSH key forwarding |
 | `ADDT_SSH_FORWARD_MODE` | proxy | SSH mode: `proxy`, `agent`, or `keys` |
 | `ADDT_SSH_ALLOWED_KEYS` | - | Filter SSH keys by comment: `github,work` |
 | `ADDT_SSH_DIR` | - | Custom SSH directory path |
@@ -888,7 +901,7 @@ addt cli update                   # Update addt
 | `ADDT_TERMINAL_OSC` | false | Forward terminal identification for OSC support |
 | `ADDT_DOCKER_DIND_ENABLE` | false | Enable Docker-in-Docker |
 | `ADDT_DOCKER_DIND_MODE` | isolated | DinD mode: `isolated` or `host` |
-| `ADDT_GITHUB_FORWARD_TOKEN` | true | Forward `GH_TOKEN` to container |
+| `ADDT_GITHUB_FORWARD_TOKEN` | false | Forward `GH_TOKEN` to container |
 | `ADDT_GITHUB_TOKEN_SOURCE` | gh_auth | Token source: `gh_auth` (requires `gh` CLI) or `env` |
 | `ADDT_GITHUB_SCOPE_TOKEN` | true | Scope `GH_TOKEN` to workspace repo via git credential-cache |
 | `ADDT_GITHUB_SCOPE_REPOS` | - | Additional repos for scoping: `myorg/repo1,myorg/repo2` |
@@ -910,7 +923,7 @@ addt cli update                   # Update addt
 | `ADDT_SECURITY_READ_ONLY_ROOTFS` | false | Read-only root filesystem |
 | `ADDT_SECURITY_TMPFS_TMP_SIZE` | 256m | Size of /tmp tmpfs |
 | `ADDT_SECURITY_TMPFS_HOME_SIZE` | 512m | Size of /home/addt tmpfs |
-| `ADDT_SECURITY_NETWORK_MODE` | bridge | Network mode: bridge, none, host |
+| `ADDT_SECURITY_NETWORK_MODE` | "" | Network mode: bridge, none, host (empty = provider default) |
 | `ADDT_SECURITY_SECCOMP_PROFILE` | default | Seccomp profile to use |
 | `ADDT_SECURITY_DISABLE_IPC` | false | Disable IPC namespace sharing |
 | `ADDT_SECURITY_TIME_LIMIT` | 0 | Auto-terminate after N minutes |
@@ -920,14 +933,23 @@ addt cli update                   # Update addt
 | `ADDT_SECURITY_YOLO` | false | Enable yolo mode globally for all extensions |
 | `ADDT_SECURITY_ISOLATE_SECRETS` | true | Isolate secrets from child processes |
 | `ADDT_SECURITY_AUDIT_LOG` | false | Enable security audit logging |
+| `ADDT_SECURITY_AUDIT_LOG_FILE` | - | Path to audit log file (default: `~/.addt/audit.log`) |
 
 ### Paths & Logging
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `ADDT_ENV_FILE_LOAD` | true | Load .env file |
 | `ADDT_ENV_FILE` | .env | Env file to load |
 | `ADDT_ENV_VARS` | ANTHROPIC_API_KEY,GH_TOKEN | Vars to forward |
 | `ADDT_LOG` | false | Enable logging |
-| `ADDT_LOG_FILE` | addt.log | Log file path |
+| `ADDT_LOG_OUTPUT` | stderr | Output target: `stderr`, `stdout`, or `file` |
+| `ADDT_LOG_FILE` | addt.log | Log file name |
+| `ADDT_LOG_DIR` | ~/.addt/logs | Log directory |
+| `ADDT_LOG_LEVEL` | INFO | Log level: `DEBUG`, `INFO`, `WARN`, `ERROR` |
+| `ADDT_LOG_MODULES` | * | Comma-separated module filter |
+| `ADDT_LOG_ROTATE` | false | Enable log rotation |
+| `ADDT_LOG_MAX_SIZE` | 10m | Max file size before rotating |
+| `ADDT_LOG_MAX_FILES` | 5 | Number of rotated files to keep |
 | `ADDT_CONFIG_DIR` | ~/.addt | Config directory |
 
 ### Tool Versions
