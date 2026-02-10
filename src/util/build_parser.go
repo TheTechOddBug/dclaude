@@ -24,7 +24,7 @@ type BuildOutput struct {
 
 // BuildRunner executes a container build command with progress output
 type BuildRunner struct {
-	Command     string   // "docker" or "podman"
+	Command     string // "docker" or "podman"
 	Args        []string
 	Env         []string // optional env override; if set, used as cmd.Env
 	Verbose     bool

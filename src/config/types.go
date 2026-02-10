@@ -135,7 +135,7 @@ type ProviderSettings struct {
 
 // GlobalConfig represents the persistent configuration stored in ~/.addt/config.yaml
 type GlobalConfig struct {
-	Provider *ProviderSettings `yaml:"provider,omitempty"`
+	Provider       *ProviderSettings  `yaml:"provider,omitempty"`
 	Container      *ContainerSettings `yaml:"container,omitempty"`
 	Docker         *DockerSettings    `yaml:"docker,omitempty"`
 	Vm             *VmSettings        `yaml:"vm,omitempty"`
